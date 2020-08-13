@@ -1,0 +1,15 @@
+# user generated logs
+logs/
+
+# Herwig outputs
+*.log
+*.out
+*.hepmc
+*.tex
+
+# Herwig installations
+Herwig-cache/
+Herwig*/
+
+# additional stuff
+*.swp
