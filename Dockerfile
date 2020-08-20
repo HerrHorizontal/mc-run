@@ -10,7 +10,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -qq -y install gcc g++ gfortran && \
     apt-get -qq -y install \
                     make automake autoconf libtool cmake rsync \ 
-                    git wget tar zlib1g-dev&& \
+                    git wget tar zlib1g zlib1g-dev&& \
     apt-get -qq -y install python python-dev && \
     apt-get -qq -y autoclean && \
     apt-get -qq -y autoremove && \
@@ -18,7 +18,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 RUN wget https://herwig.hepforge.org/downloads/herwig-bootstrap && \
     chmod +x herwig-bootstrap && \
-    ./herwig-bootstrap /herwig -j32
+    /herwig-bootstrap -j 3 --openloops-processes=ppll,ppllj,pplljj,pplljjj --without-hjets /herwig
 
 # Set the default directory
 WORKDIR /generation/docker/
+
