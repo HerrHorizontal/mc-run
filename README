@@ -1,3 +1,18 @@
 # ETP Herwig event generation
 
-Repository for tracking the development of distibutable MC event egneration with Herwig.
+Repository for tracking the development of distributable MC event generation with Herwig.
+
+
+## Herwig Docker image
+
+This repository provides a Docker image for running standalone Herwig. 
+See also the linked [Docker hub](https://hub.docker.com/repository/docker/mhorzela/herwig-standalone). 
+This image contains a full installation of Herwig with all necessary linked software components. 
+Since the size of the docker image is quite big (aprox. 8.5GiB) it might not be the best option to use for distributed execution in a batch system. 
+
+
+## Law setup
+
+TODO: For automated and distributed production of HEP-particle-collision events with Herwig, exploiting all functionality, an implementation of the workflow using [LAW](https://github.com/riga/law) is provided.
+
+
