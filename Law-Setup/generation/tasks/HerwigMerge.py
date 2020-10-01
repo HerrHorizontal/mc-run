@@ -13,7 +13,7 @@ from generation.framework import Task
 from HerwigIntegrate import HerwigIntegrate
 
 
-class HerwigBuild(Task, law.LocalWorkflow):
+class HerwigMerge(Task, law.LocalWorkflow):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
