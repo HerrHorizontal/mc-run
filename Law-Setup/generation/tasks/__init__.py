@@ -2,5 +2,5 @@
 
 import HerwigBuild
 import HerwigIntegrate
-import HerwigMergeGrids
+import HerwigMerge
 import HerwigRun
