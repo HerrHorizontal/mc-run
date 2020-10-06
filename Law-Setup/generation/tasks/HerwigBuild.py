@@ -36,7 +36,7 @@ class HerwigBuild(Task):
         return my_env
 
     def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(os.path.join(__file__,"..","setup_herwig.sh")),
+        code, out, error = interruptable_popen("source {}; env".format(os.path.join(os.path.dirname(__file__),"..","..","..","setup","setup_herwig.sh")),
                                                shell=True, 
                                                stdout=PIPE, 
                                                stderr=PIPE
@@ -49,10 +49,15 @@ class HerwigBuild(Task):
 
     def run(self):
         # data
-        _my_input_file = os.path.join(__file__, "..", "..", "{}.in".format(self.input_file_name))
         _my_input_file_name = str(self.input_file_name)
         _max_integration_jobs = str(self.integration_maxjobs)
         _config_path = str(self.config_path)
+
+        if(_config_path=="" or _config_path=="default"):
+            _my_input_file = os.path.join(os.path.dirname(__file__), "..", "..", "..", "inputfiles", "{}.in".format(self.input_file_name))
+        else:
+            _my_input_file = os.path.join(_config_path, "{}.in".format(self.input_file_name))
+
 
 
         # ensure that the output directory exists
@@ -69,17 +74,16 @@ class HerwigBuild(Task):
         my_env = self.set_environment_variables()
 
         # run Herwig build step 
-        _herwig_exec = "Herwig build"
-        _herwig_args = "--maxjobs={MAXJOBS} " \
-            "{INPUT_FILE} ".format(
-            MAXJOBS=_max_integration_jobs,
-            INPUT_FILE=_my_input_file
-        )
+        _herwig_exec = ["Herwig", "build"]
+        _herwig_args = [
+            "--maxjobs={MAXJOBS}".format(MAXJOBS=_max_integration_jobs),
+            "{INPUT_FILE}".format(INPUT_FILE=_my_input_file)
+        ]
 
-        print(colored('Executable: {} {}'.format(_herwig_exec, _herwig_args).replace(' -', ' \\\n    -'), 'yellow'))
+        print(colored('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)), 'yellow'))
 
         code, out, error = interruptable_popen(
-            " ".join([_herwig_exec, _herwig_args]),
+            _herwig_exec + _herwig_args,
             stdout=PIPE,
             stderr=PIPE,
             env=my_env
@@ -87,10 +91,16 @@ class HerwigBuild(Task):
 
         # if successful save Herwig-cache and run-file as tar.gz
         if(code != 0):
-            raise Exception('Error: ' + error + 'Outpur: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code))
+            raise Exception(colored('Error: ' + error + 'Output: ' + out + '\nHerwig build returned non-zero exit status {}'.format(code), 'red'))
         else:
-            os.system('tar -czf Herwig-build.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(INPUT_FILE_NAME=_my_input_file_name))
+            print(colored('Output: ' + out, 'yellow'))
+            os.system('tar -czf Herwig-build.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(
+                INPUT_FILE_NAME=_my_input_file_name
+            ))
 
             if os.path.exists("Herwig-build.tar.gz"):
                 output.copy_from_local("Herwig-build.tar.gz")
 
+        print(colored("=======================================================", 'green'))
+
+        

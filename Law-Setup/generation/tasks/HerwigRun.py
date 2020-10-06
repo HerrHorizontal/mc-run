@@ -14,7 +14,7 @@ from generation.framework import Task, HTCondorWorkflow
 
 from HerwigMerge import HerwigMerge
 
-class HerwigIntegrate(Task, HTCondorWorkflow):
+class HerwigRun(Task, HTCondorWorkflow):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision events
     """
@@ -84,19 +84,18 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
 
         # run Herwig integration
-        _herwig_exec = "Herwig run"
-        _herwig_args = "-q --seed={SEED} " \
-            "{INPUT_FILE_NAME}.run " \
-            "--numevents={NEVENTS} ".format(
-            SEED=_seed,
-            INPUT_FILE_NAME=_my_config,
-            NEVENTS=_num_events
-        )
+        _herwig_exec = ["Herwig", "run"]
+        _herwig_args = [
+            "-q", 
+            "--seed={SEED}".format(SEED=_seed),
+            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config),
+            "--numevents={NEVENTS} ".format(NEVENTS=_num_events)
+        ]
 
-        print(colored('Executable: {} {}'.format(_herwig_exec, _herwig_args).replace(' -', ' \\\n    -'), 'yellow'))
+        print(colored('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)), 'yellow'))
 
         code, out, error = interruptable_popen(
-            " ".join([_herwig_exec, _herwig_args]),
+            _herwig_exec + _herwig_args,
             stdout=PIPE,
             stderr=PIPE,
             env=my_env
@@ -106,11 +105,14 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
         if(code != 0):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig run returned non-zero exit status {}'.format(code))
         else:
-            if output.exists():
-                output.copy_from_local("{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
+            print(colored('Output: ' + out, 'yellow'))
+
+            _output_file = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
                     INPUT_FILE_NAME=_my_config,
-                    SEED=_seed
-                ))
+                    SEED=_seed)
+
+            if os.path.exists(_output_file):
+                output.copy_from_local(_output_file)
 
 
         print(colored("=======================================================", 'green'))

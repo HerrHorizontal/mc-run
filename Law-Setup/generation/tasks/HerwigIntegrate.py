@@ -40,7 +40,6 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
         }
         
     def output(self):
-        # 
         return self.remote_target("Herwig-int{}.tar.gz".format(self.branch))
 
     def run(self):
@@ -68,17 +67,16 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             os.system('tar -xzf {}'.format(_file.path))
 
         # run Herwig integration
-        _herwig_exec = "Herwig integrate"
-        _herwig_args = "--jobid={JOBID} " \
-            "{INPUT_FILE_NAME}.run ".format(
-            JOBID=_jobid,
-            INPUT_FILE_NAME=_my_config
-        )
+        _herwig_exec = ["Herwig", "integrate"]
+        _herwig_args = [
+            "--jobid={JOBID}".format(JOBID=_jobid),
+            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
+        ]
 
-        print(colored('Executable: {} {}'.format(_herwig_exec, _herwig_args).replace(' -', ' \\\n    -'), 'yellow'))
+        print(colored('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)), 'yellow'))
 
         code, out, error = interruptable_popen(
-            " ".join([_herwig_exec, _herwig_args]),
+            _herwig_exec + _herwig_args,
             stdout=PIPE,
             stderr=PIPE,
             env=my_env
@@ -86,8 +84,9 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
         # if successful tar and save integration
         if(code != 0):
-            raise Exception('Error: ' + error + 'Outpur: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code))
+            raise Exception(colored('Error: ' + error + 'Output: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code), 'red'))
         else:
+            print(colored('Output: ' + out, 'yellow'))
             os.system('tar -czf Herwig-int.tar.gz Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}'.format(
                 JOBID=_jobid,
                 INPUT_FILE_NAME=_my_config
@@ -96,3 +95,6 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             if os.path.exists("Herwig-int.tar.gz"):
                 output.copy_from_local("Herwig-int.tar.gz")
 
+        print(colored("=======================================================", 'green'))
+
+        

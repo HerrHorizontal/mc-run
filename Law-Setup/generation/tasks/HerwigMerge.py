@@ -11,6 +11,7 @@ from law.util import interruptable_popen
 from generation.framework import Task
 
 from HerwigIntegrate import HerwigIntegrate
+from HerwigBuild import HerwigBuild
 
 
 class HerwigMerge(Task, law.LocalWorkflow):
@@ -34,7 +35,7 @@ class HerwigMerge(Task, law.LocalWorkflow):
         return my_env
 
     def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(os.path.join(__file__,"..","setup_herwig.sh")),
+        code, out, error = interruptable_popen("source {}; env".format(os.path.join(os.path.dirname(__file__),"..","..","..","setup","setup_herwig.sh")),
                                                shell=True, 
                                                stdout=PIPE, 
                                                stderr=PIPE
@@ -78,15 +79,15 @@ class HerwigMerge(Task, law.LocalWorkflow):
                 os.system('tar -xzf {}'.format(_file.path))
 
         # run Herwig build step 
-        _herwig_exec = "Herwig mergegrids"
-        _herwig_args = "{INPUT_FILE_NAME}.run ".format(
-            INPUT_FILE_NAME=_my_input_file_name
-        )
+        _herwig_exec = ["Herwig", "mergegrids"]
+        _herwig_args = [
+            "{INPUT_FILE_NAME}.run ".format(INPUT_FILE_NAME=_my_input_file_name)
+        ]
 
-        print(colored('Executable: {} {}'.format(_herwig_exec, _herwig_args).replace(' -', ' \\\n    -'), 'yellow'))
+        print(colored('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)), 'yellow'))
 
         code, out, error = interruptable_popen(
-            " ".join([_herwig_exec, _herwig_args]),
+            _herwig_exec + _herwig_args,
             stdout=PIPE,
             stderr=PIPE,
             env=my_env
@@ -94,10 +95,13 @@ class HerwigMerge(Task, law.LocalWorkflow):
 
         # if successful save final Herwig-cache and run-file as tar.gz
         if(code != 0):
-            raise Exception('Error: ' + error + 'Outpur: ' + out + '\nHerwig mergegrids returned non-zero exit status {}'.format(code))
+            raise Exception(colored('Error: ' + error + 'Output: ' + out + '\nHerwig mergegrids returned non-zero exit status {}'.format(code), 'red'))
         else:
+            print(colored('Output: ' + out, 'yellow'))
             os.system('tar -czvf Herwig-cache.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(INPUT_FILE_NAME=_my_input_file_name))
 
             if os.path.exists("Herwig-cache.tar.gz"):
                 output.copy_from_local("Herwig-cache.tar.gz")
 
+        print(colored("=======================================================", 'green'))
+        
