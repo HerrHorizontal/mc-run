@@ -28,7 +28,7 @@ class Task(law.Task):
 
     def remote_target(self, *path):
         return law.WLCGFileTarget(self.remote_path(*path),
-                                  law.WLCGFileSystem(None, "{}/{}_{}".format(self.wlcg_path, self.input_file_name, self.mc_setting)))
+                                  law.WLCGFileSystem(None, "{}/{}/{}".format(self.wlcg_path, self.input_file_name, self.mc_setting)))
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
 
