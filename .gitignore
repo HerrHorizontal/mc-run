@@ -17,3 +17,7 @@ Herwig*/
 
 # compilation outputs
 *.pyc
+
+# Law outputs
+Law-Setup/data/
+*tar.gz
