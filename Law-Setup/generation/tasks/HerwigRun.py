@@ -51,7 +51,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         
     def output(self):
         # 
-        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.hepmc".format(
+        return self.local_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.hepmc".format(
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
