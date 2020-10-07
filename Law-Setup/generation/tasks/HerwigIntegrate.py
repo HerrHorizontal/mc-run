@@ -31,7 +31,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
     def create_branch_map(self):
         # each integration job is indexed by it's job number
-        return {jobnum: intjobnum for jobnum, intjobnum in enumerate(range(self.integration_maxjobs))}
+        return {jobnum: intjobnum for jobnum, intjobnum in enumerate(range(int(self.integration_maxjobs)))}
 
     def requires(self):
         # current branch task requires existing integrationList
