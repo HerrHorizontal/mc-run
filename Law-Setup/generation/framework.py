@@ -64,6 +64,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     htcondor_request_disk = luigi.Parameter()
     wlcg_path = luigi.Parameter()
     bootstrap_file = luigi.Parameter()
+    input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
 
     outputs_siblings = True
@@ -75,9 +76,10 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     #     return "_{}To{}".format(self.start_branch, self.end_branch)
 
     def htcondor_output_directory(self):
-          return law.WLCGDirectoryTarget(
-          self.remote_path(),
-          law.WLCGFileSystem(None, "{}_{}".format(self.wlcg_path,self.mc_setting)))
+        return law.WLCGDirectoryTarget(
+            self.remote_path(),
+            law.WLCGFileSystem(None, "{}/{}/{}".format(self.wlcg_path,self.input_file_name,self.mc_setting))
+        )
 
     def htcondor_create_job_file_factory(self):
         factory = super(HTCondorWorkflow, self).htcondor_create_job_file_factory()
