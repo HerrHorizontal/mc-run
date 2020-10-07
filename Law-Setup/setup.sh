@@ -38,7 +38,7 @@ action() {
     _addbin "$base/luigi/bin"
 
     # enum34
-    _addpy "$base/enum34-1.1.6"
+    _addpy "$base/enum34-1.1.10"
 
     # six
     _addpy "$base/six"
