@@ -40,7 +40,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
         }
         
     def output(self):
-        return self.remote_target("Herwig-int{}.tar.gz".format(self.branch))
+        return self.local_target("Herwig-int{}.tar.gz".format(self.branch))
 
     def run(self):
         

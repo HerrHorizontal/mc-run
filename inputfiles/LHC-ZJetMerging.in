@@ -19,7 +19,7 @@ read snippets/MonacoSampler.in
 cd /Herwig/Samplers
 # Perform the addaption in the read/integrate step with:
 set MonacoSampler:NIterations 7
-set MonacoSampler:InitialPoints 40000
+set MonacoSampler:InitialPoints 40
 set MonacoSampler:EnhancementFactor 1.3
 
 ##################################################
