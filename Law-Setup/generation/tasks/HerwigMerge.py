@@ -50,7 +50,7 @@ class HerwigMerge(Task, law.LocalWorkflow):
         }
     
     def output(self):
-        return self.local_target("Herwig-cache.tar.gz")
+        return self.remote_target("Herwig-cache.tar.gz")
 
     def run(self):
         # data

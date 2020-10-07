@@ -45,7 +45,7 @@ class HerwigBuild(Task):
         return my_env
 
     def output(self):
-        return self.local_target("Herwig-build.tar.gz")
+        return self.remote_target("Herwig-build.tar.gz")
 
     def run(self):
         # data
