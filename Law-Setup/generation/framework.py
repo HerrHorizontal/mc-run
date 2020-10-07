@@ -107,7 +107,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         prevdir = os.getcwd()
         os.system('cd $ANALYSIS_PATH')
         if not os.path.isfile('generation.tar.gz'):
-            os.system('tar --exclude=luigi/.git -czvf generation.tar.gz generation luigi.cfg law.cfg luigi law six enum34-1.1.6')
+            os.system('tar --exclude=luigi/.git -czf generation.tar.gz generation luigi.cfg law.cfg luigi law six enum34-1.1.10')
 	    os.chdir(prevdir)
 
         config.input_files.append(law.util.rel_path(__file__, '../generation.tar.gz'))
