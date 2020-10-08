@@ -20,4 +20,4 @@ Herwig*/
 
 # Law outputs
 Law-Setup/data/
-*tar.gz
+*.tar.gz
