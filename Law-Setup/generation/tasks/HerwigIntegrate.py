@@ -3,7 +3,6 @@
 import law
 import luigi
 import os
-from termcolor import colored
 
 from subprocess import PIPE
 from law.util import interruptable_popen
@@ -55,9 +54,9 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
         
 
         # actual payload:
-        print(colored("=======================================================", 'green'))
-        print(colored("Starting integration step to generate integration grids", 'green'))
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
+        print("Starting integration step to generate integration grids")
+        print("=======================================================")
 
         # set environment variables
         my_env = os.environ
@@ -73,7 +72,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
 
-        print(colored('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)), 'yellow'))
+        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         code, out, error = interruptable_popen(
             _herwig_exec + _herwig_args,
@@ -84,9 +83,9 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
         # if successful tar and save integration
         if(code != 0):
-            raise Exception(colored('Error: ' + error + 'Output: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code), 'red'))
+            raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code))
         else:
-            print(colored('Output: ' + out, 'yellow'))
+            print('Output: ' + out)
             os.system('tar -czf Herwig-int.tar.gz Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}'.format(
                 JOBID=_jobid,
                 INPUT_FILE_NAME=_my_config
@@ -95,6 +94,6 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             if os.path.exists("Herwig-int.tar.gz"):
                 output.copy_from_local("Herwig-int.tar.gz")
 
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
 
         
