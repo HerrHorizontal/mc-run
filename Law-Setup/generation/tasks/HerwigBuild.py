@@ -3,7 +3,6 @@
 import law
 import luigi
 import os
-from termcolor import colored
 
 from subprocess import PIPE
 from law.util import interruptable_popen
@@ -66,9 +65,9 @@ class HerwigBuild(Task):
 
 
         # actual payload:
-        print(colored("=========================================================", 'green'))
-        print(colored("Starting build step to generate Herwig-cache and run file", 'green'))
-        print(colored("=========================================================", 'green'))
+        print("=========================================================")
+        print("Starting build step to generate Herwig-cache and run file")
+        print("=========================================================")
 
         # set environment variables
         my_env = self.set_environment_variables()
@@ -80,7 +79,7 @@ class HerwigBuild(Task):
             "{INPUT_FILE}".format(INPUT_FILE=_my_input_file)
         ]
 
-        print(colored('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)), 'yellow'))
+        print('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))
 
         code, out, error = interruptable_popen(
             _herwig_exec + _herwig_args,
@@ -91,16 +90,19 @@ class HerwigBuild(Task):
 
         # if successful save Herwig-cache and run-file as tar.gz
         if(code != 0):
-            raise Exception(colored('Error: ' + error + 'Output: ' + out + '\nHerwig build returned non-zero exit status {}'.format(code), 'red'))
+            raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig build returned non-zero exit status {}'.format(code))
         else:
-            print(colored('Output: ' + out, 'yellow'))
+            print('Output: ' + out)
             os.system('tar -czf Herwig-build.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(
                 INPUT_FILE_NAME=_my_input_file_name
             ))
 
             if os.path.exists("Herwig-build.tar.gz"):
                 output.copy_from_local("Herwig-build.tar.gz")
+                os.system('rm Herwig-build.tar.gz {INPUT_FILE_NAME}.run'.format(
+                    INPUT_FILE_NAME=_my_input_file_name
+                ))
 
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
 
         
