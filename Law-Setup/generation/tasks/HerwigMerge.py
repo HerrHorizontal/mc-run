@@ -3,7 +3,6 @@
 import law
 import luigi
 import os
-from termcolor import colored
 
 from subprocess import PIPE
 from law.util import interruptable_popen
@@ -14,7 +13,7 @@ from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
 
 
-class HerwigMerge(Task, law.LocalWorkflow):
+class HerwigMerge(Task):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
@@ -63,9 +62,9 @@ class HerwigMerge(Task, law.LocalWorkflow):
 
 
         # actual payload:
-        print(colored("=======================================================", 'green'))
-        print(colored("Starting merge step to finish Herwig-cache and run file", 'green'))
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
+        print("Starting merge step to finish Herwig-cache and run file")
+        print("=======================================================")
 
         # set environment variables
         my_env = self.set_environment_variables()
@@ -74,17 +73,19 @@ class HerwigMerge(Task, law.LocalWorkflow):
         with self.input()['HerwigBuild'].localize('r') as _file:
             os.system('tar -xzf {}'.format(_file.path))
 
-        for branch in self.input()['HerwigIntegrate']["collection"].targets:
-            with branch.localize('r') as _file:
+        for branch, target in self.input()['HerwigIntegrate']["collection"].targets.items():
+            if branch <=10:
+                print('Getting Herwig integration file: {}'.format(target))
+            with target.localize('r') as _file:
                 os.system('tar -xzf {}'.format(_file.path))
 
         # run Herwig build step 
         _herwig_exec = ["Herwig", "mergegrids"]
         _herwig_args = [
-            "{INPUT_FILE_NAME}.run ".format(INPUT_FILE_NAME=_my_input_file_name)
+            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_input_file_name)
         ]
 
-        print(colored('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)), 'yellow'))
+        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         code, out, error = interruptable_popen(
             _herwig_exec + _herwig_args,
@@ -95,13 +96,16 @@ class HerwigMerge(Task, law.LocalWorkflow):
 
         # if successful save final Herwig-cache and run-file as tar.gz
         if(code != 0):
-            raise Exception(colored('Error: ' + error + 'Output: ' + out + '\nHerwig mergegrids returned non-zero exit status {}'.format(code), 'red'))
+            raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig mergegrids returned non-zero exit status {}'.format(code))
         else:
-            print(colored('Output: ' + out, 'yellow'))
-            os.system('tar -czvf Herwig-cache.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(INPUT_FILE_NAME=_my_input_file_name))
+            print('Output: ' + out)
+            os.system('tar -czf Herwig-cache.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(INPUT_FILE_NAME=_my_input_file_name))
 
             if os.path.exists("Herwig-cache.tar.gz"):
                 output.copy_from_local("Herwig-cache.tar.gz")
+                os.system('rm Herwig-cache.tar.gz {INPUT_FILE_NAME}.run'.format(
+                    INPUT_FILE_NAME=_my_input_file_name
+                ))
 
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
         
