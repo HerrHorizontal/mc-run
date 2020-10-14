@@ -3,7 +3,6 @@
 import law
 import luigi
 import os
-from termcolor import colored
 import random
 
 from subprocess import PIPE
@@ -39,7 +38,7 @@ class HerwigRun(Task, HTCondorWorkflow):
             for jobnum in range(0, int(self.number_of_jobs)):
                 _seed_list.append(random.randint(1,int(9e9)))
         else:
-            _seed_list = range(self.number_of_jobs)
+            _seed_list = range(int(self.number_of_jobs))
         # each run job is refrenced to a seed
         return {jobnum: seed for jobnum, seed in enumerate(_seed_list)}
 
@@ -71,9 +70,9 @@ class HerwigRun(Task, HTCondorWorkflow):
 
 
         # actual payload:
-        print(colored("=======================================================", 'green'))
-        print(colored("Producing events ", 'green'))
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
+        print("Producing events ")
+        print("=======================================================")
 
         # set environment variables
         my_env = os.environ
@@ -88,11 +87,11 @@ class HerwigRun(Task, HTCondorWorkflow):
         _herwig_args = [
             "-q", 
             "--seed={SEED}".format(SEED=_seed),
-            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config),
-            "--numevents={NEVENTS} ".format(NEVENTS=_num_events)
+            "--numevents={NEVENTS}".format(NEVENTS=_num_events),
+            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
 
-        print(colored('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)), 'yellow'))
+        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         code, out, error = interruptable_popen(
             _herwig_exec + _herwig_args,
@@ -105,7 +104,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         if(code != 0):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig run returned non-zero exit status {}'.format(code))
         else:
-            print(colored('Output: ' + out, 'yellow'))
+            print('Output: ' + out)
 
             _output_file = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
                     INPUT_FILE_NAME=_my_config,
@@ -115,5 +114,5 @@ class HerwigRun(Task, HTCondorWorkflow):
                 output.copy_from_local(_output_file)
 
 
-        print(colored("=======================================================", 'green'))
+        print("=======================================================")
 
