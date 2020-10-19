@@ -1,0 +1,9 @@
+[submodule "Law-Setup/law"]
+	path = Law-Setup/law
+	url = git@github.com:HerrHorizontal/law.git
+[submodule "Law-Setup/luigi"]
+	path = Law-Setup/luigi
+	url = git@github.com:spotify/luigi.git
+[submodule "Law-Setup/six"]
+	path = Law-Setup/six
+	url = git@github.com:benjaminp/six.git

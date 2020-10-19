@@ -14,3 +14,10 @@ Herwig*/
 
 # additional stuff
 *.swp
+
+# compilation outputs
+*.pyc
+
+# Law outputs
+Law-Setup/data/
+*.tar.gz
