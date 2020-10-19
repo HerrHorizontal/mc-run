@@ -74,9 +74,26 @@ Additional requirements for selecting worker nodes:
 
 *Run specific parameters*. Set these to your desired values, to configure your personal generation of events.
 - `config_path`: This is the path to the directory, which includes your Herwig inputfile. If not set, this defaults to `inputfiles`
-- `input_file_name`: This is the name of your Herwig inputfile and corresponding runfile without the file extensions.
+- `input_file_name`: This is the name of your Herwig inputfile **AND** corresponding runfile (this usually needs some configuration in the `saverun` command of your Herwig input file) without the file extensions.
 - `mc_setting`: You can set this parameter, if you want to specify further splitting in subdirectories for your outputs for different runs.
 - `integration_maxjobs`: With this you specify the splitting of the subprocesses and therefore the number of distinct integration jobs.
 - `number_of_jobs`: Set the number of jobs generating MC events with this parameter. Each job will be executed seperately on the batch system.
 - `events_per_job`: Overwrite the number of events generated with each generation job.
 - `start_seed`: Currently not used. Purposed for the use of randomly generated seeds for generation jobs.
+
+#### Executing LAW
+You are now ready to run your configured generation workflow. Set the law environment by `source Law-Setup/setup.sh`.
+To index the available LAW tasks and workflows, first execute `law index`, which will also enable autocompletion. 
+To start the generation you can now simply run
+```
+law run HerwigRun
+```
+This will start all previous steps in the necessary order and produce `.hepmc` files according to your configuration.
+Alternatively you can also run each step seperately in the following order,
+```
+law run HerwigBuild
+law run HerwigIntegrate
+law run HerwigMerge
+law run HerwigRun
+```
+which will effectively give the same results.
