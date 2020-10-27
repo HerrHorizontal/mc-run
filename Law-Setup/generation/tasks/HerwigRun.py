@@ -35,7 +35,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         _seed_list = []
         if(False):
             random.seed(self.start_seed)
-            for jobnum in range(0, int(self.number_of_jobs)):
+            for _jobnum in range(0, int(self.number_of_jobs)):
                 _seed_list.append(random.randint(1,int(9e9)))
         else:
             _seed_list = range(int(self.number_of_jobs))
@@ -107,6 +107,9 @@ class HerwigRun(Task, HTCondorWorkflow):
             print('Output: ' + out)
 
             _output_file = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
+                    INPUT_FILE_NAME=_my_config,
+                    SEED=_seed)
+            _output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}.yoda".format(
                     INPUT_FILE_NAME=_my_config,
                     SEED=_seed)
 
