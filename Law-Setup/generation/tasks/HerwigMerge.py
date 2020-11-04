@@ -19,7 +19,6 @@ class HerwigMerge(Task):
     """
 
     # configuration variables
-    integration_maxjobs = luigi.Parameter() # number of prepared integration directories
     input_file_name = luigi.Parameter()
 
     def convert_env_to_dict(self, env):
@@ -54,7 +53,6 @@ class HerwigMerge(Task):
     def run(self):
         # data
         _my_input_file_name = str(self.input_file_name)
-        _max_integration_jobs = str(self.integration_maxjobs)
 
         # ensure that the output directory exists
         output = self.output()

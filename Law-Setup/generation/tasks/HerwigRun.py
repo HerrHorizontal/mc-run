@@ -100,7 +100,7 @@ class HerwigRun(Task, HTCondorWorkflow):
             env=my_env
         )
 
-        # if successful tar and save integration
+        # if successful save HEPMC
         if(code != 0):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig run returned non-zero exit status {}'.format(code))
         else:
