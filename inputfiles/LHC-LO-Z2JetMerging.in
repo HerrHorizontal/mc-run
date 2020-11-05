@@ -1,0 +1,208 @@
+# -*- ThePEG-repository -*-
+
+##################################################
+## Herwig/Merging example input file
+##################################################
+
+##################################################
+## Collider type
+##################################################
+
+read snippets/DipoleMerging.in
+read snippets/PPCollider.in
+read snippets/MonacoSampler.in
+
+##########################
+##  Setup the MonacoSampler.
+##########################
+
+cd /Herwig/Samplers
+# Perform the addaption in the read/integrate step with:
+set MonacoSampler:NIterations 7
+set MonacoSampler:InitialPoints 40000
+set MonacoSampler:EnhancementFactor 1.3
+
+##################################################
+## Beam energy sqrt(s)
+##################################################
+
+cd /Herwig/EventHandlers
+set EventHandler:LuminosityFunction:Energy 13000*GeV
+
+##################################################
+## Process selection
+##################################################
+
+## Note that event generation may fail if no matching matrix element has
+## been found.  Coupling orders are with respect to the Born process,
+## i.e. NLO QCD does not require an additional power of alphas.
+
+## Model assumptions
+read Matchbox/StandardModelLike.in
+read Matchbox/DiagonalCKM.in
+
+## Set the order of the couplings
+cd /Herwig/Merging
+set MergingFactory:OrderInAlphaS 0
+set MergingFactory:OrderInAlphaEW 2
+
+## Select the process
+## You may use identifiers such as p, pbar, j, l, mu+, h0 etc.
+
+do MergingFactory:Process p p -> mu+ mu- [ j j ]
+
+set MergingFactory:NLOProcesses 0
+
+# Set the merging scale deviding the parton shower
+# from the matrix element region in phase space.
+set Merger:MergingScale 15.*GeV
+set Merger:MergingScaleSmearing 0.1
+
+
+# The following lines control a preweighter,
+# that can be used to force more events in higher
+# HT or pt regions. The unweighted events are accepted
+# with a enhanced probability W, that is divided from the
+# event weight once the event is accepted.
+# W = ((HT/scale)^HTPower + (pt_max/scale)^MaxPTPower)
+# with scale = MZ (can be changed)
+# Note that the weights will therefore differ from "1"
+# if the powers are not zero.
+set MPreWeight:HTPower 0
+set MPreWeight:MaxPTPower 4
+set MPreWeight:OnlyColoured No
+
+
+# The next line can switch of hadronization
+# and MPI modelling. Use with care!!
+# read Matchbox/PQCDLevel.in
+
+
+
+## Special settings required for on-shell production of unstable particles
+## enable for on-shell top production
+# read Matchbox/OnShellTopProduction.in
+## enable for on-shell W, Z or h production
+# read Matchbox/OnShellWProduction.in
+# read Matchbox/OnShellZProduction.in
+# read Matchbox/OnShellHProduction.in
+# Special settings for the VBF approximation
+# read Matchbox/VBFDiagramsOnly.in
+
+##################################################
+## Matrix element library selection
+##################################################
+
+## Select a generic tree/loop combination or a
+## specialized NLO package
+
+# read Matchbox/MadGraph-GoSam.in
+# read Matchbox/MadGraph-MadGraph.in
+# read Matchbox/MadGraph-NJet.in
+read Matchbox/MadGraph-OpenLoops.in
+# read Matchbox/HJets.in
+# read Matchbox/VBFNLO.in
+
+## Uncomment this to use ggh effective couplings
+## currently only supported by MadGraph-GoSam and
+## MadGraph-Openloops
+
+# read Matchbox/HiggsEffective.in
+
+##################################################
+## Cut selection
+## See the documentation for more options
+##################################################
+cd /Herwig/Cuts/
+set ChargedLeptonPairMassCut:MinMass 60*GeV
+set ChargedLeptonPairMassCut:MaxMass 120*GeV
+
+# cd /Herwig/MatrixElements/Matchbox/Utility
+# insert DiagramGenerator:ExcludeInternal 0 /Herwig/Particles/gamma
+
+## cuts on additional jets
+cd /Herwig/Cuts/
+# read Matchbox/DefaultPPJets.in
+
+# insert JetCuts:JetRegions 0 FirstJet
+# insert JetCuts:JetRegions 1 SecondJet
+# insert JetCuts:JetRegions 2 ThirdJet
+# insert JetCuts:JetRegions 3 FourthJet
+
+##################################################
+## Scale choice
+## See the documentation for more options
+##################################################
+
+cd /Herwig/MatrixElements/Matchbox/Scales/
+set /Herwig/Merging/MergingFactory:ScaleChoice LeptonPairMassScale
+
+##################################################
+## Scale uncertainties
+##################################################
+
+# read Matchbox/MuDown.in
+# read Matchbox/MuUp.in
+
+##################################################
+## Shower scale uncertainties
+##################################################
+
+# read Matchbox/MuQDown.in
+# read Matchbox/MuQUp.in
+
+##################################################
+## CMW - Scheme
+##################################################
+read snippets/Dipole_AutoTunes_gss.in
+
+### Use factor in alpha_s argument: alpha_s(q) -> alpha_s(fac*q)
+### with fac=exp(-(67-3pi^2-10/3*Nf)/(33-2Nf))
+read Merging/FactorCMWScheme.in
+
+### Linear CMW multiplication:
+### alpha_s(q) -> alpha_s(q)(1+K_g*alpha_s(q)/2pi )
+# read Merging/LinearCMWScheme.in
+
+
+##################################################
+## PDF choice
+##################################################
+
+read Matchbox/FiveFlavourNoBMassScheme.in
+read Matchbox/CT14.in
+#read Matchbox/MMHT2014.in
+
+##################################################
+## Analyses
+##################################################
+
+cd /Herwig/Analysis
+## Write HepMC events. Modify the PrintEvent interface for your needs.
+set /Herwig/Analysis/HepMC:PrintEvent 100000
+set /Herwig/Analysis/HepMC:Format GenEvent
+set /Herwig/Analysis/HepMC:Units GeV_mm
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 /Herwig/Analysis/HepMC
+
+## Setup the Rivet analysis:
+#read snippets/Rivet.in
+#insert Rivet:Analyses 0 XXX_2017_ABC123
+
+## Here we collected a various Rivet analysis for Zs at LHC
+## at the 8 TeV. (The collection might not be complete.)
+# read Merging/LHC7-Z-Analysis.in
+
+
+##################################################
+## Save the generator
+##################################################
+
+do /Herwig/Merging/MergingFactory:ProductionMode
+
+set /Herwig/Generators/EventGenerator:IntermediateOutput Yes
+
+cd /Herwig/Generators
+
+saverun LHC-LO-Z1JetMerging EventGenerator
+
+
