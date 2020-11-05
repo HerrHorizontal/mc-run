@@ -22,7 +22,7 @@ class RunRivet(Task, HTCondorWorkflow):
     input_file_name = luigi.Parameter()
     number_of_jobs = luigi.Parameter() # from HerwigRun
     files_per_job = luigi.Parameter() # from RunRivet
-    rivet_analyses = luigi.Parameter()
+    rivet_analyses = luigi.ListParameter()
 
     def get_incr_filelist(self):
 
