@@ -179,6 +179,7 @@ read Matchbox/CT14.in
 
 cd /Herwig/Analysis
 ## Write HepMC events. Modify the PrintEvent interface for your needs.
+create ThePEG::HepMCFile /Herwig/Analysis/HepMC HepMCAnalysis.so
 set /Herwig/Analysis/HepMC:PrintEvent 100000
 set /Herwig/Analysis/HepMC:Format GenEvent
 set /Herwig/Analysis/HepMC:Units GeV_mm
