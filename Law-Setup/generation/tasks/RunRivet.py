@@ -59,8 +59,6 @@ class RunRivet(Task, HTCondorWorkflow):
     def run(self):
 
         # branch data
-        _job_num = str(self.branch)
-        _number_of_files = str(self.branch_data)
         _my_config = str(self.input_file_name)
         _rivet_analyses = list(self.rivet_analyses)
 
