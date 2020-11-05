@@ -27,7 +27,7 @@ set MonacoSampler:EnhancementFactor 1.3
 ##################################################
 
 cd /Herwig/EventHandlers
-set EventHandler:LuminosityFunction:Energy 6500*GeV
+set EventHandler:LuminosityFunction:Energy 13000*GeV
 
 ##################################################
 ## Process selection
@@ -179,7 +179,10 @@ read Matchbox/CT14.in
 
 cd /Herwig/Analysis
 ## Write HepMC events. Modify the PrintEvent interface for your needs.
-insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 HepMCFile
+set /Herwig/Analysis/HepMC:PrintEvent 100000
+set /Herwig/Analysis/HepMC:Format GenEvent
+set /Herwig/Analysis/HepMC:Units GeV_mm
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 /Herwig/Analysis/HepMC
 
 ## Setup the Rivet analysis:
 #read snippets/Rivet.in
