@@ -63,7 +63,7 @@ namespace Rivet {
       _hist_Ys0Yb0_ZPt = bookHisto1D("ZPtY*0Yb0",binedges_ZPtC); 
       _hist_Ys0Yb05_ZPt = bookHisto1D("ZPtY*0Yb05",binedges_ZPtC); 
       _hist_Ys0Yb1_ZPt = bookHisto1D("ZPtY*0Yb1",binedges_ZPtC); 
-      _hist_Ys0Yb15_ZPt = bookHisto1D("ZPtY*0Yb25",binedges_ZPtC); 
+      _hist_Ys0Yb15_ZPt = bookHisto1D("ZPtY*0Yb15",binedges_ZPtC); 
       _hist_Ys0Yb2_ZPt = bookHisto1D("ZPtY*0Yb2",binedges_ZPtE);
       _hist_Ys05Yb0_ZPt = bookHisto1D("ZPtY*05Yb0",binedges_ZPtC); 
       _hist_Ys05Yb05_ZPt = bookHisto1D("ZPtY*05Yb05",binedges_ZPtC); 
@@ -79,7 +79,7 @@ namespace Rivet {
       _hist_Ys0Yb0_PhiStarEta = bookHisto1D("Phi*_etaY*0Yb0",binedges_PhiStarEtaC); 
       _hist_Ys0Yb05_PhiStarEta = bookHisto1D("Phi*_etaY*0Yb05",binedges_PhiStarEtaC); 
       _hist_Ys0Yb1_PhiStarEta = bookHisto1D("Phi*_etaY*0Yb1",binedges_PhiStarEtaC); 
-      _hist_Ys0Yb15_PhiStarEta = bookHisto1D("Phi*_etaY*0Yb25",binedges_PhiStarEtaC); 
+      _hist_Ys0Yb15_PhiStarEta = bookHisto1D("Phi*_etaY*0Yb15",binedges_PhiStarEtaC); 
       _hist_Ys0Yb2_PhiStarEta = bookHisto1D("Phi*_etaY*0Yb2",binedges_PhiStarEtaE);
       _hist_Ys05Yb0_PhiStarEta = bookHisto1D("Phi*_etaY*05Yb0",binedges_PhiStarEtaC); 
       _hist_Ys05Yb05_PhiStarEta = bookHisto1D("Phi*_etaY*05Yb05",binedges_PhiStarEtaC); 
