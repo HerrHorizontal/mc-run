@@ -97,13 +97,21 @@ class HerwigMerge(Task):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig mergegrids returned non-zero exit status {}'.format(code))
         else:
             print('Output: ' + out)
-            os.system('tar -czf Herwig-cache.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(INPUT_FILE_NAME=_my_input_file_name))
 
-            if os.path.exists("Herwig-cache.tar.gz"):
-                output.copy_from_local("Herwig-cache.tar.gz")
+            output_file = "Herwig-cache.tar.gz"
+
+            os.system('tar -czf {OUTPUT_FILE} Herwig-cache {INPUT_FILE_NAME}.run'.format(
+                OUTPUT_FILE=output_file,
+                INPUT_FILE_NAME=_my_input_file_name
+            ))
+
+            if os.path.exists(output_file):
+                output.copy_from_local(output_file)
                 os.system('rm Herwig-cache.tar.gz {INPUT_FILE_NAME}.run'.format(
                     INPUT_FILE_NAME=_my_input_file_name
                 ))
+            else:
+                raise Exception("Output file '{}' doesn't exist! Abort!".format(output_file))
 
         print("=======================================================")
         
