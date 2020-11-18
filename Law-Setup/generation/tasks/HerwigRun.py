@@ -50,7 +50,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         
     def output(self):
         # 
-        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.hepmc".format(
+        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
@@ -61,7 +61,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         _job_num = str(self.branch)
         _my_config = str(self.input_file_name)
         _num_events = str(self.events_per_job)
-        _seed = str(self.branch_data)
+        _seed = int(self.branch_data)
 
 
         # ensure that the output directory exists
@@ -105,16 +105,42 @@ class HerwigRun(Task, HTCondorWorkflow):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig run returned non-zero exit status {}'.format(code))
         else:
             print('Output: ' + out)
-
-            _output_file = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
+            print("Seed: {}".format(_seed))
+            
+            output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
+                    INPUT_FILE_NAME=_my_config
+                )
+            if int(_seed) is not 0:
+                output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
                     INPUT_FILE_NAME=_my_config,
                     SEED=_seed)
-            _output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}.yoda".format(
+                output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}.yoda".format(
                     INPUT_FILE_NAME=_my_config,
                     SEED=_seed)
+            else:
+                output_file_hepmc = "{INPUT_FILE_NAME}.hepmc".format(INPUT_FILE_NAME=_my_config)
+                output_file_yoda = "{INPUT_FILE_NAME}.yoda".format(INPUT_FILE_NAME=_my_config)
 
-            if os.path.exists(_output_file):
-                output.copy_from_local(_output_file)
+            if os.path.exists(output_file_hepmc):
+                # tar and compress the output HepMC files to save disk space
+                if os.path.exists(output_file_yoda):
+                    # also add already existing YODA files if existant
+                    os.system('tar -cjfv {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
+                        OUTPUT_FILE=output_file,
+                        HEPMC_FILE=output_file_hepmc,
+                        YODA_FILE=output_file_yoda
+                    ))
+                else:
+                    os.system('tar -cjfv {OUTPUT_FILE} {HEPMC_FILE}'.format(
+                        OUTPUT_FILE=output_file,
+                        HEPMC_FILE=output_file_hepmc
+                    ))
+
+            if(os.path.exists(output_file)):
+                # copy the compressed outputs to save them
+                output.copy_from_local(output_file)
+            else:
+                raise Exception("Output file '{}' doesn't exist! Abort!".format(output_file))
 
 
         print("=======================================================")
