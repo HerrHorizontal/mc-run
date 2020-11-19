@@ -125,13 +125,13 @@ class HerwigRun(Task, HTCondorWorkflow):
                 # tar and compress the output HepMC files to save disk space
                 if os.path.exists(output_file_yoda):
                     # also add already existing YODA files if existant
-                    os.system('tar -cjfv {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
+                    os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
                         OUTPUT_FILE=output_file,
                         HEPMC_FILE=output_file_hepmc,
                         YODA_FILE=output_file_yoda
                     ))
                 else:
-                    os.system('tar -cjfv {OUTPUT_FILE} {HEPMC_FILE}'.format(
+                    os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}'.format(
                         OUTPUT_FILE=output_file,
                         HEPMC_FILE=output_file_hepmc
                     ))
