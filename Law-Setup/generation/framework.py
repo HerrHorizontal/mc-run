@@ -79,8 +79,6 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
     def htcondor_output_directory(self):
         _full_wlcg_path = "{}/{}/{}".format(self.wlcg_path,self.input_file_name,self.mc_setting)
-        print("Full path: {}".format(_full_wlcg_path), "Type: {}".format(str(type(_full_wlcg_path))))
-        print("WLCG path: {}".format(self.wlcg_path), "Type: {}".format(str(type(self.wlcg_path))))
         return law.wlcg.WLCGDirectoryTarget(
             self.remote_path(),
             law.wlcg.WLCGFileSystem(None, base=_full_wlcg_path)
