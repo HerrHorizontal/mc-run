@@ -68,15 +68,18 @@ class YodaMerge(Task):
         # localize the separate YODA files on grid storage
         inputfile_list = []
         for branch, target in self.input()['RunRivet']["collection"].targets.items():
-            inputfile_list.append(target.localize('r').path)
+            with target.localize('r') as _file:
+                inputfile_list.append(_file.path)
+        print("Input files: {}".format(inputfile_list))
 
         # merge the YODA files 
         _output_file = "{OUTPUT_FILE_NAME}.yoda".format(OUTPUT_FILE_NAME=_my_input_file_name)
 
         _rivet_exec = ["yodamerge"]
         _rivet_args = [
-            "-o {OUTPUT_FILE}".format(OUTPUT_FILE=_output_file),
-            "{YODA_FILES}".format(YODA_FILES=" ".join(inputfile_list))
+            "--output={OUTPUT_FILE}".format(OUTPUT_FILE=_output_file)
+        ] + [
+            "{YODA_FILES}".format(YODA_FILES=_yoda_file) for _yoda_file in inputfile_list
         ]
 
         print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
