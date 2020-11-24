@@ -13,11 +13,11 @@ namespace Rivet {
 
 
   /// @brief Add a short analysis description here
-  class ZplusJet : public Analysis {
+  class ZplusJet_2 : public Analysis {
   public:
 
     /// Constructor
-    DEFAULT_RIVET_ANALYSIS_CTOR(ZplusJet);
+    DEFAULT_RIVET_ANALYSIS_CTOR(ZplusJet_2);
 
 
     /// @name Analysis methods
@@ -41,7 +41,7 @@ namespace Rivet {
       FastJets jets(ffs, FastJets::ANTIKT, 0.4);
       declare(jets, "Jets");
       /// out of acceptance particles treat as invisible
-      VetoedFinalState fs_onlyinacc(ffs, (Cuts::abspid ==  PID::MUON && Cuts::abseta > 2.4) || 
+      VetoedFinalState fs_onlyinacc(ffs, (Cuts::abspid == PID::MUON && Cuts::abseta > 2.4) || 
                                     (Cuts::abspid == PID::PHOTON && Cuts::abseta > 3.0) || 
                                     (Cuts::abspid == PID::ELECTRON && Cuts::abseta > 3.0));
       declare(MissingMomentum(fs_onlyinacc), "invisibles");
@@ -305,7 +305,7 @@ namespace Rivet {
 
 
   // The hook for the plugin system
-  DECLARE_RIVET_PLUGIN(ZplusJet);
+  DECLARE_RIVET_PLUGIN(ZplusJet_2);
 
 
 }

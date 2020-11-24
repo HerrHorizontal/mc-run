@@ -1,6 +1,6 @@
 Name: ZplusJet
 Year: <Insert year of publication>
-Summary: Final observables for the tripple differential Z+jet meausrement performed by the CMS collaboration
+Summary: Final observables for the tripple differential Z+jet measurement performed by the CMS collaboration
 Experiment: CMS
 Collider: LHC
 InspireID: <Insert the Inspire ID>
@@ -24,5 +24,8 @@ Keywords: []
 BibKey: 
 BibTeX: ''
 ToDo:
- - Implement the analysis, test it, remove this ToDo, and mark as VALIDATED :-)
+ - Implement the analysis, 
+ - test it, 
+ - remove this ToDo, 
+ - and mark as VALIDATED :-)
 
