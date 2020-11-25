@@ -204,6 +204,6 @@ set /Herwig/Generators/EventGenerator:IntermediateOutput Yes
 
 cd /Herwig/Generators
 
-saverun LHC-LO-Z1JetMerging EventGenerator
+saverun LHC-LO-Z2JetMerging EventGenerator
 
 
