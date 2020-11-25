@@ -32,7 +32,7 @@ namespace Rivet {
       // all final-state particles within
       // the given eta acceptance
       const FinalState fs(Cuts::abseta < 5. && Cuts::pT > 100*MeV);
-      const ChargedFinalState cfs(fs);
+      //const ChargedFinalState cfs(fs);
 
 
       // The final-state particles declared above are clustered using FastJet with
@@ -108,6 +108,9 @@ namespace Rivet {
       // Retrieve dressed leptons, sorted by pT
       vector<DressedLepton> leptons = apply<DressedLeptons>(event, "leptons").dressedLeptons();
       MSG_DEBUG("Lepton multiplicity = " << leptons.size());
+
+      // discard events with less than two muons
+      if (leptons.size() < 2) vetoEvent;
 
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
       Jets jets = apply<FastJets>(event, "jets").jetsByPt(Cuts::absrap < 2.4 && Cuts::pT > 10*GeV);
