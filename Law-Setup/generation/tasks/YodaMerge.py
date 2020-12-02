@@ -167,10 +167,10 @@ class YodaMerge(Task):
         os.system('rm {OUTPUT_FILE}'.format(
             OUTPUT_FILE=_output_file
         ))
-        # for outfile in final_input_files:
-        #     os.system('rm {OUTPUT_FILE}'.format(
-        #         OUTPUT_FILE=outfile
-        #     ))
+        for _outfile in final_input_files:
+            os.system('rm {OUTPUT_FILE}'.format(
+                OUTPUT_FILE=_outfile
+            ))
         
 
         print("=======================================================")
