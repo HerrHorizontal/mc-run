@@ -1,4 +1,4 @@
-# ETP Herwig event generation
+# Herwig event generation
 
 Repository for tracking the development of distributable MC event generation with [Herwig7](https://herwig.hepforge.org/).
 
