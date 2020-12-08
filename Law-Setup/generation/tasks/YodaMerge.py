@@ -19,6 +19,11 @@ class YodaMerge(Task):
 
     # configuration variables
     input_file_name = luigi.Parameter()
+    chunk_size = luigi.IntParameter()
+
+    exclude_params_req = {
+        "chunk_size"
+    }
 
     def convert_env_to_dict(self, env):
         my_env = {}
@@ -42,7 +47,7 @@ class YodaMerge(Task):
 
     def requires(self):
         return {
-            'RunRivet': RunRivet(),
+            'RunRivet': RunRivet.req(self),
         }
     
     def output(self):
@@ -150,7 +155,7 @@ class YodaMerge(Task):
             with target.localize('r') as _file:
                 inputfile_list.append(_file.path)
 
-        chunk_size = 300 #it seems yodamerge is able to merge at least 300 files at the same time
+        chunk_size = self.chunk_size
 
         final_input_files=inputfile_list
         while len(final_input_files)>chunk_size:
