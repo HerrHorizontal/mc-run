@@ -42,9 +42,10 @@ class HerwigMerge(Task):
         return my_env
 
     def requires(self):
+        t = HerwigIntegrate.req(self)
         return {
-            'HerwigIntegrate': HerwigIntegrate(),
-            'HerwigBuild': HerwigBuild()
+            'HerwigIntegrate': t,
+            'HerwigBuild': HerwigBuild.req(t)
         }
     
     def output(self):

@@ -21,13 +21,24 @@ class HerwigRun(Task, HTCondorWorkflow):
     # configuration variables
     input_file_name = luigi.Parameter()
     start_seed = luigi.Parameter()
-    number_of_jobs = luigi.Parameter()
-    events_per_job = luigi.Parameter()
+    number_of_jobs = luigi.IntParameter()
+    events_per_job = luigi.IntParameter()
+
+    exclude_params_req = {
+        "number_of_jobs",
+        "events_per_job",
+        "start_seed", 
+        "htcondor_walltime", "htcondor_request_memory", 
+        "htcondor_requirements", "htcondor_request_disk"
+    }
+    exclude_params_req_get = {
+        "bootstrap_file"
+    }
 
     def workflow_requires(self):
         # integration requires successful build step
         return {
-            'HerwigMerge': HerwigMerge()
+            'HerwigMerge': HerwigMerge.req(self)
         }
 
     def create_branch_map(self):
@@ -45,7 +56,7 @@ class HerwigRun(Task, HTCondorWorkflow):
     def requires(self):
         # current branch task requires existing Herwig-cache and run-file
         return {
-            'HerwigMerge': HerwigMerge()
+            'HerwigMerge': HerwigMerge.req(self)
         }
         
     def output(self):
