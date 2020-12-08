@@ -21,61 +21,61 @@ class RunRivet(Task, HTCondorWorkflow):
 
     # configuration variables
     input_file_name = luigi.Parameter()
-    number_of_jobs = luigi.Parameter() # from HerwigRun
-    files_per_job = luigi.Parameter() # from RunRivet
+    files_per_job = luigi.IntParameter() # from RunRivet
     rivet_analyses = luigi.ListParameter()
 
-    def get_incr_filelist(self):
-        """
-        # Method to identify the HepMC inputfile splitting.
-        # It returns a list of file identifiers (int), which define the lower and upper borders 
-        # of the filelist for all branch tasks.
-        """
-        _files_per_job = int(self.files_per_job)
-        _number_of_jobs = int(self.number_of_jobs)
-        # remaining number of files not matched to job
-        # _remaining_files = _number_of_jobs % _files_per_job
-
-        incr_filenumber_list = list(range(_number_of_jobs)[::_files_per_job])
-        # add the total number of jobs as right border
-        incr_filenumber_list.append(int(self.number_of_jobs))
-
-        #print("Incremental file number list: {}".format(incr_filenumber_list))
-        
-        return incr_filenumber_list
+    exclude_params_req = {
+        "rivet_analyses",
+        "files_per_job",
+        "bootstrap_file", 
+        "htcondor_walltime", "htcondor_request_memory", 
+        "htcondor_requirements", "htcondor_request_disk"
+    }
 
 
     def workflow_requires(self):
+        reqs = super(RunRivet, self).workflow_requires()
         # analyzing requires successfully generated events
-        return {
-            #"HerwigRun": HerwigRun.req(self, branches=range(self.get_incr_filelist()[self.branch],self.get_incr_filelist()[self.branch+1]))
-            "HerwigRun": HerwigRun.req(self,branch=self.branch)
-        }
+        # require the parent workflow and inform it about the branches to produce by passing
+        # the "branches" parameter and simultaneously preventing {start,end}_branch being used
+        branches = sum(self.branch_map.values(), [])
+        reqs["HerwigRun"] = HerwigRun.req(
+            self, 
+            branches=branches,
+            _exclude=[
+                "start_branch", "end_branch",
+                "bootstrap_file", 
+                "htcondor_walltime", "htcondor_request_memory", 
+                "htcondor_requirements", "htcondor_request_disk"
+                ]
+            )
+
+        return reqs
+
 
     def create_branch_map(self):
-        # each analysis job is indexed by the according number of HEPMC files to analyze  
-        # print("Branch map: {}".format(dict(enumerate(self.get_incr_filelist()[:-1]))))              
-        # return {
-        #     i: fileident for i, fileident in enumerate(self.get_incr_filelist()[:-1])
-        # }
-
+        # each analysis job analyzes a chunk of HepMC files  
+        branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
         # one by one job to inputfile matching
         return {
-            jobnum: intjobnum for jobnum, intjobnum in enumerate(range(int(self.number_of_jobs))) 
+            jobnum: branch_chunk 
+            for jobnum, branch_chunk in enumerate(branch_chunks) 
         }
+
 
     def requires(self):
         # each branch task requires existent HEPMC files to analyze
-        # print("Branches: {}".format(range(self.get_incr_filelist()[self.branch],self.get_incr_filelist()[self.branch+1])))
-        # print(dir(self))
-        # print("Requirements start/end: {}".format(HerwigRun.req(self, start_branch=self.get_incr_filelist()[self.branch], end_branch=self.get_incr_filelist()[self.branch+1]-1)))
-        # print("Requirements 1,2,5: {}".format(HerwigRun.req(self, branches="1,2,5")))
-        # return [
-        #     HerwigRun.req(self, branch=_branch) for _branch in range(self.get_incr_filelist()[self.branch], self.get_incr_filelist()[self.branch+1])
-        # ]
-        return {
-            "HerwigRun": HerwigRun.req(self,branch=self.branch)
-        }
+        try:
+            req = super(RunRivet,self).requires()
+        except:
+            req = dict()
+        finally:
+            req["HerwigRun"] = [
+                    HerwigRun.req(self, branch=b)
+                    for b in self.branch_data
+                ]
+        return req
+
 
     def output(self):
         # 
@@ -83,6 +83,7 @@ class RunRivet(Task, HTCondorWorkflow):
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
+
 
     def run(self):
 
@@ -106,11 +107,9 @@ class RunRivet(Task, HTCondorWorkflow):
         
         # identify and get the HEPMC files for analyzing
         print("Inputs: {}".format(self.input()))
-        # for target in self.input()['HerwigRun']:
-        #     with target.localize('r') as input_file:
-        #         os.system('tar -xvjf {}'.format(input_file.path))
-        with self.input()['HerwigRun'].localize('r') as input_file:
-            os.system('tar -xvjf {}'.format(input_file.path))
+        for target in self.input()['HerwigRun']:
+            with target.localize('r') as input_file:
+                os.system('tar -xvjf {}'.format(input_file.path))
 
         input_files = glob.glob('*.hepmc')
 
