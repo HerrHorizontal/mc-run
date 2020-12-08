@@ -23,13 +23,13 @@ class Task(law.Task):
         return law.LocalFileTarget(self.local_path(*path))
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,) + path
+        parts = (self.input_file_name, self.mc_setting, self.__class__.__name__,) + path
         return os.path.join(*parts)
 
     def remote_target(self, *path):
         return law.wlcg.WLCGFileTarget(
             self.remote_path(*path),
-            law.wlcg.WLCGFileSystem(None, base="{}/{}/{}".format(self.wlcg_path, self.input_file_name, self.mc_setting))
+            law.wlcg.WLCGFileSystem(None, base="{}".format(self.wlcg_path))
             )
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
@@ -69,7 +69,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
 
-    outputs_siblings = True
+    output_collection_cls = law.SiblingFileCollection
 
     def htcondor_create_job_manager(self):
         return HTCondorJobManager()
