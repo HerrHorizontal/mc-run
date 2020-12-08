@@ -7,7 +7,7 @@ LogX=1
 RatioPlotMode=default
 RatioPlotYMin=0.8
 RatioPlotYMax=1.2
-RatioPlotYLabel=$\frac{data1}{data2}$
+RatioPlotYLabel=Ratio
 NormalizeToIntegral=1
 # END PLOT
 
