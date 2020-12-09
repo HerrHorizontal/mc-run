@@ -93,7 +93,7 @@ class HerwigRun(Task, HTCondorWorkflow):
             os.system('tar -xzf {}'.format(_file.path))
 
 
-        # run Herwig integration
+        # run Herwig event generation
         _herwig_exec = ["Herwig", "run"]
         _herwig_args = [
             "-q", 
