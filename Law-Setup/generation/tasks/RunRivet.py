@@ -65,15 +65,11 @@ class RunRivet(Task, HTCondorWorkflow):
 
     def requires(self):
         # each branch task requires existent HEPMC files to analyze
-        try:
-            req = super(RunRivet,self).requires()
-        except:
-            req = dict()
-        finally:
-            req["HerwigRun"] = [
-                    HerwigRun.req(self, branch=b)
-                    for b in self.branch_data
-                ]
+        req = dict()
+        req["HerwigRun"] = [
+                HerwigRun.req(self, branch=b)
+                for b in self.branch_data
+            ]
         return req
 
 
