@@ -50,7 +50,12 @@ LAW also provides support for other file and batch systems, but you need to defi
 
 #### Tasks and Workflows
 
+
+
 ##### Herwig7
+
+![Graphical representation of Herwig7 workflow management](Law-Setup_Herwig.png "Herwig7 setup for automated generation with Law")
+
 Running Herwig7 automatically and distributed on a batch system involves four steps:
 - *HerwigBuild*: First, in a *build* step the necessary matrix elements (MEs) libraries for the hard scattering process are generated and compiled. Moreover the handling to the further generation steps is configured and further steps are prepared. This is run locally.
 - *HerwigIntegrate*: Second, grids for the prepared MEs are *integrate*d for a convergent phase-space integration. Since this can be computationally quite expensive, this is distributedly executed on the batch system for a given subprocess splitting.
@@ -58,6 +63,9 @@ Running Herwig7 automatically and distributed on a batch system involves four st
 - *HerwigRun*: Fourth and last, the fully prepared integration grid is used to *run* the phase-space integration and generate events.
 
 ##### Rivet
+
+![Graphical representation of Rivet workflow management extending the generation](Law-Setup_Rivet.png "Rivet setup for automated analysis of genereted events with Law")
+
 The analysis of generated HepMC files by Herwig is executed distributedly on a batch system. This involves two steps:
 - *RunRivet*: First the specified Rivet plugins are run on the collection of generated HepMC files, which will produce the histograms, scatter objects and counters defined in the according plugin in the YODA format. This is done distributedly on the batch system. The amount of files to analyze per job can be specified in the steering file, with the aim to avoid very short jobs, which might bother the batch system.
 - *YodaMerge*: The distributedly produced YODA files are gathered and merged to a single YODA file, which contains the whole statistics of the generated and analyzed events. This is done locally in configrable chunks, which are then recursively merged to provide the fully merged file in the end.
