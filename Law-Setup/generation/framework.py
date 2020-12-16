@@ -23,7 +23,7 @@ class Task(law.Task):
         return law.LocalFileTarget(self.local_path(*path))
 
     def remote_path(self, *path):
-        parts = (self.input_file_name, self.mc_setting, self.__class__.__name__,) + path
+        parts = (self.__class__.__name__, self.input_file_name,) + path
         return os.path.join(*parts)
 
     def remote_target(self, *path):

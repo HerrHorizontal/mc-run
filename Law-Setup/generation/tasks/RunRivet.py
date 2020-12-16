@@ -21,6 +21,7 @@ class RunRivet(Task, HTCondorWorkflow):
 
     # configuration variables
     input_file_name = luigi.Parameter()
+    mc_setting = luigi.Parameter()
     files_per_job = luigi.IntParameter() # from RunRivet
     rivet_analyses = luigi.ListParameter()
 
@@ -75,7 +76,8 @@ class RunRivet(Task, HTCondorWorkflow):
 
     def output(self):
         # 
-        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
+        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
+            MC_SETTING=str(self.mc_setting),
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))

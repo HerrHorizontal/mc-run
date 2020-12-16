@@ -19,6 +19,7 @@ class YodaMerge(Task):
 
     # configuration variables
     input_file_name = luigi.Parameter()
+    mc_setting = luigi.Parameter()
     chunk_size = luigi.IntParameter()
 
     exclude_params_req = {
@@ -51,7 +52,10 @@ class YodaMerge(Task):
         }
     
     def output(self):
-        return self.remote_target("{INPUT_FILE_NAME}.yoda".format(INPUT_FILE_NAME=self.input_file_name))
+        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}.yoda".format(
+            MC_SETTING=str(self.mc_setting),
+            INPUT_FILE_NAME=str(self.input_file_name)
+            ))
 
 
     def mergeSingleYodaChunk(self, inputfile_list, inputfile_chunk=None):

@@ -20,6 +20,7 @@ class HerwigRun(Task, HTCondorWorkflow):
 
     # configuration variables
     input_file_name = luigi.Parameter()
+    mc_setting = luigi.Parameter()
     start_seed = luigi.Parameter()
     number_of_jobs = luigi.IntParameter()
     events_per_job = luigi.IntParameter()
@@ -61,7 +62,8 @@ class HerwigRun(Task, HTCondorWorkflow):
         
     def output(self):
         # 
-        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
+        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
+            MC_SETTING=str(self.mc_setting),
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
