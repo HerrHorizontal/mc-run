@@ -24,8 +24,10 @@ class HerwigRun(Task, HTCondorWorkflow):
     start_seed = luigi.Parameter()
     number_of_jobs = luigi.IntParameter()
     events_per_job = luigi.IntParameter()
+    setupfile = luigi.Parameter(default=None)
 
     exclude_params_req = {
+        "setupfile",
         "number_of_jobs",
         "events_per_job",
         "start_seed", 
@@ -104,6 +106,18 @@ class HerwigRun(Task, HTCondorWorkflow):
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
 
+        # identify the setupfile if specified
+        print("Setupfile: {}".format(self.setupfile))
+        _setupfile_suffix = ""
+        if all(self.setupfile != defaultval for defaultval in [None, "None"]):
+            setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"generation","setupfiles",str(self.setupfile))
+            if os.path.exists(setupfile_path):
+                print("Setupfile for executable: {}".format(setupfile_path))
+                _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
+                _setupfile_suffix = "-" + setupfile_path
+            else:
+                raise Exception("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         code, out, error = interruptable_popen(
@@ -124,15 +138,25 @@ class HerwigRun(Task, HTCondorWorkflow):
                     INPUT_FILE_NAME=_my_config
                 )
             if int(_seed) is not 0:
-                output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
+                output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.hepmc".format(
                     INPUT_FILE_NAME=_my_config,
-                    SEED=_seed)
-                output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}.yoda".format(
+                    SEED=_seed,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
+                output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.yoda".format(
                     INPUT_FILE_NAME=_my_config,
-                    SEED=_seed)
+                    SEED=_seed,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
             else:
-                output_file_hepmc = "{INPUT_FILE_NAME}.hepmc".format(INPUT_FILE_NAME=_my_config)
-                output_file_yoda = "{INPUT_FILE_NAME}.yoda".format(INPUT_FILE_NAME=_my_config)
+                output_file_hepmc = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.hepmc".format(
+                    INPUT_FILE_NAME=_my_config,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
+                output_file_yoda = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.yoda".format(
+                    INPUT_FILE_NAME=_my_config,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
 
             if os.path.exists(output_file_hepmc):
                 # tar and compress the output HepMC files to save disk space
@@ -148,6 +172,9 @@ class HerwigRun(Task, HTCondorWorkflow):
                         OUTPUT_FILE=output_file,
                         HEPMC_FILE=output_file_hepmc
                     ))
+            else:
+                os.system("ls -l")
+                raise Exception("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
 
             if(os.path.exists(output_file)):
                 # copy the compressed outputs to save them
