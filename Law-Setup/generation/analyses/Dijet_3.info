@@ -1,0 +1,37 @@
+Name: Dijet_3
+Year: 2021
+Summary: Triple-differential measurements of the dijet cross section at 13 TeV
+Experiment: CMS
+Collider: LHC
+InspireID: <Insert the Inspire ID>
+Status: UNVALIDATED
+Authors:
+ - Klaus Rabbertz <klaus.rabbertz@cern.ch>
+ - Daniel Savoiu <daniel.savoiu@cern.ch>
+#References:
+#- '<Example: Eur.Phys.J. C76 (2016) no.7, 392>'
+#- '<Example: DOI:10.1140/epjc/s10052-016-4184-8>'
+#- '<Example: arXiv:1605.03814>'
+RunInfo: <Describe event types, cuts, and other general generator config tips.>
+    pp collision, 13 TeV, jets with anti-kt algorithm with jet size parameters of
+    $R = 0.4$ and $R = 0.8$; only events with at least two jets up to $|y| = 5.0$
+    are selected and the first and second $p_T$-leading jets are required to have
+    $|y| < 3.0$, as well as transverse momenta greater than 100 and 50 GeV,
+    respectively.
+NeedCrossSection: no
+Beams: [p+, p+]
+Energies: [13000]
+Cuts: events with at least two jets with $|y| < 5.0$
+      leading jet with $p_T > 100$, subleading jet with $p_T > 50$, and both with $|y| < 3.0$
+Luminosity_fb: 35.9
+Description:
+  'pp collision, 13 TeV, jets with anti-kt algorithm with jet size parameters of
+   $R = 0.4$ and $R = 0.8$; only events with at least two jets up to $|y| = 5.0$
+   are selected and the first and second $p_T$-leading jets are required to have
+   $|y| < 3.0$, as well as transverse momenta greater than 100 and 50 GeV,
+   respectively.'
+Keywords: []
+BibKey: 
+BibTeX: ''
+ToDo:
+ - Implement the analysis, test it, remove this ToDo, and mark as VALIDATED :-)
