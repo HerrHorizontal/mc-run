@@ -19,7 +19,6 @@ class HerwigMerge(Task):
     """
 
     # configuration variables
-    integration_maxjobs = luigi.Parameter() # number of prepared integration directories
     input_file_name = luigi.Parameter()
 
     def convert_env_to_dict(self, env):
@@ -43,9 +42,10 @@ class HerwigMerge(Task):
         return my_env
 
     def requires(self):
+        t = HerwigIntegrate.req(self)
         return {
-            'HerwigIntegrate': HerwigIntegrate(),
-            'HerwigBuild': HerwigBuild()
+            'HerwigIntegrate': t,
+            'HerwigBuild': HerwigBuild.req(t)
         }
     
     def output(self):
@@ -54,7 +54,6 @@ class HerwigMerge(Task):
     def run(self):
         # data
         _my_input_file_name = str(self.input_file_name)
-        _max_integration_jobs = str(self.integration_maxjobs)
 
         # ensure that the output directory exists
         output = self.output()
@@ -99,13 +98,21 @@ class HerwigMerge(Task):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig mergegrids returned non-zero exit status {}'.format(code))
         else:
             print('Output: ' + out)
-            os.system('tar -czf Herwig-cache.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(INPUT_FILE_NAME=_my_input_file_name))
 
-            if os.path.exists("Herwig-cache.tar.gz"):
-                output.copy_from_local("Herwig-cache.tar.gz")
+            output_file = "Herwig-cache.tar.gz"
+
+            os.system('tar -czf {OUTPUT_FILE} Herwig-cache {INPUT_FILE_NAME}.run'.format(
+                OUTPUT_FILE=output_file,
+                INPUT_FILE_NAME=_my_input_file_name
+            ))
+
+            if os.path.exists(output_file):
+                output.copy_from_local(output_file)
                 os.system('rm Herwig-cache.tar.gz {INPUT_FILE_NAME}.run'.format(
                     INPUT_FILE_NAME=_my_input_file_name
                 ))
+            else:
+                raise Exception("Output file '{}' doesn't exist! Abort!".format(output_file))
 
         print("=======================================================")
         

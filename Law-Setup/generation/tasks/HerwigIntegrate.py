@@ -20,12 +20,18 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
     # configuration variables
     input_file_name = luigi.Parameter()
-    integration_maxjobs = luigi.Parameter() # number of prepared integration jobs
+    integration_maxjobs = HerwigBuild.integration_maxjobs # number of prepared integration jobs
+
+    exclude_params_req = {
+        "bootstrap_file", 
+        "htcondor_walltime", "htcondor_request_memory", 
+        "htcondor_requirements", "htcondor_request_disk"
+    }
 
     def workflow_requires(self):
         # integration requires successful build step
         return {
-            'HerwigBuild': HerwigBuild()
+            'HerwigBuild': HerwigBuild.req(self)
         }
 
     def create_branch_map(self):
@@ -35,7 +41,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
     def requires(self):
         # current branch task requires existing integrationList
         return {
-            'HerwigBuild': HerwigBuild()
+            'HerwigBuild': HerwigBuild.req(self)
         }
         
     def output(self):

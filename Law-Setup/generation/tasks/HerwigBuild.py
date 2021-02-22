@@ -92,10 +92,13 @@ class HerwigBuild(Task):
         if(code != 0):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig build returned non-zero exit status {}'.format(code))
         else:
-            print('Output: ' + out)
-            os.system('tar -czf Herwig-build.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(
-                INPUT_FILE_NAME=_my_input_file_name
-            ))
+            if(os.path.exists("Herwig-cache")):
+                print('Output: ' + out)
+                os.system('tar -czf Herwig-build.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(
+                    INPUT_FILE_NAME=_my_input_file_name
+                ))
+            else:
+                Exception("Something went wrong, Herwig-cache doesn't exist! Abort!")
 
             if os.path.exists("Herwig-build.tar.gz"):
                 output.copy_from_local("Herwig-build.tar.gz")

@@ -49,9 +49,9 @@ set MergingFactory:OrderInAlphaEW 2
 ## Select the process
 ## You may use identifiers such as p, pbar, j, l, mu+, h0 etc.
 
-do MergingFactory:Process p p -> mu+ mu- [ j j j ]
+do MergingFactory:Process p p -> mu+ mu- [ j ]
 
-set MergingFactory:NLOProcesses 3
+set MergingFactory:NLOProcesses 0
 
 # Set the merging scale deviding the parton shower
 # from the matrix element region in phase space.
@@ -204,6 +204,6 @@ set /Herwig/Generators/EventGenerator:IntermediateOutput Yes
 
 cd /Herwig/Generators
 
-saverun LHC-ZJetMerging EventGenerator
+saverun LHC-LO-Z1JetMerging EventGenerator
 
 

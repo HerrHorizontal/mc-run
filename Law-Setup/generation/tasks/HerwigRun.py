@@ -20,14 +20,28 @@ class HerwigRun(Task, HTCondorWorkflow):
 
     # configuration variables
     input_file_name = luigi.Parameter()
+    mc_setting = luigi.Parameter()
     start_seed = luigi.Parameter()
-    number_of_jobs = luigi.Parameter()
-    events_per_job = luigi.Parameter()
+    number_of_jobs = luigi.IntParameter()
+    events_per_job = luigi.IntParameter()
+    setupfile = luigi.Parameter(default=None)
+
+    exclude_params_req = {
+        "setupfile",
+        "number_of_jobs",
+        "events_per_job",
+        "start_seed", 
+        "htcondor_walltime", "htcondor_request_memory", 
+        "htcondor_requirements", "htcondor_request_disk"
+    }
+    exclude_params_req_get = {
+        "bootstrap_file"
+    }
 
     def workflow_requires(self):
         # integration requires successful build step
         return {
-            'HerwigMerge': HerwigMerge()
+            'HerwigMerge': HerwigMerge.req(self)
         }
 
     def create_branch_map(self):
@@ -35,7 +49,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         _seed_list = []
         if(False):
             random.seed(self.start_seed)
-            for jobnum in range(0, int(self.number_of_jobs)):
+            for _jobnum in range(0, int(self.number_of_jobs)):
                 _seed_list.append(random.randint(1,int(9e9)))
         else:
             _seed_list = range(int(self.number_of_jobs))
@@ -45,12 +59,13 @@ class HerwigRun(Task, HTCondorWorkflow):
     def requires(self):
         # current branch task requires existing Herwig-cache and run-file
         return {
-            'HerwigMerge': HerwigMerge()
+            'HerwigMerge': HerwigMerge.req(self)
         }
         
     def output(self):
         # 
-        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.hepmc".format(
+        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
+            MC_SETTING=str(self.mc_setting),
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
@@ -61,7 +76,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         _job_num = str(self.branch)
         _my_config = str(self.input_file_name)
         _num_events = str(self.events_per_job)
-        _seed = str(self.branch_data)
+        _seed = int(self.branch_data)
 
 
         # ensure that the output directory exists
@@ -82,7 +97,7 @@ class HerwigRun(Task, HTCondorWorkflow):
             os.system('tar -xzf {}'.format(_file.path))
 
 
-        # run Herwig integration
+        # run Herwig event generation
         _herwig_exec = ["Herwig", "run"]
         _herwig_args = [
             "-q", 
@@ -90,6 +105,18 @@ class HerwigRun(Task, HTCondorWorkflow):
             "--numevents={NEVENTS}".format(NEVENTS=_num_events),
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
+
+        # identify the setupfile if specified
+        print("Setupfile: {}".format(self.setupfile))
+        _setupfile_suffix = ""
+        if all(self.setupfile != defaultval for defaultval in [None, "None"]):
+            setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"generation","setupfiles",str(self.setupfile))
+            if os.path.exists(setupfile_path):
+                print("Setupfile for executable: {}".format(setupfile_path))
+                _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
+                _setupfile_suffix = "-" + setupfile_path
+            else:
+                raise Exception("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
@@ -100,18 +127,60 @@ class HerwigRun(Task, HTCondorWorkflow):
             env=my_env
         )
 
-        # if successful tar and save integration
+        # if successful save HEPMC
         if(code != 0):
             raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig run returned non-zero exit status {}'.format(code))
         else:
             print('Output: ' + out)
-
-            _output_file = "{INPUT_FILE_NAME}-S{SEED}.hepmc".format(
+            print("Seed: {}".format(_seed))
+            
+            output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
+                    INPUT_FILE_NAME=_my_config
+                )
+            if int(_seed) is not 0:
+                output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.hepmc".format(
                     INPUT_FILE_NAME=_my_config,
-                    SEED=_seed)
+                    SEED=_seed,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
+                output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.yoda".format(
+                    INPUT_FILE_NAME=_my_config,
+                    SEED=_seed,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
+            else:
+                output_file_hepmc = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.hepmc".format(
+                    INPUT_FILE_NAME=_my_config,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
+                output_file_yoda = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.yoda".format(
+                    INPUT_FILE_NAME=_my_config,
+                    SETUPFILE_SUFFIX=_setupfile_suffix
+                    )
 
-            if os.path.exists(_output_file):
-                output.copy_from_local(_output_file)
+            if os.path.exists(output_file_hepmc):
+                # tar and compress the output HepMC files to save disk space
+                if os.path.exists(output_file_yoda):
+                    # also add already existing YODA files if existant
+                    os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
+                        OUTPUT_FILE=output_file,
+                        HEPMC_FILE=output_file_hepmc,
+                        YODA_FILE=output_file_yoda
+                    ))
+                else:
+                    os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}'.format(
+                        OUTPUT_FILE=output_file,
+                        HEPMC_FILE=output_file_hepmc
+                    ))
+            else:
+                os.system("ls -l")
+                raise Exception("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
+
+            if(os.path.exists(output_file)):
+                # copy the compressed outputs to save them
+                output.copy_from_local(output_file)
+            else:
+                raise Exception("Output file '{}' doesn't exist! Abort!".format(output_file))
 
 
         print("=======================================================")
