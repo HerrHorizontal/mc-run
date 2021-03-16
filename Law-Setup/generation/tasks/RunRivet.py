@@ -74,10 +74,14 @@ class RunRivet(Task, HTCondorWorkflow):
         return req
 
 
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        return os.path.join(*parts)
+
+
     def output(self):
         # 
-        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
-            MC_SETTING=str(self.mc_setting),
+        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
@@ -92,7 +96,10 @@ class RunRivet(Task, HTCondorWorkflow):
 
         # ensure that the output directory exists
         output = self.output()
-        output.parent.touch()
+        try:
+            output.parent.touch()
+        except IOError:
+            print("Output target doesn't exist!")
 
 
         # actual payload:
