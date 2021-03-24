@@ -81,7 +81,9 @@ class RunRivet(Task, HTCondorWorkflow):
 
     def output(self):
         # 
-        return self.remote_target("{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
+        dir_number = int(self.branch)/1000
+        return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
+            DIR_NUMBER=str(dir_number),
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
