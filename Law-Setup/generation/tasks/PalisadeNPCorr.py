@@ -50,16 +50,20 @@ class PalisadeNPCorr(Task,law.LocalWorkflow):
 
     
     def create_branch_map(self):
+        pass
 
 
     def workflow_requires(self):
+        pass
 
 
     def requires(self):
+        pass
 
 
     def output(self):
+        pass
 
     
     def run(self):
-        
+        pass
