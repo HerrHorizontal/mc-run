@@ -78,13 +78,15 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
 
+    # set Law options
     output_collection_cls = law.SiblingFileCollection
+    create_branch_map_before_repr = True
 
     def htcondor_create_job_manager(self):
         return HTCondorJobManager()
 
-    # def htcondor_output_postfix(self):
-    #     return "_{}To{}".format(self.start_branch, self.end_branch)
+    #def htcondor_output_postfix(self):
+    #    return "_{}To{}".format(self.start_branch, self.end_branch)
 
     def htcondor_output_directory(self):
         return law.wlcg.WLCGDirectoryTarget(

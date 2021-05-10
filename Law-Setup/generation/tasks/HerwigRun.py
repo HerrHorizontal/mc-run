@@ -18,7 +18,7 @@ class HerwigRun(Task, HTCondorWorkflow):
     Use the prepared grids in Herwig-cache to generate HEP particle collision events
     """
 
-    # quick fix for the file collection type to allow outputs in nested directory structure
+    # allow outputs in nested directory structure
     output_collection_cls = law.NestedSiblingFileCollection
 
     # configuration variables

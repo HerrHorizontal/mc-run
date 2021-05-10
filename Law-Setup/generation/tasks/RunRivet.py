@@ -19,7 +19,7 @@ class RunRivet(Task, HTCondorWorkflow):
     Analyze generated HEPMC files with Rivet and create YODA files
     """
 
-    # quick fix for the file collection type to allow outputs in nested directory structure
+    # allow outputs in nested directory structure
     output_collection_cls = law.NestedSiblingFileCollection
 
     # configuration variables
