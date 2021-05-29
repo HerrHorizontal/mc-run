@@ -22,15 +22,15 @@ action(){
     export PYTHONPATH="$PWD/enum34-1.1.10:$PWD/law:$PWD/luigi:$PWD/six:$PWD:$PYTHONPATH"
 
     # setup Herwig
-    export INSTALL_LOC=/cvmfs/pheno.egi.eu/Herwig/Herwig-7-2
-    export HERWIGPATH=/cvmfs/pheno.egi.eu/Herwig/Herwig-7-2
+    export INSTALL_LOC=/cvmfs/etp.kit.edu/herwig/
+    export HERWIGPATH=/cvmfs/etp.kit.edu/herwig/
     export PATH=$INSTALL_LOC/bin:$PATH
-    export LHAPDF=/cvmfs/pheno.egi.eu/Herwig
+    export LHAPDF=/cvmfs/etp.kit.edu/herwig/
     export PATH=$PATH:$LHAPDF/bin
     export LD_LIBRARY_PATH=$LHAPDF/lib:$LD_LIBRARY_PATH
     export PYTHONPATH=$LHAPDF/lib/python2.7/site-packages:$PYTHONPATH
     # activate Herwig
-    source /cvmfs/pheno.egi.eu/Herwig/bin/activate
+    source /cvmfs/etp.kit.edu/herwig/bin/activate
 
 }
 
