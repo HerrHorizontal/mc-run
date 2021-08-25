@@ -71,8 +71,9 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
     output_collection_cls = law.SiblingFileCollection
 
-    def htcondor_create_job_manager(self):
-        return HTCondorJobManager()
+    def htcondor_create_job_manager(self, **kwargs):
+        kwargs = merge_dicts(self.htcondor_job_manager_defaults, kwargs)
+        return HTCondorJobManager(**kwargs)
 
     # def htcondor_output_postfix(self):
     #     return "_{}To{}".format(self.start_branch, self.end_branch)
