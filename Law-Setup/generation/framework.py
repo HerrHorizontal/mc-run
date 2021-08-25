@@ -6,6 +6,7 @@ import re
 import luigi
 import law
 import law.contrib.htcondor
+from law.util import merge_dicts
 
 law.contrib.load("wlcg")
 
