@@ -10,6 +10,7 @@ from law.util import merge_dicts
 
 law.contrib.load("wlcg")
 
+
 class Task(law.Task):
 
     wlcg_path = luigi.Parameter()
@@ -33,6 +34,7 @@ class Task(law.Task):
             law.wlcg.WLCGFileSystem(None, base="{}".format(self.wlcg_path))
             )
 
+
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
 
     status_line_cre = re.compile("^(\d+\.\d+)" + 4 * "\s+[^\s]+" + "\s+([UIRXSCHE<>])\s+.*$")
@@ -52,6 +54,7 @@ class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
 #            return cls.FAILED
 #        else:
 #            return cls.FAILED
+
 
 class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
@@ -86,7 +89,10 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
             )
 
     def htcondor_create_job_file_factory(self):
-        factory = super(HTCondorWorkflow, self).htcondor_create_job_file_factory()
+        factory = super(
+            HTCondorWorkflow,
+            self
+        ).htcondor_create_job_file_factory()
         factory.is_tmp = False
         return factory
 
@@ -111,8 +117,14 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         prevdir = os.getcwd()
         os.system('cd $ANALYSIS_PATH')
         if not os.path.isfile('generation.tar.gz'):
-            os.system('tar --exclude=luigi/.git -czf generation.tar.gz generation luigi.cfg law.cfg luigi law six enum34-1.1.10')
-	    os.chdir(prevdir)
+            os.system(
+                "tar --exclude=luigi/.git "
+                + "-czf generation.tar.gz "
+                + "generation luigi.cfg law.cfg luigi law six enum34-1.1.10"
+            )
+        os.chdir(prevdir)
 
-        config.input_files.append(law.util.rel_path(__file__, '../generation.tar.gz'))
+        config.input_files.append(
+            law.util.rel_path(__file__, '../generation.tar.gz')
+        )
         return config
