@@ -156,8 +156,9 @@ class YodaMerge(Task):
         # localize the separate YODA files on grid storage
         inputfile_list = []
         for branch, target in self.input()['RunRivet']["collection"].targets.items():
-            with target.localize('r') as _file:
-                inputfile_list.append(_file.path)
+            if target.exists():
+                with target.localize('r') as _file:
+                    inputfile_list.append(_file.path)
 
         chunk_size = self.chunk_size
 
