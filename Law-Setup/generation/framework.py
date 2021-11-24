@@ -17,6 +17,15 @@ class Task(law.Task):
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
 
+    _wlcg_file_systems = {}
+
+    @classmethod
+    def get_wlcg_file_system(cls, wlcg_path):
+        if wlcg_path not in cls._wlcg_file_systems:
+            cls._wlcg_file_systems[wlcg_path] = law.wlcg.WLCGFileSystem(None, base=wlcg_path)
+
+        return cls._wlcg_file_systems[wlcg_path]
+
     def local_path(self, *path):
         parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,) + path
         return os.path.join(*parts)
@@ -27,12 +36,12 @@ class Task(law.Task):
     def remote_path(self, *path):
         parts = (self.__class__.__name__, self.input_file_name,) + path
         return os.path.join(*parts)
-
+    
     def remote_target(self, *path):
         return law.wlcg.WLCGFileTarget(
             self.remote_path(*path),
-            law.wlcg.WLCGFileSystem(None, base="{}".format(self.wlcg_path))
-            )
+            self.get_wlcg_file_system(self.wlcg_path),
+        )
 
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
@@ -73,14 +82,16 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
 
+    # set Law options
     output_collection_cls = law.SiblingFileCollection
+    create_branch_map_before_repr = True
 
     def htcondor_create_job_manager(self, **kwargs):
         kwargs = merge_dicts(self.htcondor_job_manager_defaults, kwargs)
         return HTCondorJobManager(**kwargs)
 
-    # def htcondor_output_postfix(self):
-    #     return "_{}To{}".format(self.start_branch, self.end_branch)
+    #def htcondor_output_postfix(self):
+    #    return "_{}To{}".format(self.start_branch, self.end_branch)
 
     def htcondor_output_directory(self):
         return law.wlcg.WLCGDirectoryTarget(

@@ -26,6 +26,7 @@ class YodaMerge(Task):
         "chunk_size"
     }
 
+
     def convert_env_to_dict(self, env):
         my_env = {}
         for line in env.splitlines():
@@ -37,6 +38,7 @@ class YodaMerge(Task):
                     pass
         return my_env
 
+
     def set_environment_variables(self):
         code, out, error = interruptable_popen("source {}; env".format(os.path.join(os.path.dirname(__file__),"..","..","..","setup","setup_rivet.sh")),
                                                shell=True, 
@@ -46,16 +48,24 @@ class YodaMerge(Task):
         my_env = self.convert_env_to_dict(out)
         return my_env
 
+
     def requires(self):
         return {
             'RunRivet': RunRivet.req(self),
         }
+
+
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        return os.path.join(*parts)
     
+
     def output(self):
-        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}.yoda".format(
-            MC_SETTING=str(self.mc_setting),
-            INPUT_FILE_NAME=str(self.input_file_name)
-            ))
+        return self.remote_target(
+            "{INPUT_FILE_NAME}.yoda".format(
+                INPUT_FILE_NAME=str(self.input_file_name)
+            )
+        )
 
 
     def mergeSingleYodaChunk(self, inputfile_list, inputfile_chunk=None):
@@ -109,7 +119,6 @@ class YodaMerge(Task):
         else:
             print('Output: ' + out)
 
-
         try:
             os.path.exists(output_file)
         except:
@@ -145,8 +154,10 @@ class YodaMerge(Task):
 
         # ensure that the output directory exists
         output = self.output()
-        output.parent.touch()
-
+        try:
+            output.parent.touch()
+        except IOError:
+            print("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -160,6 +171,7 @@ class YodaMerge(Task):
                 with target.localize('r') as _file:
                     inputfile_list.append(_file.path)
 
+        # merge in chunks
         chunk_size = self.chunk_size
 
         final_input_files=inputfile_list

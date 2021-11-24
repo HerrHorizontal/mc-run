@@ -20,6 +20,9 @@ class HerwigRun(Task, HTCondorWorkflow):
     events
     """
 
+    # allow outputs in nested directory structure
+    output_collection_cls = law.NestedSiblingFileCollection
+
     # configuration variables
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
@@ -40,11 +43,13 @@ class HerwigRun(Task, HTCondorWorkflow):
         "bootstrap_file"
     }
 
+
     def workflow_requires(self):
         # integration requires successful build step
         return {
             'HerwigMerge': HerwigMerge.req(self)
         }
+
 
     def create_branch_map(self):
         # create list of seeds
@@ -58,19 +63,28 @@ class HerwigRun(Task, HTCondorWorkflow):
         # each run job is refrenced to a seed
         return {jobnum: seed for jobnum, seed in enumerate(_seed_list)}
 
+
     def requires(self):
         # current branch task requires existing Herwig-cache and run-file
         return {
             'HerwigMerge': HerwigMerge.req(self)
         }
+
+
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        return os.path.join(*parts)
+
         
     def output(self):
         # 
-        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
-            MC_SETTING=str(self.mc_setting),
+        dir_number = int(self.branch)/1000
+        return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
+            DIR_NUMBER=str(dir_number),
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
+
 
     def run(self):
         
@@ -83,7 +97,10 @@ class HerwigRun(Task, HTCondorWorkflow):
 
         # ensure that the output directory exists
         output = self.output()
-        output.parent.touch()
+        try:
+            output.parent.touch()
+        except IOError:
+            print("Output target doesn't exist!")
 
 
         # actual payload:

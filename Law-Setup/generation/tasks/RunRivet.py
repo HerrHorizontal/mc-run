@@ -19,6 +19,9 @@ class RunRivet(Task, HTCondorWorkflow):
     Analyze generated HEPMC files with Rivet and create YODA files
     """
 
+    # allow outputs in nested directory structure
+    output_collection_cls = law.NestedSiblingFileCollection
+
     # configuration variables
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
@@ -74,10 +77,16 @@ class RunRivet(Task, HTCondorWorkflow):
         return req
 
 
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        return os.path.join(*parts)
+
+
     def output(self):
         # 
-        return self.remote_target("{MC_SETTING}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
-            MC_SETTING=str(self.mc_setting),
+        dir_number = int(self.branch)/1000
+        return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
+            DIR_NUMBER=str(dir_number),
             INPUT_FILE_NAME=str(self.input_file_name),
             JOB_NUMBER=str(self.branch)
             ))
@@ -92,7 +101,10 @@ class RunRivet(Task, HTCondorWorkflow):
 
         # ensure that the output directory exists
         output = self.output()
-        output.parent.touch()
+        try:
+            output.parent.touch()
+        except IOError:
+            print("Output target doesn't exist!")
 
 
         # actual payload:
