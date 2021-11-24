@@ -13,9 +13,11 @@ from generation.framework import Task, HTCondorWorkflow
 
 from HerwigMerge import HerwigMerge
 
+
 class HerwigRun(Task, HTCondorWorkflow):
     """
-    Use the prepared grids in Herwig-cache to generate HEP particle collision events
+    Use the prepared grids in Herwig-cache to generate HEP particle collision \
+    events
     """
 
     # configuration variables

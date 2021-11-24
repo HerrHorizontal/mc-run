@@ -1,6 +1,5 @@
 
 
-import law
 import luigi
 import os
 
@@ -12,12 +11,12 @@ from generation.framework import Task
 
 class HerwigBuild(Task):
     """
-    Gather and compile all necessary libraries and prepare the integration lists 
-    for the chosen Matchbox defined in the '[input_file_name].in' file 
-    by running 'Herwig build', which will create the Herwig-cache directory 
+    Gather and compile all necessary libraries and prepare the integration \
+    lists for the chosen Matchbox defined in the '[input_file_name].in' file \
+    by running 'Herwig build', which will create the Herwig-cache directory \
     and the '[input_file_name].run' file
     """
-    
+
     # configuration variables
     input_file_name = luigi.Parameter()
     integration_maxjobs = luigi.Parameter()
@@ -26,7 +25,7 @@ class HerwigBuild(Task):
     def convert_env_to_dict(self, env):
         my_env = {}
         for line in env.splitlines():
-            if line.find(" ") < 0 :
+            if line.find(" ") < 0:
                 try:
                     key, value = line.split("=", 1)
                     my_env[key] = value
@@ -35,11 +34,20 @@ class HerwigBuild(Task):
         return my_env
 
     def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(os.path.join(os.path.dirname(__file__),"..","..","..","setup","setup_herwig.sh")),
-                                               shell=True, 
-                                               stdout=PIPE, 
-                                               stderr=PIPE
-                                               )
+        code, out, error = interruptable_popen("source {}; env".format(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "..",
+                    "..",
+                    "setup",
+                    "setup_herwig.sh"
+                )
+            ),
+            shell=True,
+            stdout=PIPE,
+            stderr=PIPE
+        )
         my_env = self.convert_env_to_dict(out)
         return my_env
 
@@ -52,17 +60,24 @@ class HerwigBuild(Task):
         _max_integration_jobs = str(self.integration_maxjobs)
         _config_path = str(self.config_path)
 
-        if(_config_path=="" or _config_path=="default"):
-            _my_input_file = os.path.join(os.path.dirname(__file__), "..", "..", "..", "inputfiles", "{}.in".format(self.input_file_name))
+        if(_config_path == "" or _config_path == "default"):
+            _my_input_file = os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "inputfiles",
+                "{}.in".format(self.input_file_name)
+            )
         else:
-            _my_input_file = os.path.join(_config_path, "{}.in".format(self.input_file_name))
-
-
+            _my_input_file = os.path.join(
+                _config_path,
+                "{}.in".format(self.input_file_name)
+            )
 
         # ensure that the output directory exists
         output = self.output()
         output.parent.touch()
-
 
         # actual payload:
         print("=========================================================")
@@ -90,7 +105,13 @@ class HerwigBuild(Task):
 
         # if successful save Herwig-cache and run-file as tar.gz
         if(code != 0):
-            raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig build returned non-zero exit status {}'.format(code))
+            raise Exception(
+                'Error: '
+                + error
+                + 'Output: '
+                + out
+                + '\nHerwig build returned non-zero exit status {}'.format(code)
+            )
         else:
             if(os.path.exists("Herwig-cache")):
                 print('Output: ' + out)
