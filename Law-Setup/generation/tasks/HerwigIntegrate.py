@@ -20,10 +20,10 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
     # configuration variables
     input_file_name = luigi.Parameter()
-    integration_maxjobs = HerwigBuild.integration_maxjobs # number of prepared integration jobs
+    integration_maxjobs = luigi.Parameter() # number of prepared integration jobs
 
     exclude_params_req = {
-        "bootstrap_file", 
+        "bootstrap_file",
         "htcondor_walltime", "htcondor_request_memory", 
         "htcondor_requirements", "htcondor_request_disk"
     }
