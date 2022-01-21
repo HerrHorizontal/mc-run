@@ -1,0 +1,7 @@
+##################################################
+## ShowerHandler(s)
+##################################################
+
+## Switches for turning generation steps off and on
+cd /Herwig/EventHandlers
+set EventHandler:CascadeHandler:MPIHandler NULL

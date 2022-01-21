@@ -1,0 +1,8 @@
+##################################################
+## ShowerHandler(s)
+##################################################
+
+## Switches for turning generation steps off and on
+cd /Herwig/EventHandlers
+set EventHandler:DecayHandler NULL
+set EventHandler:HadronizationHandler NULL
