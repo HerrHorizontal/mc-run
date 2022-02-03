@@ -69,7 +69,7 @@ Running Herwig7 automatically and distributed on a batch system involves four st
 
 The analysis of generated HepMC files by Herwig is executed distributedly on a batch system. This involves two steps:
 - *RunRivet*: First the specified Rivet plugins are run on the collection of generated HepMC files, which will produce the histograms, scatter objects and counters defined in the according plugin in the YODA format. This is done distributedly on the batch system. The amount of files to analyze per job can be specified in the steering file, with the aim to avoid very short jobs, which might bother the batch system.
-- *YodaMerge*: The distributedly produced YODA files are gathered and merged to a single YODA file, which contains the whole statistics of the generated and analyzed events. This is done locally in configrable chunks, which are then recursively merged to provide the fully merged file in the end.
+- *RivetMerge*: The distributedly produced YODA files are gathered and merged to a single YODA file, which contains the whole statistics of the generated and analyzed events. This is done locally in configrable chunks, which are then recursively merged to provide the fully merged file in the end.
 
 The according code for these tasks and workflows is defined in `Law-Setup/generation/tasks`.
 
@@ -115,7 +115,7 @@ This will start all previous steps in the necessary order and produce `.hepmc` f
 
 For the concurrent analysis of the generated events, simply execute
 ```
-law run YodaMerge
+law run RivetMerge
 ```
 , which will provide you the desired analysis outputs once finished.
 
@@ -126,6 +126,6 @@ law run HerwigIntegrate
 law run HerwigMerge
 law run HerwigRun
 law run RunRivet
-law run YodaMerge
+law run RivetMerge
 ```
 which will effectively give the same results. This is only recommended for debugging reasons, since Law will automatically take care of the whole generation and analysis chain, which also includes the parameter and dependecy handling.
