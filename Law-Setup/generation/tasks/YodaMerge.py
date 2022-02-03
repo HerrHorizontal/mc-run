@@ -91,11 +91,11 @@ class YodaMerge(Task):
                 BUNCH=inputfile_chunk
                 )
 
-        _rivet_exec = ["yodamerge"]
+        _rivet_exec = ["rivet-merge"]
         _rivet_args = [
             "--output={OUTPUT_FILE}".format(OUTPUT_FILE=output_file)
         ]
-        _rivet_in = [
+        _rivet_in = ["-e"] + [
             "{YODA_FILES}".format(YODA_FILES=_yoda_file) for _yoda_file in inputfile_list
         ]
 
