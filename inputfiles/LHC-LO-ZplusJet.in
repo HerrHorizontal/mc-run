@@ -89,9 +89,9 @@ set ChargedLeptonPairMassCut:MaxMass 120*GeV
 
 ## cuts on additional jets
 
-# read Matchbox/DefaultPPJets.in
+read Matchbox/DefaultPPJets.in
 
-# insert JetCuts:JetRegions 0 FirstJet          ###?
+insert JetCuts:JetRegions 0 FirstJet
 # insert JetCuts:JetRegions 1 SecondJet
 # insert JetCuts:JetRegions 2 ThirdJet
 # insert JetCuts:JetRegions 3 FourthJet
