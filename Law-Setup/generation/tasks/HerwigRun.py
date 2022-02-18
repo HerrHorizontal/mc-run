@@ -3,6 +3,7 @@
 import law
 import luigi
 import os
+import shutil
 import random
 
 from subprocess import PIPE
@@ -125,13 +126,15 @@ class HerwigRun(Task, HTCondorWorkflow):
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
 
-        # identify the setupfile if specified
+        # identify the setupfile if specified and copy it to working directory
+        work_dir = os.getcwd()
         print("Setupfile: {}".format(self.setupfile))
         _setupfile_suffix = ""
         if all(self.setupfile != defaultval for defaultval in [None, "None"]):
             setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"generation","setupfiles",str(self.setupfile))
             if os.path.exists(setupfile_path):
-                print("Setupfile for executable: {}".format(setupfile_path))
+                print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
+                setupfile_path = shutil.copy(setupfile_path, work_dir)
                 _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
                 _setupfile_suffix = "-" + setupfile_path
             else:
