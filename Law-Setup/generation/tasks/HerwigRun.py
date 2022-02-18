@@ -134,9 +134,15 @@ class HerwigRun(Task, HTCondorWorkflow):
             setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"generation","setupfiles",str(self.setupfile))
             if os.path.exists(setupfile_path):
                 print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
-                setupfile_path = shutil.copy(setupfile_path, work_dir)
-                _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
-                _setupfile_suffix = "-" + setupfile_path
+                # for python3 the next two lines can be merged
+                shutil.copy(setupfile_path, work_dir)
+                setupfile_path = os.path.basename(setupfile_path)
+                # end of merge
+                if os.path.exists(setupfile_path):
+                    _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
+                    _setupfile_suffix = "-" + setupfile_path
+                else:
+                    raise Exception("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
             else:
                 raise Exception("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
 
