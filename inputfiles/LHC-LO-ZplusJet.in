@@ -120,7 +120,7 @@ read Matchbox/MCatLO-DefaultShower.in
 # read Matchbox/MCatNLO-DipoleShower.in
 # read Matchbox/Powheg-DipoleShower.in
 ## use for strict LO/NLO comparisons
-# read Matchbox/MCatLO-DipoleShower.in      ###?
+# read Matchbox/MCatLO-DipoleShower.in
 ## use for improved LO showering
 # read Matchbox/LO-DipoleShower.in
 
@@ -148,7 +148,7 @@ read Matchbox/MuQUp.in
 read Matchbox/FiveFlavourScheme.in
 ## required for dipole shower and fixed order in five flavour scheme
 # read Matchbox/FiveFlavourNoBMassScheme.in
-read Matchbox/CT14.in       ###?
+read Matchbox/CT14.in
 # read Matchbox/MMHT2014.in
 
 ##################################################
