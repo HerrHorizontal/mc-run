@@ -9,7 +9,7 @@ from law.util import interruptable_popen
 
 from generation.framework import Task
 
-from YodaMerge import YodaMerge
+from RivetMerge import RivetMerge
 
 class ConvertYodaToRoot(Task, law.LocalWorkflow):
     """
@@ -62,13 +62,13 @@ class ConvertYodaToRoot(Task, law.LocalWorkflow):
 
     def workflow_requires(self):
         reqs = super(ConvertYodaToRoot, self).workflow_requires()
-        reqs["YodaMerge"] = YodaMerge.req(self)
+        reqs["RivetMerge"] = RivetMerge.req(self)
         return reqs
 
 
     def requires(self):
         req = dict()
-        req["YodaMerge"] = YodaMerge.req(
+        req["RivetMerge"] = RivetMerge.req(
             self,
             mc_setting = self.branch_data["mc_setting"],
             input_file_name = self.branch_data["input_file_name"]
@@ -105,7 +105,7 @@ class ConvertYodaToRoot(Task, law.LocalWorkflow):
         print("=======================================================")
 
         # localize the separate YODA files on grid storage
-        input_yoda_file = self.input()['YodaMerge'].load()
+        input_yoda_file = self.input()['RivetMerge'].load()
 
         code, out, error = interruptable_popen(
             ["yoda2root", "output.root", "{}".format(input_yoda_file.path)],
