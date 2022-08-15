@@ -22,7 +22,7 @@ exploiting all functionality, an implementation of the workflow using [LAW](http
 In the following the setup of needed software is explained.
 
 #### Herwig7
-The necessary [Herwig7](https://herwig.hepforge.org/) software is loaded from CVMFS (`/cvmfs/pheno.egi.eu/Herwig`) in the `setup/setup_herwig.sh` script 
+The necessary [Herwig7](https://herwig.hepforge.org/) software is loaded from CVMFS (`/cvmfs/etp.kit.edu/herwig`) in the `setup/setup_herwig.sh` script 
 for local execution and `Law-Setup/generation/setup_lawherwig.sh` for remote jobs.
 If you want to load the Herwig7 software differently, you need to change the according lines in **both** scripts.
 
