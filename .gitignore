@@ -19,6 +19,6 @@ Herwig*/
 *.pyc
 
 # Law outputs
-Law-Setup/data/
+logs/*
 *.tar.gz
-Law-Setup/.law/
+.law/
