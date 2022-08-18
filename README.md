@@ -23,15 +23,15 @@ In the following the setup of needed software is explained.
 
 #### Herwig7
 The necessary [Herwig7](https://herwig.hepforge.org/) software is loaded from CVMFS (`/cvmfs/pheno.egi.eu/Herwig`) in the `setup/setup_herwig.sh` script 
-for local execution and `Law-Setup/generation/setup_lawherwig.sh` for remote jobs.
+for local execution and `generation/setup_lawherwig.sh` for remote jobs.
 If you want to load the Herwig7 software differently, you need to change the according lines in **both** scripts.
 
 #### Rivet
-In a similar way the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/)  is also loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/releases/LCG_96b/MCGenerators/rivet/`) in the `setup/setup_rivet.sh` script for local execution and `Law-Setup/generation/setup_lawrivet.sh` for remote jobs.
+In a similar way the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/)  is also loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/releases/LCG_96b/MCGenerators/rivet/`) in the `setup/setup_rivet.sh` script for local execution and `generation/setup_lawrivet.sh` for remote jobs.
 These also need to be adjusted, if you want to use Rivet from a different source.
 
 #### Law, Luigi, Six and Enum34
-The necessary software for LAW is on one hand loaded as `git submodules` in `Law-Setup/law`, `Law-Setup/luigi` and `Law-Setup/six`. 
+The necessary software for LAW is on one hand loaded as `git submodules` in `law`, `luigi` and `six`. 
 These can be loaded by executing 
 ```bash
 git submodule init
@@ -39,13 +39,13 @@ git submodule update
 ```
 or setting the submodules while cloning the repository with the  `--recurse-submodules` option.
 
-On the other hand Enum34 is included in `Law-Setup/enum34-1.1.10` as part of the repository and will be cloned as such.
+On the other hand Enum34 is included in `enum34-1.1.10` as part of the repository and will be cloned as such.
 
 
 ### Running the generation
 
 #### Framework
-An HTCondor and file-IO interface for LAW are specified in `Law-Setup/generation/framework.py`. 
+An HTCondor and file-IO interface for LAW are specified in `generation/framework.py`. 
 There the HTCondor system and the file IO are interfaced to LAW.
 LAW also provides support for other file and batch systems, but you need to define these by your own, in case you need it.
 
@@ -55,7 +55,7 @@ LAW also provides support for other file and batch systems, but you need to defi
 
 ##### Herwig7
 
-![Graphical representation of Herwig7 workflow management](Law-Setup_Herwig.png "Herwig7 setup for automated generation with Law")
+![Graphical representation of Herwig7 workflow management](plots/design/Law-Setup_Herwig.png "Herwig7 setup for automated generation with Law")
 
 Running Herwig7 automatically and distributed on a batch system involves four steps:
 - *HerwigBuild*: First, in a *build* step the necessary matrix elements (MEs) libraries for the hard scattering process are generated and compiled. Moreover the handling to the further generation steps is configured and further steps are prepared. This is run locally.
@@ -65,16 +65,16 @@ Running Herwig7 automatically and distributed on a batch system involves four st
 
 ##### Rivet
 
-![Graphical representation of Rivet workflow management extending the generation](Law-Setup_Rivet.png "Rivet setup for automated analysis of genereted events with Law")
+![Graphical representation of Rivet workflow management extending the generation](plots/design/Law-Setup_Rivet.png "Rivet setup for automated analysis of genereted events with Law")
 
 The analysis of generated HepMC files by Herwig is executed distributedly on a batch system. This involves two steps:
 - *RunRivet*: First the specified Rivet plugins are run on the collection of generated HepMC files, which will produce the histograms, scatter objects and counters defined in the according plugin in the YODA format. This is done distributedly on the batch system. The amount of files to analyze per job can be specified in the steering file, with the aim to avoid very short jobs, which might bother the batch system.
 - *RivetMerge*: The distributedly produced YODA files are gathered and merged to a single YODA file, which contains the whole statistics of the generated and analyzed events. This is done locally in configrable chunks, which are then recursively merged to provide the fully merged file in the end.
 
-The according code for these tasks and workflows is defined in `Law-Setup/generation/tasks`.
+The according code for these tasks and workflows is defined in `generation/tasks`.
 
 #### Configuration
-All important parameters for the execution of the automated generation are set in `Law-Setup/luigi.cfg`. 
+All important parameters for the execution of the automated generation are set in `luigi.cfg`. 
 Make sure to adjust the following parameters before starting the generation:
 
 *Grid parameters*. In case you want to run the setup on the grid you will need to set the following parameters:
@@ -100,12 +100,12 @@ Additional requirements for selecting worker nodes:
 - `start_seed`: Currently not used. Purposed for the use of randomly generated seeds for generation jobs.
 
 *Analysis specific parameters*. Set these to steer the analysis of your generated HepMC events.
-- `rivet_analyses`: List of Rivet plugins you want to run on your generated HepMC files. If you want to run your own analysis make sure to put your compiled `RivetAnalysis.so` to the `Law-Setup/generation/analyses` directory.
+- `rivet_analyses`: List of Rivet plugins you want to run on your generated HepMC files. If you want to run your own analysis make sure to put your compiled `RivetAnalysis.so` to the `generation/analyses` directory.
 - `files_per_job`: Number of HepMC files to be analyzed by a single Rivet job. Usually Rivet runs very fast (order of 1000 events per minute). If your HepMC files contain only a small number of events you can ensure here, to run Rivet jobs on the desired number of events.
 - `chunk_size`: Number of simultaneously merged YODA files to avoid running into the argument limit of the subprocess or the CLI.
 
 #### Executing LAW
-You are now ready to run your configured generation workflow. Set the law environment by `source Law-Setup/setup.sh`.
+You are now ready to run your configured generation workflow. Set the law environment by `source setup.sh`.
 To index the available LAW tasks and workflows, first execute `law index`, which will also enable autocompletion. 
 To start the generation you can now simply run
 ```
