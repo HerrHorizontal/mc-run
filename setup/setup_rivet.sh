@@ -19,8 +19,9 @@ action(){
         local this_file="${BASH_SOURCE[0]}"
     fi
     local base="$( cd "$( dirname "$this_file" )" && pwd)"
-    export ANALYSIS_PATH="$base/../Law-Setup"
-    export RIVET_ANALYSIS_PATH="$ANALYSIS_PATH/generation/analyses:$RIVET_ANALYSIS_PATH"
+    local parent="$( dirname "$base" )"
+
+    export RIVET_ANALYSIS_PATH="$parent/analyses:$RIVET_ANALYSIS_PATH"
     #export RIVET_INFO_PATH="$RIVET_ANALYSIS_PATH"
 }
 

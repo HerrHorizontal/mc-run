@@ -131,7 +131,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         print("Setupfile: {}".format(self.setupfile))
         _setupfile_suffix = ""
         if all(self.setupfile != defaultval for defaultval in [None, "None"]):
-            setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"generation","setupfiles",str(self.setupfile))
+            setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"inputfiles","setupfiles",str(self.setupfile))
             if os.path.exists(setupfile_path):
                 print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
                 # for python3 the next two lines can be merged

@@ -40,7 +40,7 @@ class RivetMerge(Task):
 
 
     def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(os.path.join(os.path.dirname(__file__),"..","..","..","setup","setup_rivet.sh")),
+        code, out, error = interruptable_popen("source {}; env".format(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")),
                                                shell=True, 
                                                stdout=PIPE, 
                                                stderr=PIPE

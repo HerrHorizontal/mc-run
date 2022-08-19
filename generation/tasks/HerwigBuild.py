@@ -36,10 +36,7 @@ class HerwigBuild(Task):
     def set_environment_variables(self):
         code, out, error = interruptable_popen("source {}; env".format(
                 os.path.join(
-                    os.path.dirname(__file__),
-                    "..",
-                    "..",
-                    "..",
+                    "$ANALYSIS_PATH",
                     "setup",
                     "setup_herwig.sh"
                 )
@@ -62,10 +59,7 @@ class HerwigBuild(Task):
 
         if(_config_path == "" or _config_path == "default"):
             _my_input_file = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "..",
+                "$ANALYSIS_PATH",
                 "inputfiles",
                 "{}.in".format(self.input_file_name)
             )
