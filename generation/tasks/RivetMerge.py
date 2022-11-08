@@ -21,32 +21,12 @@ class RivetMerge(Task):
     input_file_name = luigi.Parameter()
     mc_setting = luigi.Parameter()
     chunk_size = luigi.IntParameter()
+    source_script = luigi.Parameter(default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"))
+    
 
     exclude_params_req = {
         "chunk_size"
     }
-
-
-    def convert_env_to_dict(self, env):
-        my_env = {}
-        for line in env.splitlines():
-            if line.find(" ") < 0 :
-                try:
-                    key, value = line.split("=", 1)
-                    my_env[key] = value
-                except ValueError:
-                    pass
-        return my_env
-
-
-    def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")),
-                                               shell=True, 
-                                               stdout=PIPE, 
-                                               stderr=PIPE
-                                               )
-        my_env = self.convert_env_to_dict(out)
-        return my_env
 
 
     def requires(self):
@@ -75,7 +55,7 @@ class RivetMerge(Task):
         print("-------------------------------------------------------")
 
         # set environment variables
-        my_env = self.set_environment_variables()
+        my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # data
         _my_input_file_name = str(self.input_file_name)

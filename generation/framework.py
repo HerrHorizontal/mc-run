@@ -3,10 +3,11 @@
 import os
 
 import re
+from subprocess import PIPE
 import luigi
 import law
 import law.contrib.htcondor
-from law.util import merge_dicts
+from law.util import merge_dicts, interruptable_popen
 
 law.contrib.load("wlcg")
 
@@ -36,12 +37,34 @@ class Task(law.Task):
     def remote_path(self, *path):
         parts = (self.__class__.__name__, self.input_file_name,) + path
         return os.path.join(*parts)
-    
+
     def remote_target(self, *path):
         return law.wlcg.WLCGFileTarget(
             self.remote_path(*path),
             self.get_wlcg_file_system(self.wlcg_path),
         )
+
+    def _convert_env_to_dict(self, env):
+        my_env = {}
+        for line in env.splitlines():
+            if line.find(" ") < 0 :
+                try:
+                    key, value = line.split("=", 1)
+                    my_env[key] = value
+                except ValueError:
+                    pass
+        return my_env
+
+    def set_environment_variables(self, source_script_path):
+        code, out, error = interruptable_popen("source {}; env".format(source_script_path),
+                                               shell=True, 
+                                               stdout=PIPE, 
+                                               stderr=PIPE
+                                               )
+        if code != 0:
+            raise Exception('Error: {}\nEnvironment: {}\nReading environent failed with exit status {}'.format(error, out, code))
+        my_env = self._convert_env_to_dict(out)
+        return my_env
 
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):

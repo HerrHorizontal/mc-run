@@ -20,26 +20,8 @@ class HerwigMerge(Task):
 
     # configuration variables
     input_file_name = luigi.Parameter()
+    source_script = luigi.Parameter(default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"))
 
-    def convert_env_to_dict(self, env):
-        my_env = {}
-        for line in env.splitlines():
-            if line.find(" ") < 0 :
-                try:
-                    key, value = line.split("=", 1)
-                    my_env[key] = value
-                except ValueError:
-                    pass
-        return my_env
-
-    def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")),
-                                               shell=True, 
-                                               stdout=PIPE, 
-                                               stderr=PIPE
-                                               )
-        my_env = self.convert_env_to_dict(out)
-        return my_env
 
     def requires(self):
         t = HerwigIntegrate.req(self)
@@ -66,7 +48,7 @@ class HerwigMerge(Task):
         print("=======================================================")
 
         # set environment variables
-        my_env = self.set_environment_variables()
+        my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # download the packed files from grid and unpack
         with self.input()['HerwigBuild'].localize('r') as _file:

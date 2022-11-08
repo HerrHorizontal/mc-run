@@ -21,32 +21,8 @@ class HerwigBuild(Task):
     input_file_name = luigi.Parameter()
     integration_maxjobs = luigi.Parameter()
     config_path = luigi.Parameter()
+    source_script = luigi.Parameter(default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"))
 
-    def convert_env_to_dict(self, env):
-        my_env = {}
-        for line in env.splitlines():
-            if line.find(" ") < 0:
-                try:
-                    key, value = line.split("=", 1)
-                    my_env[key] = value
-                except ValueError:
-                    pass
-        return my_env
-
-    def set_environment_variables(self):
-        code, out, error = interruptable_popen("source {}; env".format(
-                os.path.join(
-                    "$ANALYSIS_PATH",
-                    "setup",
-                    "setup_herwig.sh"
-                )
-            ),
-            shell=True,
-            stdout=PIPE,
-            stderr=PIPE
-        )
-        my_env = self.convert_env_to_dict(out)
-        return my_env
 
     def output(self):
         return self.remote_target("Herwig-build.tar.gz")
@@ -79,7 +55,7 @@ class HerwigBuild(Task):
         print("=========================================================")
 
         # set environment variables
-        my_env = self.set_environment_variables()
+        my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # run Herwig build step 
         _herwig_exec = ["Herwig", "build"]
