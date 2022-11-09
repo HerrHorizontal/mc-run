@@ -7,3 +7,12 @@
 [submodule "Law-Setup/six"]
 	path = six
 	url = https://github.com/benjaminp/six.git
+[submodule "law"]
+	path = law
+	url = https://github.com/riga/law.git
+[submodule "luigi"]
+	path = luigi
+	url = https://github.com/spotify/luigi.git
+[submodule "six"]
+	path = six
+	url = https://github.com/benjaminp/six.git
