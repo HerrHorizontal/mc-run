@@ -22,6 +22,7 @@ class HerwigMerge(Task):
 
     # configuration variables
     source_script = luigi.Parameter(
+        significant=False,
         default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"),
         description="Path to the source script providing the local Herwig environment to use."
     )

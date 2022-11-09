@@ -25,6 +25,7 @@ class RivetMerge(Task):
     )
     source_script = luigi.Parameter(
         default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"),
+        significant=False,
         description="Path to the source script providing the local Rivet environment to use."
     )
     
