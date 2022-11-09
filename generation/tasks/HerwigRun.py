@@ -2,6 +2,7 @@
 
 import law
 import luigi
+from luigi.util import inherits
 import os
 import shutil
 import random
@@ -10,11 +11,12 @@ from subprocess import PIPE
 from law.util import interruptable_popen
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import Task, HTCondorWorkflow
+from generation.framework import Task, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigMerge import HerwigMerge
 
 
+@inherits(GenerationScenarioConfig)
 class HerwigRun(Task, HTCondorWorkflow):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
@@ -25,12 +27,22 @@ class HerwigRun(Task, HTCondorWorkflow):
     output_collection_cls = law.NestedSiblingFileCollection
 
     # configuration variables
-    input_file_name = luigi.Parameter()
-    mc_setting = luigi.Parameter()
-    start_seed = luigi.Parameter()
-    number_of_jobs = luigi.IntParameter()
-    events_per_job = luigi.IntParameter()
-    setupfile = luigi.Parameter(default=None)
+    start_seed = luigi.IntParameter(
+        default=42,
+        description="Start seed for random generation of individual job seeds. Currently not used!"
+    )
+    number_of_jobs = luigi.IntParameter(
+        description="Number of individual generation jobs. Each will generate statistically independent events."
+    )
+    events_per_job = luigi.IntParameter(
+        description="Number of events generated in each job."
+    )
+    setupfile = luigi.Parameter(
+        default=None,
+        description="Setupfile to adjust Herwig parameters in the event generation. \
+                Those parameters should not involve the hard process generation. \
+                Setupfiles have to be stored in `inputfiles/setupfiles/`."
+    )
 
     exclude_params_req = {
         "setupfile",

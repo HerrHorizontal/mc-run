@@ -2,30 +2,36 @@
 
 import law
 import luigi
+from luigi.util import inherits
 import os
 
 from subprocess import PIPE
 from law.util import interruptable_popen
 
-from generation.framework import Task
+from generation.framework import Task, GenerationScenarioConfig
 
 from RunRivet import RunRivet
 
 
+@inherits(GenerationScenarioConfig)
 class RivetMerge(Task):
     """
     Merge separate YODA files from Rivet analysis runs to a single YODA file 
     """
 
     # configuration variables
-    input_file_name = luigi.Parameter()
-    mc_setting = luigi.Parameter()
-    chunk_size = luigi.IntParameter()
-    source_script = luigi.Parameter(default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"))
+    chunk_size = luigi.IntParameter(
+        description="Number of individual YODA files to merge in a single `rivet-merge` call."
+    )
+    source_script = luigi.Parameter(
+        default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"),
+        description="Path to the source script providing the local Rivet environment to use."
+    )
     
 
     exclude_params_req = {
-        "chunk_size"
+        "chunk_size",
+        "source_script"
     }
 
 

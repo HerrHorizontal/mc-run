@@ -1,14 +1,16 @@
 
 
 import luigi
+from luigi.util import inherits
 import os
 
 from subprocess import PIPE
 from law.util import interruptable_popen
 
-from generation.framework import Task
+from generation.framework import Task, CommonConfig
 
 
+@inherits(CommonConfig)
 class HerwigBuild(Task):
     """
     Gather and compile all necessary libraries and prepare the integration \
@@ -18,10 +20,18 @@ class HerwigBuild(Task):
     """
 
     # configuration variables
-    input_file_name = luigi.Parameter()
-    integration_maxjobs = luigi.Parameter()
-    config_path = luigi.Parameter()
-    source_script = luigi.Parameter(default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"))
+    integration_maxjobs = luigi.Parameter(
+        description="Number of individual integration jobs to prepare. \
+                Should not be greater than the number of subprocesses."
+    )
+    config_path = luigi.Parameter(
+        default=os.path.join("$ANALYSIS_PATH","inputfiles"),
+        description="Directory where the Herwig config file resides."
+    )
+    source_script = luigi.Parameter(
+        default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"),
+        description="Path to the source script providing the local Herwig environment to use."
+    )
 
 
     def output(self):

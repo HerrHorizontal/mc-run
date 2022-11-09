@@ -2,6 +2,7 @@
 
 import law
 import luigi
+from luigi.util import inherits
 import os
 import random
 import glob
@@ -10,10 +11,12 @@ from subprocess import PIPE
 from law.util import interruptable_popen
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import Task, HTCondorWorkflow
+from generation.framework import Task, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigRun import HerwigRun
 
+
+@inherits(GenerationScenarioConfig)
 class RunRivet(Task, HTCondorWorkflow):
     """
     Analyze generated HEPMC files with Rivet and create YODA files
@@ -23,10 +26,16 @@ class RunRivet(Task, HTCondorWorkflow):
     output_collection_cls = law.NestedSiblingFileCollection
 
     # configuration variables
-    input_file_name = luigi.Parameter()
-    mc_setting = luigi.Parameter()
-    files_per_job = luigi.IntParameter() # from RunRivet
-    rivet_analyses = luigi.ListParameter()
+    files_per_job = luigi.IntParameter(
+        default=10,
+        description="Number of HepMC files analyzed per Rivet job. \
+                Rivet is very fast analyzing HepMC files, so a sufficient high number should be given. \
+                At the same time don't overdo it, since the files might be quite large and fill the scratch space."
+    ) # from RunRivet
+    rivet_analyses = luigi.ListParameter(
+        default=["MC_XS","MC_WEIGHTS"],
+        description="List of IDs of Rivet analyses to run."
+    )
 
     exclude_params_req = {
         "rivet_analyses",

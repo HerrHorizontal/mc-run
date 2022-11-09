@@ -6,17 +6,37 @@ import re
 from subprocess import PIPE
 import luigi
 import law
+from luigi.util import inherits
 import law.contrib.htcondor
 from law.util import merge_dicts, interruptable_popen
 
 law.contrib.load("wlcg")
 
 
-class Task(law.Task):
+class CommonConfig(luigi.Config):
 
-    wlcg_path = luigi.Parameter()
-    input_file_name = luigi.Parameter()
-    mc_setting = luigi.Parameter()
+    wlcg_path = luigi.Parameter(
+        description="Protocol and path suffix pointing to the remote parent directory for generation outputs, \
+                e.g. `srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only/store/user/<USER_NAME>`."
+    )
+    input_file_name = luigi.Parameter(
+        description="Name of the Herwig input file used for event generation without file extension `.in`. \
+                Per default saved in the `inputfiles` directory."
+    )
+
+
+@inherits(CommonConfig)
+class GenerationScenarioConfig(luigi.Config):
+
+    mc_setting = luigi.Parameter(
+        description="Scenario of the MC production. Typically one of the following: `withNP`, `NPoff`, `MPIoff` or `Hadoff`. \
+                Used to differentiate between output-paths for different generation scenarios."
+    )
+
+
+
+@inherits(CommonConfig)
+class Task(law.Task):
 
     _wlcg_file_systems = {}
 
@@ -88,22 +108,57 @@ class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
 #            return cls.FAILED
 
 
+@inherits(CommonConfig)
 class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
-    htcondor_accounting_group = luigi.Parameter()
-    htcondor_requirements = luigi.Parameter()
-    htcondor_remote_job = luigi.Parameter()
-    htcondor_user_proxy = luigi.Parameter()
-    htcondor_walltime = luigi.Parameter()
-    htcondor_request_cpus = luigi.Parameter()
-    htcondor_request_memory = luigi.Parameter()
-    htcondor_universe = luigi.Parameter()
-    htcondor_docker_image = luigi.Parameter()
-    htcondor_request_disk = luigi.Parameter()
-    wlcg_path = luigi.Parameter()
-    bootstrap_file = luigi.Parameter()
-    input_file_name = luigi.Parameter()
-    mc_setting = luigi.Parameter()
+    htcondor_accounting_group = luigi.Parameter(
+        significant=False,
+        description="HTCondor accounting group jobs are submitted."
+    )
+    htcondor_requirements = luigi.Parameter(
+        significant=False,
+        description="Additional requirements on e.g. the target machines to run the jobs."
+    )
+    htcondor_remote_job = luigi.Parameter(
+        default="True",
+        significant=False,
+        description="ETP HTCondor specific flag to allow jobs to run on remote resources."
+    )
+    htcondor_user_proxy = luigi.Parameter(
+        significant=False,
+        description="X509 user proxy certificate to authenticate towards grid resources."
+    )
+    htcondor_walltime = luigi.Parameter(
+        significant=False,
+        description="Requested walltime for the jobs."
+    )
+    htcondor_request_cpus = luigi.Parameter(
+        default="1",
+        significant=False,
+        description="Number of CPU cores to request for each job."
+    )
+    htcondor_request_memory = luigi.Parameter(
+        default="2500",
+        significant=False,
+        description="Amount of memory to request for each job."
+    )
+    htcondor_request_disk = luigi.Parameter(
+        significant=False,
+        description="Amount of disk scratch space to request for each job."
+    )
+    htcondor_universe = luigi.Parameter(
+        default="docker",
+        significant=False,
+        description="HTcondor universe to run jobs in."
+    )
+    htcondor_docker_image = luigi.Parameter(
+        default="mschnepf/slc7-condocker",
+        significant=False,
+        description="Docker image to use for running docker jobs."
+    )
+    bootstrap_file = luigi.Parameter(
+        description="Path to the source script providing the software environment to source at job start."
+    )
 
     # set Law options
     output_collection_cls = law.SiblingFileCollection

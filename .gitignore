@@ -10,7 +10,7 @@ logs/
 
 # Herwig installations
 Herwig-cache/
-Herwig*/
+Herwig*/*
 
 # additional stuff
 *.swp

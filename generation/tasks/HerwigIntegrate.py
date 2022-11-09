@@ -2,16 +2,19 @@
 
 import law
 import luigi
+from luigi.util import inherits
 import os
 
 from subprocess import PIPE
 from law.util import interruptable_popen
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import Task, HTCondorWorkflow
+from generation.framework import Task, HTCondorWorkflow, CommonConfig
 
 from HerwigBuild import HerwigBuild
 
+
+@inherits(CommonConfig)
 class HerwigIntegrate(Task, HTCondorWorkflow):
     """
     Create jobwise integration grids from 'Herwig build' preparations gathered in the Herwig-cache directory
@@ -19,8 +22,10 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
     """
 
     # configuration variables
-    input_file_name = luigi.Parameter()
-    integration_maxjobs = luigi.Parameter() # number of prepared integration jobs
+    integration_maxjobs = luigi.Parameter(
+        description="Number of individual prepared integration jobs in the HerwigBuild step. \
+                Should not be greater than the number of subprocesses."
+    )
 
     exclude_params_req = {
         "bootstrap_file",

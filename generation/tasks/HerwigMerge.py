@@ -2,25 +2,33 @@
 
 import law
 import luigi
+from luigi.util import inherits
 import os
 
 from subprocess import PIPE
 from law.util import interruptable_popen
 
-from generation.framework import Task
+from generation.framework import Task, CommonConfig
 
 from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
 
 
+@inherits(CommonConfig)
 class HerwigMerge(Task):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
 
     # configuration variables
-    input_file_name = luigi.Parameter()
-    source_script = luigi.Parameter(default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"))
+    source_script = luigi.Parameter(
+        default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"),
+        description="Path to the source script providing the local Herwig environment to use."
+    )
+
+    exclude_params_req = {
+        "source_script"
+    }
 
 
     def requires(self):
