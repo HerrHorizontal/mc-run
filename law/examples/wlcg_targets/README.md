@@ -1,3 +1,0 @@
-# Example: WLCG targets
-
-TODO.
