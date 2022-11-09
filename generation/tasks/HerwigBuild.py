@@ -25,10 +25,12 @@ class HerwigBuild(Task):
                 Should not be greater than the number of subprocesses."
     )
     config_path = luigi.Parameter(
+        significant=False,
         default=os.path.join("$ANALYSIS_PATH","inputfiles"),
         description="Directory where the Herwig config file resides."
     )
     source_script = luigi.Parameter(
+        significant=False,
         default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"),
         description="Path to the source script providing the local Herwig environment to use."
     )
