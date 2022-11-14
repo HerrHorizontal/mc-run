@@ -8,5 +8,4 @@ import HerwigRun
 import RunRivet
 import RivetMerge
 
-import ConvertYodaToRoot
-import PalisadeNPCorr
+import DeriveNPCorr
