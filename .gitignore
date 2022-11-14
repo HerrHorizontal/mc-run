@@ -22,3 +22,6 @@ Herwig*/*
 logs/*
 *.tar.gz
 .law/
+
+# vitural environments
+.venv
