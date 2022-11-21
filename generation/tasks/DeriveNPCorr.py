@@ -34,11 +34,33 @@ class DeriveNPCorr(Task):
         default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"),
         description="Path to the source script providing the local Herwig environment to use."
     )
+    match = luigi.Parameter(
+        significant=False,
+        default=None,
+        description="Include analysis objects which name matches this regex."
+    )
+    unmatch = luigi.Parameter(
+        significant=False,
+        default=None,
+        description="Exclude analysis objects which name matches this regex."
+    )
+    xlabel = luigi.Parameter(
+        significant=False,
+        default=None,
+        description="Label to print for the x-axis of the plots"
+    )
+    ylabel = luigi.Parameter(
+        significant=False,
+        default="NP corr.",
+        description="Label to print for the y-axis of the plots"
+    )
 
     exclude_params_req = {
         "source_script",
         "mc_setting_full",
-        "mc_setting_partial"
+        "mc_setting_partial",
+        "match",
+        "unmatch"
     }
 
 
@@ -115,6 +137,10 @@ class DeriveNPCorr(Task):
             "--output-file", "{}".format(output_yoda),
             "--plot-dir", "{}".format(plot_dir)
         ]
+        executable += ["--match", self.match] if self.match else []
+        executable += ["--unmatch", self.unmatch] if self.unmatch else []
+        executable += ["--xlabel", self.xlabel] if self.xlabel else []
+        executable += ["--ylabel", self.ylabel] if self.ylabel else []
 
         print("Executable: {}".format(" ".join(executable)))
 
@@ -134,7 +160,7 @@ class DeriveNPCorr(Task):
         if not os.path.exists(output_yoda):
             raise FileNotFoundError("Could not find output file {}!".format(output_yoda))
 
-        output["yoda"].dump(output_yoda)
+        output["yoda"].copy_from_local(output_yoda)
         os.system('rm {OUTPUT_FILE}'.format(
             OUTPUT_FILE=output_yoda
         ))
@@ -143,5 +169,8 @@ class DeriveNPCorr(Task):
             raise LookupError("Plot directory {} is empty!".format(plot_dir))
 
         output["plots"].dump(plot_dir)
+        os.system('rm -r {OUTPUT_DIR}'.format(
+            OUTPUT_DIR=plot_dir
+        ))
 
         print("-------------------------------------------------------")
