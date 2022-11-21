@@ -33,7 +33,7 @@ action(){
 
 
     # Export rivet analysis path for plugin analyses
-    export RIVET_ANALYSIS_PATH="$ANALYSIS_PATH/generation/analyses:$RIVET_ANALYSIS_PATH"
+    export RIVET_ANALYSIS_PATH="$ANALYSIS_PATH/analyses:$RIVET_ANALYSIS_PATH"
 
 }
 
