@@ -97,13 +97,15 @@ class HerwigMerge(Task):
                 INPUT_FILE_NAME=_my_input_file_name
             ))
 
+            output_file = os.path.abspath(output_file)
+
             if os.path.exists(output_file):
                 output.copy_from_local(output_file)
                 os.system('rm Herwig-cache.tar.gz {INPUT_FILE_NAME}.run'.format(
                     INPUT_FILE_NAME=_my_input_file_name
                 ))
             else:
-                raise Exception("Output file '{}' doesn't exist! Abort!".format(output_file))
+                raise FileNotFoundError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
         print("=======================================================")
         

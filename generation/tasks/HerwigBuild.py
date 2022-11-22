@@ -95,19 +95,29 @@ class HerwigBuild(Task):
                 + '\nHerwig build returned non-zero exit status {}'.format(code)
             )
         else:
-            if(os.path.exists("Herwig-cache")):
+            cache_dir = os.path.abspath("Herwig-cache")
+            output_file = os.path.exists("Herwig-build.tar.gz")
+
+            if(os.path.exists(cache_dir)):
                 print('Output: ' + out)
-                os.system('tar -czf Herwig-build.tar.gz Herwig-cache {INPUT_FILE_NAME}.run'.format(
+                if not os.listdir(cache_dir):
+                    raise LookupError("Herwig cache directory {} is empty!".format(cache_dir))
+                os.system('tar -czf {OUTPUT_FILE} {HERWIGCACHE} {INPUT_FILE_NAME}.run'.format(
+                    OUTPUT_FILE=output_file,
+                    HERWIGCACHE = cache_dir,
                     INPUT_FILE_NAME=_my_input_file_name
                 ))
             else:
-                Exception("Something went wrong, Herwig-cache doesn't exist! Abort!")
+                raise FileNotFoundError("Something went wrong, Herwig-cache doesn't exist! Abort!")
 
-            if os.path.exists("Herwig-build.tar.gz"):
-                output.copy_from_local("Herwig-build.tar.gz")
-                os.system('rm Herwig-build.tar.gz {INPUT_FILE_NAME}.run'.format(
+            if os.path.exists(output_file):
+                output.copy_from_local(output_file)
+                os.system('rm {OUTPUT_FILE} {INPUT_FILE_NAME}.run'.format(
+                    OUTPUT_FILE=output_file,
                     INPUT_FILE_NAME=_my_input_file_name
                 ))
+            else:
+                raise FileNotFoundError("Could not find output file {}!".format(output_file))
 
         print("=======================================================")
 

@@ -166,21 +166,19 @@ class RivetMerge(Task):
             final_input_files=self.mergeChunkwise(full_inputfile_list=final_input_files,chunk_size=chunk_size)
         
         _output_file = self.mergeSingleYodaChunk(inputfile_list=final_input_files)
+        _output_file = os.path.abspath(_output_file)
 
-        try:
-            os.path.exists(_output_file)
-        except:
-            print("Could not find output file {}!".format(_output_file))
-
-        output.copy_from_local(_output_file)
-        os.system('rm {OUTPUT_FILE}'.format(
-            OUTPUT_FILE=_output_file
-        ))
-        for _outfile in final_input_files:
+        if os.path.exists(_output_file):
+            output.copy_from_local(_output_file)
             os.system('rm {OUTPUT_FILE}'.format(
-                OUTPUT_FILE=_outfile
+                OUTPUT_FILE=_output_file
             ))
-        
+            for _outfile in final_input_files:
+                os.system('rm {OUTPUT_FILE}'.format(
+                    OUTPUT_FILE=_outfile
+                ))
+        else:
+            raise FileNotFoundError("Could not find output file {}!".format(_output_file))
 
         print("=======================================================")
         

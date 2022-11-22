@@ -156,9 +156,12 @@ class RunRivet(Task, HTCondorWorkflow):
             print('Output: ' + out)
 
             _output_file = "Rivet.yoda"
+            _output_file = os.path.abspath(_output_file)
 
             if os.path.exists(_output_file):
                 output.copy_from_local(_output_file)
+            else:
+                raise FileNotFoundError("Could not find output file {}!".format(_output_file))
 
 
         print("=======================================================")

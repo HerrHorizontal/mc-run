@@ -198,6 +198,9 @@ class HerwigRun(Task, HTCondorWorkflow):
                     SETUPFILE_SUFFIX=_setupfile_suffix
                     )
 
+            output_file_hepmc = os.path.abspath(output_file_hepmc)
+            output_file_yoda = os.path.abspath(output_file_yoda)
+            
             if os.path.exists(output_file_hepmc):
                 # tar and compress the output HepMC files to save disk space
                 if os.path.exists(output_file_yoda):
@@ -214,13 +217,15 @@ class HerwigRun(Task, HTCondorWorkflow):
                     ))
             else:
                 os.system("ls -l")
-                raise Exception("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
+                raise FileNotFoundError("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
+
+            output_file = os.path.abspath(output_file)
 
             if(os.path.exists(output_file)):
                 # copy the compressed outputs to save them
                 output.copy_from_local(output_file)
             else:
-                raise Exception("Output file '{}' doesn't exist! Abort!".format(output_file))
+                raise FileNotFoundError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
 
         print("=======================================================")

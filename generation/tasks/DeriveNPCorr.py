@@ -46,7 +46,7 @@ class DeriveNPCorr(Task):
     )
     xlabel = luigi.Parameter(
         significant=False,
-        default=None,
+        default="Observable",
         description="Label to print for the x-axis of the plots"
     )
     ylabel = luigi.Parameter(
@@ -60,7 +60,9 @@ class DeriveNPCorr(Task):
         "mc_setting_full",
         "mc_setting_partial",
         "match",
-        "unmatch"
+        "unmatch",
+        "xlabel",
+        "ylabel"
     }
 
 
@@ -156,6 +158,8 @@ class DeriveNPCorr(Task):
             raise Exception('Error:\n' + error + '\nOutput:\n' + out + '\nYodaNPCorr returned non-zero exit status {}'.format(code))
         else:
             print('Output:\n' + out)
+
+        output_yoda = os.path.abspath(output_yoda)
 
         if not os.path.exists(output_yoda):
             raise FileNotFoundError("Could not find output file {}!".format(output_yoda))
