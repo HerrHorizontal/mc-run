@@ -1,5 +1,5 @@
-# user generated logs
-logs/
+# user generated logs and temporary outputs
+data/
 
 # Herwig outputs
 *.run
