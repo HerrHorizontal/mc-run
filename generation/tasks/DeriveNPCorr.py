@@ -44,25 +44,13 @@ class DeriveNPCorr(Task):
         default=None,
         description="Exclude analysis objects which name matches this regex."
     )
-    xlabel = luigi.Parameter(
-        # significant=False,
-        default="Observable",
-        description="Label to print for the x-axis of the plots"
-    )
-    ylabel = luigi.Parameter(
-        # significant=False,
-        default="NP corr.",
-        description="Label to print for the y-axis of the plots"
-    )
 
     exclude_params_req = {
         "source_script",
         "mc_setting_full",
         "mc_setting_partial",
         "match",
-        "unmatch",
-        "xlabel",
-        "ylabel"
+        "unmatch"
     }
 
 
@@ -80,20 +68,15 @@ class DeriveNPCorr(Task):
 
 
     def output(self):
-        outputs = dict()
-        outputs["yoda"] = self.remote_target(
-            "{full}-{partial}-Ratio.yoda".format(
+        output = self.remote_target(
+            "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio.yoda".format(
+                match = self.match,
+                unmatch = self.unmatch,
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial
             )
         )
-        outputs["plots"] = self.remote_target(
-            "{full}-{partial}-Ratio-Plots.tar.gz".format(
-                full = self.mc_setting_full,
-                partial = self.mc_setting_partial
-            )
-        )
-        return outputs
+        return output
 
     def run(self):
         # ensure that the output directory exists
@@ -113,12 +96,12 @@ class DeriveNPCorr(Task):
         my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # localize the separate YODA files on grid storage
-        print("Inputs: {}".format(self.input()["full"]))
+        print("Inputs:")
         with self.input()["full"].localize('r') as _file:
-            print("full: {}".format(_file.path))
+            print("\tfull: {} cached at {}".format(self.input()["full"], _file.path))
             input_yoda_file_full = _file.path
         with self.input()["partial"].localize('r') as _file:
-            print("partial: {}".format(_file.path))
+            print("\tpartial: {} cached at {}".format(self.input()["partial"], _file.path))
             input_yoda_file_partial = _file.path
 
         # assign paths for output YODA file and plots
@@ -126,23 +109,15 @@ class DeriveNPCorr(Task):
             full = self.mc_setting_full,
             partial = self.mc_setting_partial
         )
-        plot_dir = os.path.abspath("plots-{full}-{partial}".format(
-            full=self.mc_setting_full,
-            partial = self.mc_setting_partial
-        ))
-
         # execute the script deriving the NP correction plots and files
         executable = [
             "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaDeriveNPCorr.py"),
             "--full", "{}".format(input_yoda_file_full),
             "--partial", "{}".format(input_yoda_file_partial),
-            "--output-file", "{}".format(output_yoda),
-            "--plot-dir", "{}".format(plot_dir)
+            "--output-file", "{}".format(output_yoda)
         ]
         executable += ["--match", self.match] if self.match else []
         executable += ["--unmatch", self.unmatch] if self.unmatch else []
-        executable += ["--xlabel", self.xlabel] if self.xlabel else []
-        executable += ["--ylabel", self.ylabel] if self.ylabel else []
 
         print("Executable: {}".format(" ".join(executable)))
 
@@ -167,14 +142,6 @@ class DeriveNPCorr(Task):
         output["yoda"].copy_from_local(output_yoda)
         os.system('rm {OUTPUT_FILE}'.format(
             OUTPUT_FILE=output_yoda
-        ))
-        
-        if not os.listdir(plot_dir):
-            raise LookupError("Plot directory {} is empty!".format(plot_dir))
-
-        output["plots"].dump(plot_dir)
-        os.system('rm -r {OUTPUT_DIR}'.format(
-            OUTPUT_DIR=plot_dir
         ))
 
         print("-------------------------------------------------------")
