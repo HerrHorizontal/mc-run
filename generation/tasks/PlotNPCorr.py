@@ -47,11 +47,11 @@ class PlotNPCorr(Task, law.LocalWorkflow):
     )
     filter_label_pad_tuples = luigi.TupleParameter(
         default=((".*","","Observable","NP corr.","arb. units"),),
-        description="Tuple of tuples containing five strings:\n \
+        description="Tuple of tuples containing four or five strings:\n \
             - the filter for identification of the analysis objects to plot, match and unmatch, \n\
             - the x- and y-axis labels for the ratio pad (showing i.e. the NP-correction), \n\
             - OPTIONAL: the label for a top pad showing the original distributions used to derive the ratio \n\
-            ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", \"origin-ylabel\"), (...), ...)"
+            ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", [\"origin-ylabel\"]), (...), ...)"
     )
 
     exclude_params_req = {
