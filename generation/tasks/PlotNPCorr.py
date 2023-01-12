@@ -174,26 +174,28 @@ class PlotNPCorr(Task, law.LocalWorkflow):
 
         print("Executable: {}".format(" ".join(executable)))
 
-        code, out, error = interruptable_popen(
-            executable,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
-
-        # if successful return merged YODA file and plots
-        if(code != 0):
+        try:
+            code, out, error = interruptable_popen(
+                executable,
+                stdout=PIPE,
+                stderr=PIPE,
+                env=my_env
+            )
+            # if successful return merged YODA file and plots
+            if(code != 0):
+                raise RuntimeError(
+                    '{task} returned non-zero exit status {code}!\n'.format(task=self.__class__.__name__, code=code)
+                    + '\tError:\n{}\n'.format(error)
+                    + '\tOutput:\n{}\n'.format(out) 
+                )
+            else:
+                print('Output:\n{}'.format(out))
+        except RuntimeError as e:
             output.remove()
-            raise Exception('Error:\n' + error + '\nOutput:\n' + out + '\nYodaNPCorr returned non-zero exit status {}'.format(code))
-        else:
-            print('Output:\n' + out)
+            raise e
         
         if not os.listdir(plot_dir):
+            output.remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir))
-
-        output["plots"].dump(plot_dir)
-        os.system('rm -r {OUTPUT_DIR}'.format(
-            OUTPUT_DIR=plot_dir
-        ))
 
         print("-------------------------------------------------------")
