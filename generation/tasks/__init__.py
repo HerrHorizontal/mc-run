@@ -8,3 +8,5 @@ import HerwigRun
 import RunRivet
 import RivetMerge
 
+import DeriveNPCorr
+import PlotNPCorr

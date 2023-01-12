@@ -94,25 +94,26 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
         # if successful tar and save integration
         if(code != 0):
-            raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code))
+            raise RuntimeError('Error: ' + error + 'Output: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code))
         else:
             print('Output: ' + out)
-            _output_file = "Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}".format(
+            _output_dir = "Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}".format(
                 JOBID=_jobid,
                 INPUT_FILE_NAME=_my_config
             )
 
-            if os.path.exists(os.path.join(_output_file,"HerwigGrids.xml")):
+            if os.path.exists(os.path.join(_output_dir,"HerwigGrids.xml")):
                 os.system(
                     'tar -czf Herwig-int.tar.gz {OUTPUT_FILE}'.format(
-                        OUTPUT_FILE=_output_file
+                        OUTPUT_FILE=_output_dir
                     )
                 )
             else:
-                raise Exception('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_file,"HerwigGrids.xml")))
+                raise FileNotFoundError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
 
-            if os.path.exists("Herwig-int.tar.gz"):
-                output.copy_from_local("Herwig-int.tar.gz")
+            output_file = os.path.abspath("Herwig-int.tar.gz")
+            if os.path.exists(output_file):
+                output.copy_from_local(output_file)
 
         print("=======================================================")
 

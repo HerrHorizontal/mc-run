@@ -1,5 +1,5 @@
-# user generated logs
-logs/
+# user generated logs and temporary outputs
+data/
 
 # Herwig outputs
 *.run
@@ -22,3 +22,7 @@ Herwig*/*
 logs/*
 *.tar.gz
 .law/
+plots*
+
+# vitural environments
+.venv
