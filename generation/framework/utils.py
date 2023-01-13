@@ -35,3 +35,24 @@ def set_environment_variables(source_script_path):
 herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")))
 
 rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
+
+
+def run_command(executable, env, *args, **kwargs):
+    code, out, error = interruptable_popen(
+        executable,
+        *args,
+        stdout=PIPE,
+        stderr=PIPE,
+        env=env,
+        **kwargs
+    )
+    # if successful return merged YODA file and plots
+    if(code != 0):
+        raise RuntimeError(
+            'Command {command} returned non-zero exit status {code}!\n'.format(command=executable, code=code)
+            + '\tError:\n{}\n'.format(error)
+            + '\tOutput:\n{}\n'.format(out) 
+        )
+    else:
+        print('Output:\n{}'.format(out))
+    return code, out, error
