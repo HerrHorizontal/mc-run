@@ -6,9 +6,9 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from law.util import interruptable_popen
+from generation.framework.utils import run_command, herwig_env
 
-from generation.framework import Task, CommonConfig
+from generation.framework.tasks import Task, CommonConfig
 
 from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
@@ -19,13 +19,6 @@ class HerwigMerge(Task):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
-
-    # configuration variables
-    source_script = luigi.Parameter(
-        significant=False,
-        default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"),
-        description="Path to the source script providing the local Herwig environment to use."
-    )
 
     exclude_params_req = {
         "source_script"
@@ -38,9 +31,11 @@ class HerwigMerge(Task):
             'HerwigIntegrate': t,
             'HerwigBuild': HerwigBuild.req(t)
         }
-    
+
+
     def output(self):
         return self.remote_target("Herwig-cache.tar.gz")
+
 
     def run(self):
         # data
@@ -50,14 +45,10 @@ class HerwigMerge(Task):
         output = self.output()
         output.parent.touch()
 
-
         # actual payload:
         print("=======================================================")
         print("Starting merge step to finish Herwig-cache and run file")
         print("=======================================================")
-
-        # set environment variables
-        my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # download the packed files from grid and unpack
         with self.input()['HerwigBuild'].localize('r') as _file:
@@ -77,12 +68,7 @@ class HerwigMerge(Task):
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
-        code, out, error = interruptable_popen(
-            _herwig_exec + _herwig_args,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
+        code, out, error = run_command(_herwig_exec + _herwig_args, env=herwig_env)
 
         # if successful save final Herwig-cache and run-file as tar.gz
         if(code != 0):

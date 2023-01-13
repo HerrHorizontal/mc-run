@@ -6,9 +6,9 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from law.util import interruptable_popen
+from generation.framework.utils import run_command, rivet_env
 
-from generation.framework import Task, GenerationScenarioConfig
+from generation.framework.tasks import Task, GenerationScenarioConfig
 
 from RunRivet import RunRivet
 
@@ -23,12 +23,6 @@ class RivetMerge(Task):
     chunk_size = luigi.IntParameter(
         description="Number of individual YODA files to merge in a single `rivet-merge` call."
     )
-    source_script = luigi.Parameter(
-        default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"),
-        significant=False,
-        description="Path to the source script providing the local Rivet environment to use."
-    )
-    
 
     exclude_params_req = {
         "chunk_size",
@@ -47,6 +41,7 @@ class RivetMerge(Task):
         return os.path.join(*parts)
     
 
+
     def output(self):
         return self.remote_target(
             "{INPUT_FILE_NAME}.yoda".format(
@@ -60,9 +55,6 @@ class RivetMerge(Task):
         print("-------------------------------------------------------")
         print("Starting merging of chunk {}".format(inputfile_chunk))
         print("-------------------------------------------------------")
-
-        # set environment variables
-        my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # data
         _my_input_file_name = str(self.input_file_name)
@@ -93,28 +85,14 @@ class RivetMerge(Task):
             print("Input files: {}".format(inputfile_list))
             print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args + _rivet_in)))
         
-        code, out, error = interruptable_popen(
-            _rivet_exec + _rivet_args + _rivet_in,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
-
-        # if successful return merged YODA file
-        if(code != 0):
-            raise Exception('Error: ' + error + 'Output: ' + out + '\nYodaMerge returned non-zero exit status {}'.format(code))
-        else:
-            print('Output: ' + out)
-
-        try:
-            os.path.exists(output_file)
-        except:
-            print("Could not find output file {}!".format(output_file))
+        run_command(_rivet_exec+_rivet_args+_rivet_in, env=rivet_env)
+        if not os.path.exists(output_file):
+            raise FileNotFoundError("Could not find output file {}!".format(output_file))
         
         print("-------------------------------------------------------")
 
         return output_file
-    
+
 
     def mergeChunkwise(self, full_inputfile_list, chunk_size): 
 
@@ -162,23 +140,23 @@ class RivetMerge(Task):
         chunk_size = self.chunk_size
 
         final_input_files=inputfile_list
-        while len(final_input_files)>chunk_size:
-            final_input_files=self.mergeChunkwise(full_inputfile_list=final_input_files,chunk_size=chunk_size)
-        
-        _output_file = self.mergeSingleYodaChunk(inputfile_list=final_input_files)
-        _output_file = os.path.abspath(_output_file)
+        try:
+            while len(final_input_files)>chunk_size:
+                final_input_files=self.mergeChunkwise(full_inputfile_list=final_input_files,chunk_size=chunk_size)
+            
+            _output_file = self.mergeSingleYodaChunk(inputfile_list=final_input_files)
+            _output_file = os.path.abspath(_output_file)
 
-        if os.path.exists(_output_file):
-            output.copy_from_local(_output_file)
-            os.system('rm {OUTPUT_FILE}'.format(
-                OUTPUT_FILE=_output_file
-            ))
-            for _outfile in final_input_files:
-                os.system('rm {OUTPUT_FILE}'.format(
-                    OUTPUT_FILE=_outfile
-                ))
-        else:
-            raise FileNotFoundError("Could not find output file {}!".format(_output_file))
+            if os.path.exists(_output_file):
+                output.copy_from_local(_output_file)
+                os.remove(_output_file)
+                for _outfile in final_input_files:
+                    os.remove(_outfile)
+            else:
+                raise FileNotFoundError("Could not find output file {}!".format(_output_file))
+        except Exception as e:
+            self.output().remove()
+            raise e
+
 
         print("=======================================================")
-        

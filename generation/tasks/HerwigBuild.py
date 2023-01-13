@@ -5,9 +5,8 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from law.util import interruptable_popen
-
-from generation.framework import Task, CommonConfig
+from generation.framework.utils import run_command, herwig_env
+from generation.framework.tasks import Task, CommonConfig
 
 
 @inherits(CommonConfig)
@@ -28,11 +27,6 @@ class HerwigBuild(Task):
         significant=False,
         default=os.path.join("$ANALYSIS_PATH","inputfiles"),
         description="Directory where the Herwig config file resides."
-    )
-    source_script = luigi.Parameter(
-        significant=False,
-        default=os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh"),
-        description="Path to the source script providing the local Herwig environment to use."
     )
 
 
@@ -66,9 +60,6 @@ class HerwigBuild(Task):
         print("Starting build step to generate Herwig-cache and run file")
         print("=========================================================")
 
-        # set environment variables
-        my_env = self.set_environment_variables(source_script_path=self.source_script)
-
         # run Herwig build step 
         _herwig_exec = ["Herwig", "build"]
         _herwig_args = [
@@ -78,12 +69,7 @@ class HerwigBuild(Task):
 
         print('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))
 
-        code, out, error = interruptable_popen(
-            _herwig_exec + _herwig_args,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
+        code, out, error = run_command(_herwig_exec+_herwig_args, env=herwig_env)
 
         # if successful save Herwig-cache and run-file as tar.gz
         if(code != 0):

@@ -6,7 +6,7 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from law.util import interruptable_popen
+from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework import Task, HTCondorWorkflow, CommonConfig
@@ -33,36 +33,38 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
         "htcondor_requirements", "htcondor_request_disk"
     }
 
+
     def workflow_requires(self):
         # integration requires successful build step
         return {
             'HerwigBuild': HerwigBuild.req(self)
         }
 
+
     def create_branch_map(self):
         # each integration job is indexed by it's job number
         return {jobnum: intjobnum for jobnum, intjobnum in enumerate(range(int(self.integration_maxjobs)))}
+
 
     def requires(self):
         # current branch task requires existing integrationList
         return {
             'HerwigBuild': HerwigBuild.req(self)
         }
-        
+
+
     def output(self):
         return self.remote_target("Herwig-int{}.tar.gz".format(self.branch))
 
+
     def run(self):
-        
         # branch data
         _jobid = str(self.branch)
         _my_config = str(self.input_file_name)
 
-
         # ensure that the output directory exists
         output = self.output()
         output.parent.touch()
-        
 
         # actual payload:
         print("=======================================================")
@@ -85,12 +87,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
-        code, out, error = interruptable_popen(
-            _herwig_exec + _herwig_args,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
+        code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)
 
         # if successful tar and save integration
         if(code != 0):
