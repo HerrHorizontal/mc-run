@@ -1,6 +1,4 @@
 
-
-import law
 import luigi
 from luigi.util import inherits
 import os
@@ -87,30 +85,29 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
-        code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)
+        try:
+            code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)
+        except RuntimeError as e:
+            output.remove()
+            raise e
 
-        # if successful tar and save integration
-        if(code != 0):
-            raise RuntimeError('Error: ' + error + 'Output: ' + out + '\nHerwig integrate returned non-zero exit status {}'.format(code))
-        else:
-            print('Output: ' + out)
-            _output_dir = "Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}".format(
-                JOBID=_jobid,
-                INPUT_FILE_NAME=_my_config
-            )
+        _output_dir = "Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}".format(
+            JOBID=_jobid,
+            INPUT_FILE_NAME=_my_config
+        )
 
-            if os.path.exists(os.path.join(_output_dir,"HerwigGrids.xml")):
-                os.system(
-                    'tar -czf Herwig-int.tar.gz {OUTPUT_FILE}'.format(
-                        OUTPUT_FILE=_output_dir
-                    )
+        if os.path.exists(os.path.join(_output_dir,"HerwigGrids.xml")):
+            os.system(
+                'tar -czf Herwig-int.tar.gz {OUTPUT_FILE}'.format(
+                    OUTPUT_FILE=_output_dir
                 )
-            else:
-                raise FileNotFoundError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
+            )
+        else:
+            raise FileNotFoundError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
 
-            output_file = os.path.abspath("Herwig-int.tar.gz")
-            if os.path.exists(output_file):
-                output.copy_from_local(output_file)
+        output_file = os.path.abspath("Herwig-int.tar.gz")
+        if os.path.exists(output_file):
+            output.copy_from_local(output_file)
 
         print("=======================================================")
 

@@ -138,21 +138,19 @@ class RunRivet(Task, HTCondorWorkflow):
 
         print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
 
-        code, out, error = run_command(_rivet_exec + _rivet_args, env=my_env)
+        try:
+            run_command(_rivet_exec + _rivet_args, env=my_env)
+        except RuntimeError as e:
+            output.remove()
+            raise e
 
-        # if successful save YODA output
-        if(code != 0):
-            raise Exception('Error: ' + error + 'Output: ' + out + '\nRivet returned non-zero exit status {}'.format(code))
+        _output_file = "Rivet.yoda"
+        _output_file = os.path.abspath(_output_file)
+
+        if os.path.exists(_output_file):
+            output.copy_from_local(_output_file)
         else:
-            print('Output: ' + out)
-
-            _output_file = "Rivet.yoda"
-            _output_file = os.path.abspath(_output_file)
-
-            if os.path.exists(_output_file):
-                output.copy_from_local(_output_file)
-            else:
-                raise FileNotFoundError("Could not find output file {}!".format(_output_file))
+            raise FileNotFoundError("Could not find output file {}!".format(_output_file))
 
 
         print("=======================================================")

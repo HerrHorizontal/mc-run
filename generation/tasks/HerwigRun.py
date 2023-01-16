@@ -66,15 +66,15 @@ class HerwigRun(Task, HTCondorWorkflow):
 
     def create_branch_map(self):
         # create list of seeds
-        _seed_list = []
+        seed_list = []
         if(False):
-            random.seed(self.start_seed)
+            random.seed(self.startseed)
             for _jobnum in range(0, int(self.number_of_jobs)):
-                _seed_list.append(random.randint(1,int(9e9)))
+                seed_list.append(random.randint(1,int(9e9)))
         else:
-            _seed_list = range(int(self.number_of_jobs))
+            seed_list = range(int(self.number_of_jobs))
         # each run job is refrenced to a seed
-        return {jobnum: seed for jobnum, seed in enumerate(_seed_list)}
+        return {jobnum: seed for jobnum, seed in enumerate(seed_list)}
 
 
     def requires(self):
@@ -104,7 +104,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         _job_num = str(self.branch)
         _my_config = str(self.input_file_name)
         _num_events = str(self.events_per_job)
-        _seed = int(self.branch_data)
+        seed = int(self.branch_data)
 
         # ensure that the output directory exists
         output = self.output()
@@ -129,7 +129,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         _herwig_exec = ["Herwig", "run"]
         _herwig_args = [
             "-q", 
-            "--seed={SEED}".format(SEED=_seed),
+            "--seed={SEED}".format(SEED=seed),
             "--numevents={NEVENTS}".format(NEVENTS=_num_events),
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
@@ -150,73 +150,71 @@ class HerwigRun(Task, HTCondorWorkflow):
                     _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
                     _setupfile_suffix = "-" + setupfile_path
                 else:
-                    raise Exception("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+                    raise FileNotFoundError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
             else:
-                raise Exception("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+                raise FileNotFoundError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
-        code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)
-
-        # if successful save HEPMC
-        if(code != 0):
-            raise Exception('Error: ' + error + 'Output: ' + out + '\nHerwig run returned non-zero exit status {}'.format(code))
-        else:
-            print('Output: ' + out)
-            print("Seed: {}".format(_seed))
-            
-            output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
-                    INPUT_FILE_NAME=_my_config
+        try:
+            run_command(_herwig_exec + _herwig_args, env=my_env)
+            print("Seed: {}".format(seed))
+        except RuntimeError as e:
+            output.remove()
+            raise e
+        
+        output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
+                INPUT_FILE_NAME=_my_config
+            )
+        if int(seed) is not 0:
+            output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.hepmc".format(
+                INPUT_FILE_NAME=_my_config,
+                SEED=seed,
+                SETUPFILE_SUFFIX=_setupfile_suffix
                 )
-            if int(_seed) is not 0:
-                output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.hepmc".format(
-                    INPUT_FILE_NAME=_my_config,
-                    SEED=_seed,
-                    SETUPFILE_SUFFIX=_setupfile_suffix
-                    )
-                output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.yoda".format(
-                    INPUT_FILE_NAME=_my_config,
-                    SEED=_seed,
-                    SETUPFILE_SUFFIX=_setupfile_suffix
-                    )
-            else:
-                output_file_hepmc = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.hepmc".format(
-                    INPUT_FILE_NAME=_my_config,
-                    SETUPFILE_SUFFIX=_setupfile_suffix
-                    )
-                output_file_yoda = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.yoda".format(
-                    INPUT_FILE_NAME=_my_config,
-                    SETUPFILE_SUFFIX=_setupfile_suffix
-                    )
+            output_file_yoda = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.yoda".format(
+                INPUT_FILE_NAME=_my_config,
+                SEED=seed,
+                SETUPFILE_SUFFIX=_setupfile_suffix
+                )
+        else:
+            output_file_hepmc = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.hepmc".format(
+                INPUT_FILE_NAME=_my_config,
+                SETUPFILE_SUFFIX=_setupfile_suffix
+                )
+            output_file_yoda = "{INPUT_FILE_NAME}{SETUPFILE_SUFFIX}.yoda".format(
+                INPUT_FILE_NAME=_my_config,
+                SETUPFILE_SUFFIX=_setupfile_suffix
+                )
 
-            output_file_hepmc = os.path.abspath(output_file_hepmc)
-            output_file_yoda = os.path.abspath(output_file_yoda)
-            
-            if os.path.exists(output_file_hepmc):
-                # tar and compress the output HepMC files to save disk space
-                if os.path.exists(output_file_yoda):
-                    # also add already existing YODA files if existant
-                    os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
-                        OUTPUT_FILE=output_file,
-                        HEPMC_FILE=output_file_hepmc,
-                        YODA_FILE=output_file_yoda
-                    ))
-                else:
-                    os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}'.format(
-                        OUTPUT_FILE=output_file,
-                        HEPMC_FILE=output_file_hepmc
-                    ))
+        output_file_hepmc = os.path.abspath(output_file_hepmc)
+        output_file_yoda = os.path.abspath(output_file_yoda)
+        
+        if os.path.exists(output_file_hepmc):
+            # tar and compress the output HepMC files to save disk space
+            if os.path.exists(output_file_yoda):
+                # also add already existing YODA files if existant
+                os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
+                    OUTPUT_FILE=output_file,
+                    HEPMC_FILE=output_file_hepmc,
+                    YODA_FILE=output_file_yoda
+                ))
             else:
-                os.system("ls -l")
-                raise FileNotFoundError("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
+                os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}'.format(
+                    OUTPUT_FILE=output_file,
+                    HEPMC_FILE=output_file_hepmc
+                ))
+        else:
+            os.system("ls -l")
+            raise FileNotFoundError("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
 
-            output_file = os.path.abspath(output_file)
+        output_file = os.path.abspath(output_file)
 
-            if(os.path.exists(output_file)):
-                # copy the compressed outputs to save them
-                output.copy_from_local(output_file)
-            else:
-                raise FileNotFoundError("Output file '{}' doesn't exist! Abort!".format(output_file))
+        if(os.path.exists(output_file)):
+            # copy the compressed outputs to save them
+            output.copy_from_local(output_file)
+        else:
+            raise FileNotFoundError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
 
         print("=======================================================")

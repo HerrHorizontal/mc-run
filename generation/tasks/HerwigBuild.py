@@ -69,41 +69,32 @@ class HerwigBuild(Task):
 
         print('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))
 
-        code, out, error = run_command(_herwig_exec+_herwig_args, env=herwig_env)
+        try:
+            run_command(_herwig_exec+_herwig_args, env=herwig_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
+        except RuntimeError as e:
+            output.remove()
+            raise e
 
-        # if successful save Herwig-cache and run-file as tar.gz
-        if(code != 0):
-            raise Exception(
-                'Error: '
-                + error
-                + 'Output: '
-                + out
-                + '\nHerwig build returned non-zero exit status {}'.format(code)
-            )
+        cache_dir = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-cache"))
+        output_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-build.tar.gz"))
+
+        if(os.path.exists(cache_dir)):
+            if not os.listdir(cache_dir):
+                raise LookupError("Herwig cache directory {} is empty!".format(cache_dir))
+            os.system('tar -czf {OUTPUT_FILE} {HERWIGCACHE} {INPUT_FILE_NAME}.run'.format(
+                OUTPUT_FILE=output_file,
+                HERWIGCACHE = cache_dir,
+                INPUT_FILE_NAME=_my_input_file_name
+            ))
         else:
-            cache_dir = os.path.abspath("Herwig-cache")
-            output_file = os.path.exists("Herwig-build.tar.gz")
+            raise FileNotFoundError("Something went wrong, Herwig-cache doesn't exist! Abort!")
 
-            if(os.path.exists(cache_dir)):
-                print('Output: ' + out)
-                if not os.listdir(cache_dir):
-                    raise LookupError("Herwig cache directory {} is empty!".format(cache_dir))
-                os.system('tar -czf {OUTPUT_FILE} {HERWIGCACHE} {INPUT_FILE_NAME}.run'.format(
-                    OUTPUT_FILE=output_file,
-                    HERWIGCACHE = cache_dir,
-                    INPUT_FILE_NAME=_my_input_file_name
-                ))
-            else:
-                raise FileNotFoundError("Something went wrong, Herwig-cache doesn't exist! Abort!")
-
-            if os.path.exists(output_file):
-                output.copy_from_local(output_file)
-                os.system('rm {OUTPUT_FILE} {INPUT_FILE_NAME}.run'.format(
-                    OUTPUT_FILE=output_file,
-                    INPUT_FILE_NAME=_my_input_file_name
-                ))
-            else:
-                raise FileNotFoundError("Could not find output file {}!".format(output_file))
+        if os.path.exists(output_file):
+            output.copy_from_local(output_file)
+            os.remove(output_file)
+            os.remove(_my_input_file_name)
+        else:
+            raise FileNotFoundError("Could not find output file {}!".format(output_file))
 
         print("=======================================================")
 
