@@ -164,7 +164,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         return factory
 
     def htcondor_bootstrap_file(self):
-        return law.util.rel_path(__file__, self.bootstrap_file)
+        return law.util.rel_path(__file__, "..", self.bootstrap_file)
 
     def htcondor_job_config(self, config, job_num, branches):
         config.custom_content = []
@@ -183,14 +183,17 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
         prevdir = os.getcwd()
         os.system('cd $ANALYSIS_PATH')
-        if not os.path.isfile('generation.tar.gz'):
-            os.system(
-                "tar --exclude=*.git* "
-                + "-czf generation.tar.gz "
-                + "generation analyses inputfiles luigi.cfg law.cfg luigi law six enum34-1.1.10"
-            )
+        if os.path.isfile('generation.tar.gz'):
+            from shutil import move
+            move('generation.tar.gz', 'old_generation.tar.gz')
+            print("Tarball already exists! Preparing a new one!")
+        os.system(
+            "tar --exclude=*.git* "
+            + "-czf generation.tar.gz "
+            + "generation analyses inputfiles setup luigi.cfg law.cfg luigi law six enum34-1.1.10"
+        )
         os.chdir(prevdir)
 
-        config.input_files["TARBALL"] = law.util.rel_path(__file__, '../generation.tar.gz')
+        config.input_files["TARBALL"] = law.util.rel_path(__file__, '..', '../generation.tar.gz')
 
         return config
