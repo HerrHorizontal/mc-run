@@ -17,6 +17,17 @@ def _convert_env_to_dict(env):
     return my_env
 
 def set_environment_variables(source_script_path):
+    """Creates a subprocess readable environment dict
+
+    Args:
+        source_script_path (str): Path to the file sourcing the environment
+
+    Raises:
+        RuntimeError: Raised when environment couldn't be sourced
+
+    Returns:
+        dict: Environment variables
+    """
     code, out, error = interruptable_popen("source {}; env".format(source_script_path),
                                             shell=True, 
                                             stdout=PIPE, 
@@ -38,6 +49,18 @@ rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS
 
 
 def run_command(executable, env, *args, **kwargs):
+    """Helper function for execution of a command in a subprocess.
+
+    Args:
+        executable (List[str]): Command to execute
+        env (Dict): Environment for the execution
+
+    Raises:
+        RuntimeError: Terminate when subprocess failed. Throw command, error and output streams.
+
+    Returns:
+        tuple[int | Any, Any | str, Any | str]: execution code, output string and error string
+    """
     code, out, error = interruptable_popen(
         executable,
         *args,
