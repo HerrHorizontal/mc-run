@@ -4,9 +4,9 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from law.util import interruptable_popen
+from generation.framework.utils import run_command, rivet_env
 
-from generation.framework import Task, CommonConfig
+from generation.framework.tasks import Task, CommonConfig
 
 from RivetMerge import RivetMerge
 from DeriveNPCorr import DeriveNPCorr
@@ -29,11 +29,6 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         description="Scenario identifier for the partial MC production, typically `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
-    )
-    source_script = luigi.Parameter(
-        significant=False,
-        default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"),
-        description="Path to the source script providing the local Rivet environment to use."
     )
     match = luigi.Parameter(
         # significant=False,
@@ -140,9 +135,6 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         print("Starting NP-factor plotting with YODA")
         print("=======================================================")
 
-        # set environment variables
-        my_env = self.set_environment_variables(source_script_path=self.source_script)
-
         # localize the separate YODA files on grid storage
         print("Inputs: {}".format(self.input()))
         with self.input()["full"].localize('r') as _file:
@@ -175,21 +167,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         print("Executable: {}".format(" ".join(executable)))
 
         try:
-            code, out, error = interruptable_popen(
-                executable,
-                stdout=PIPE,
-                stderr=PIPE,
-                env=my_env
-            )
-            # if successful return merged YODA file and plots
-            if(code != 0):
-                raise RuntimeError(
-                    '{task} returned non-zero exit status {code}!\n'.format(task=self.__class__.__name__, code=code)
-                    + '\tError:\n{}\n'.format(error)
-                    + '\tOutput:\n{}\n'.format(out) 
-                )
-            else:
-                print('Output:\n{}'.format(out))
+            run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
             output.remove()
             raise e

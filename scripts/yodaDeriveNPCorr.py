@@ -82,6 +82,13 @@ aos_full = yoda.readYODA(yoda_file_full, asdict=True, patterns=args.MATCH, unpat
 aos_partial = yoda.readYODA(yoda_file_partial, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH)
 
 # loop through all histograms in both scenarios and divide full by partial
+if not aos_full or not aos_partial:
+    if not aos_full and not aos_partial:
+        raise RuntimeError("No full and partial analysis objects matching the filters!")
+    elif not aos_full:
+        raise RuntimeError("No full analysis objects matching the filters!")
+    else:
+        raise RuntimeError("No partial analysis objects matching the filters!")
 if not aos_full.viewkeys() == aos_partial.viewkeys():
     raise KeyError("Unmatched key(s) {} in provided YODA files {}, {}".format(
         (aos_full.viewkeys() - aos_partial.viewkeys()),

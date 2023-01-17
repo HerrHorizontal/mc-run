@@ -8,7 +8,7 @@ import luigi
 import law
 from luigi.util import inherits
 import law.contrib.htcondor
-from law.util import merge_dicts, interruptable_popen
+from law.util import merge_dicts
 
 law.contrib.load("wlcg")
 
@@ -63,28 +63,6 @@ class Task(law.Task):
             self.remote_path(*path),
             self.get_wlcg_file_system(self.wlcg_path),
         )
-
-    def _convert_env_to_dict(self, env):
-        my_env = {}
-        for line in env.splitlines():
-            if line.find(" ") < 0 :
-                try:
-                    key, value = line.split("=", 1)
-                    my_env[key] = value
-                except ValueError:
-                    pass
-        return my_env
-
-    def set_environment_variables(self, source_script_path):
-        code, out, error = interruptable_popen("source {}; env".format(source_script_path),
-                                               shell=True, 
-                                               stdout=PIPE, 
-                                               stderr=PIPE
-                                               )
-        if code != 0:
-            raise Exception('Error: {}\nEnvironment: {}\nReading environent failed with exit status {}'.format(error, out, code))
-        my_env = self._convert_env_to_dict(out)
-        return my_env
 
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):
@@ -186,7 +164,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         return factory
 
     def htcondor_bootstrap_file(self):
-        return law.util.rel_path(__file__, self.bootstrap_file)
+        return law.util.rel_path(__file__, "..", self.bootstrap_file)
 
     def htcondor_job_config(self, config, job_num, branches):
         config.custom_content = []
@@ -205,15 +183,17 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
 
         prevdir = os.getcwd()
         os.system('cd $ANALYSIS_PATH')
-        if not os.path.isfile('generation.tar.gz'):
-            os.system(
-                "tar --exclude=*.git* "
-                + "-czf generation.tar.gz "
-                + "generation analyses inputfiles luigi.cfg law.cfg luigi law six enum34-1.1.10"
-            )
+        if os.path.isfile('generation.tar.gz'):
+            from shutil import move
+            move('generation.tar.gz', 'old_generation.tar.gz')
+            print("Tarball already exists! Preparing a new one!")
+        os.system(
+            "tar --exclude=*.git* "
+            + "-czf generation.tar.gz "
+            + "generation analyses inputfiles setup luigi.cfg law.cfg luigi law six enum34-1.1.10"
+        )
         os.chdir(prevdir)
 
-        config.input_files.append(
-            law.util.rel_path(__file__, '../generation.tar.gz')
-        )
+        config.input_files["TARBALL"] = law.util.rel_path(__file__, '..', '../generation.tar.gz')
+
         return config

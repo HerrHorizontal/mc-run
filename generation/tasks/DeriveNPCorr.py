@@ -4,9 +4,9 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from law.util import interruptable_popen
+from generation.framework.utils import run_command, rivet_env
 
-from generation.framework import Task, CommonConfig
+from generation.framework.tasks import Task, CommonConfig
 
 from RivetMerge import RivetMerge
 
@@ -28,11 +28,6 @@ class DeriveNPCorr(Task):
         description="Scenario identifier for the partial MC production, typically `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
-    )
-    source_script = luigi.Parameter(
-        significant=False,
-        default=os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh"),
-        description="Path to the source script providing the local Herwig environment to use."
     )
     match = luigi.Parameter(
         # significant=False,
@@ -82,8 +77,7 @@ class DeriveNPCorr(Task):
         # ensure that the output directory exists
         output = self.output()
         try:
-            for o in output.values():
-                o.parent.touch()
+            output.parent.touch()
         except IOError:
             print("Output target doesn't exist!")
 
@@ -91,9 +85,6 @@ class DeriveNPCorr(Task):
         print("=======================================================")
         print("Starting NP-factor calculation with YODA")
         print("=======================================================")
-
-        # set environment variables
-        my_env = self.set_environment_variables(source_script_path=self.source_script)
 
         # localize the separate YODA files on grid storage
         print("Inputs:")
@@ -121,27 +112,15 @@ class DeriveNPCorr(Task):
 
         print("Executable: {}".format(" ".join(executable)))
 
-        code, out, error = interruptable_popen(
-            executable,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
-
-        # if successful return merged YODA file and plots
-        if(code != 0):
-            raise Exception('Error:\n' + error + '\nOutput:\n' + out + '\nYodaNPCorr returned non-zero exit status {}'.format(code))
-        else:
-            print('Output:\n' + out)
-
-        output_yoda = os.path.abspath(output_yoda)
-
-        if not os.path.exists(output_yoda):
-            raise FileNotFoundError("Could not find output file {}!".format(output_yoda))
-
-        output["yoda"].copy_from_local(output_yoda)
-        os.system('rm {OUTPUT_FILE}'.format(
-            OUTPUT_FILE=output_yoda
-        ))
+        try:
+            run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
+            output_yoda = os.path.abspath(output_yoda)
+            if not os.path.exists(output_yoda):
+                raise FileNotFoundError("Could not find output file {}!".format(output_yoda))
+            output.copy_from_local(output_yoda)
+            os.remove(output_yoda)
+        except RuntimeError as e:
+            output.remove()
+            raise e
 
         print("-------------------------------------------------------")

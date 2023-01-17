@@ -26,3 +26,6 @@ plots*
 
 # vitural environments
 .venv
+
+# editor files
+.vscode

@@ -8,10 +8,10 @@ import random
 import glob
 
 from subprocess import PIPE
-from law.util import interruptable_popen
+from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigRun import HerwigRun
 
@@ -62,7 +62,6 @@ class RunRivet(Task, HTCondorWorkflow):
                 "htcondor_requirements", "htcondor_request_disk"
                 ]
             )
-
         return reqs
 
 
@@ -102,11 +101,9 @@ class RunRivet(Task, HTCondorWorkflow):
 
 
     def run(self):
-
         # branch data
         _my_config = str(self.input_file_name)
         _rivet_analyses = list(self.rivet_analyses)
-
 
         # ensure that the output directory exists
         output = self.output()
@@ -114,7 +111,6 @@ class RunRivet(Task, HTCondorWorkflow):
             output.parent.touch()
         except IOError:
             print("Output target doesn't exist!")
-
 
         # actual payload:
         print("=======================================================")
@@ -142,26 +138,19 @@ class RunRivet(Task, HTCondorWorkflow):
 
         print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
 
-        code, out, error = interruptable_popen(
-            _rivet_exec + _rivet_args,
-            stdout=PIPE,
-            stderr=PIPE,
-            env=my_env
-        )
+        try:
+            run_command(_rivet_exec + _rivet_args, env=my_env)
+        except RuntimeError as e:
+            output.remove()
+            raise e
 
-        # if successful save YODA output
-        if(code != 0):
-            raise Exception('Error: ' + error + 'Output: ' + out + '\nRivet returned non-zero exit status {}'.format(code))
+        _output_file = "Rivet.yoda"
+        _output_file = os.path.abspath(_output_file)
+
+        if os.path.exists(_output_file):
+            output.copy_from_local(_output_file)
         else:
-            print('Output: ' + out)
-
-            _output_file = "Rivet.yoda"
-            _output_file = os.path.abspath(_output_file)
-
-            if os.path.exists(_output_file):
-                output.copy_from_local(_output_file)
-            else:
-                raise FileNotFoundError("Could not find output file {}!".format(_output_file))
+            raise FileNotFoundError("Could not find output file {}!".format(_output_file))
 
 
         print("=======================================================")
