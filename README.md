@@ -75,11 +75,13 @@ The according code for these tasks and workflows is defined in `generation/tasks
 
 ##### Further Processing
 
+![Graphical representation of further processing workflow management extending the generation and analysis](plots/design/Law-Setup_Analysis.png "YODA and matplotlib setup for automated post-processing and plotting of genereted analysis objects with Law")
+
 Further processing of the produced YODA files is supported by the task:
-- *DeriveNPCorr*: It calculates the ratio of two separate MC productions, i.e. for the derivation of non-perturbative correction factors, using the functionality provided by the `yoda` API. You can specify match and unmatch regular expressions to filter the analysis objects to process. It will create a new `.yoda` file containing the creted ratio analysis objects.
+- *DeriveNPCorr*: It calculates the ratio of two separate MC productions, i.e. for the derivation of non-perturbative correction factors, using the functionality provided by the [`YODA` API](https://yoda.hepforge.org/). You can specify match and unmatch regular expressions to filter the analysis objects to process. It will create a new `.yoda` file containing the creted ratio analysis objects.
 
 ##### Plotting
-Tasks for plotting with the functionality provided by the `matplotlib` python library and input file handling with the [`yoda`](https://yoda.hepforge.org/) toolset:
+Tasks for plotting with the functionality provided by the `matplotlib` python library and input file handling with the [`YODA`](https://yoda.hepforge.org/) toolset:
 - *PlotNPCorr*: This reads in the ratio analysis objects derived in the `DeriveNPCorr` task and plots them. With the `--filter-label-pad-tuples` option a tuple of tuples is specified. Its first two components are regexes which filter the analysis objects to plot by matching and unmatching. The third component is a label string interpreted in LaTex math mode to plot on the x-axis of the plot. The fourth component is a string to be put as the y-axis label. The fifth component is an optional string. When set, also the two original distributions used to derive the ratio are plotted in a top pad. The according y-axis label is taken to be the specified string. Example: `'(("ZPt","RAW","p_T^Z\,/\,\mathrm{GeV}","NP corr.","\mathrm{arb. units}"),("PhiStarEta","RAW","\phi^*_\eta","NP corr."))'`
 
 #### Configuration
