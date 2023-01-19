@@ -48,7 +48,7 @@ class Task(law.Task):
         return cls._wlcg_file_systems[wlcg_path]
 
     def local_path(self, *path):
-        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,) + path
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,  self.input_file_name,) + path
         return os.path.join(*parts)
 
     def local_target(self, *path):
