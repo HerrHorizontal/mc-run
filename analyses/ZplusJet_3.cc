@@ -38,8 +38,10 @@ namespace Rivet {
       // The final-state particles declared above are clustered using FastJet with
       // the anti-kT algorithm and a jet-radius parameter 0.4
       // neutrinos are excluded from the clustering
-      FastJets jetfs(fs, FastJets::ANTIKT, 0.4, JetAlg::Muons::ALL, JetAlg::Invisibles::NONE);
-      declare(jetfs, "jets");
+      FastJets jetfsak4(fs, FastJets::ANTIKT, 0.4, JetAlg::Muons::ALL, JetAlg::Invisibles::NONE);
+      declare(jetfsak4, "jetsAK4");
+      FastJets jetfsak8(fs, FastJets::ANTIKT, 0.8, JetAlg::Muons::ALL, JetAlg::Invisibles::NONE);
+      declare(jetfsak8, "jetsAK8");
 
       // FinalState of prompt photons and bare muons and electrons in the event
       PromptFinalState photons(Cuts::abspid == PID::PHOTON);
@@ -61,7 +63,6 @@ namespace Rivet {
       // Book histograms
       // specify custom binning
       /// Book histograms with variable bin size
-      book(_h["NJets"], "NJets", 10, 0.5, 10.5);
 
       vector<double> binedges_Ystar = {0.0, 0.5, 1.0, 1.5, 2.0};
       vector<double> binedges_Yboost = {0.0, 0.5, 1.0, 1.5, 2.0};
@@ -69,36 +70,38 @@ namespace Rivet {
       vector<double> binedges_ZPt;
       vector<double> binedges_PhiStarEta;
 
-      for(auto _ystar: binedges_Ystar){
-        for(auto _yboost: binedges_Yboost){
-          if(_ystar + _yboost > 2.) continue;
-          // extreme bin
-          if(_ystar>=2.0 && _yboost<0.5){
-            binedges_ZPt = {25., 30., 40., 50., 70., 90., 110., 150., 250.};
-            binedges_PhiStarEta = {0.4, 0.6, 0.8, 1.0, 5.};
-          }
-          // central bins
-          else if((_ystar<0.5 && _yboost<2.) || (_ystar<1. && _yboost<1.5) || (_ystar<1.5 && _yboost<1.)){
-            binedges_ZPt = {25., 30., 35., 40., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 220., 250., 400., 1000.};
-            binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 4., 5., 7., 10., 15., 20., 30., 50.};
-          }
-          // edge bins
-          else {
-            binedges_ZPt = {25., 30., 35., 40., 45., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 250., 1000.};
-            binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 5., 10., 15., 50.};
-          }
+      for(auto _jettype: {"AK4","AK8"}){
+        book(_h["NJets"+to_string(_jettype)], "NJets"+to_string(_jettype), 10, 0.5, 10.5);
+        for(auto _ystar: binedges_Ystar){
+          for(auto _yboost: binedges_Yboost){
+            if(_ystar + _yboost > 2.) continue;
+            // extreme bin
+            if(_ystar>=2.0 && _yboost<0.5){
+              binedges_ZPt = {25., 30., 40., 50., 70., 90., 110., 150., 250.};
+              binedges_PhiStarEta = {0.4, 0.6, 0.8, 1.0, 5.};
+            }
+            // central bins
+            else if((_ystar<0.5 && _yboost<2.) || (_ystar<1. && _yboost<1.5) || (_ystar<1.5 && _yboost<1.)){
+              binedges_ZPt = {25., 30., 35., 40., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 220., 250., 400., 1000.};
+              binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 4., 5., 7., 10., 15., 20., 30., 50.};
+            }
+            // edge bins
+            else {
+              binedges_ZPt = {25., 30., 35., 40., 45., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 250., 1000.};
+              binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 5., 10., 15., 50.};
+            }
 
-          string _hist_ZPt_ident = "ZPtYs"+to_string(_ystar)+"Yb"+to_string(_yboost);
-          string _hist_ZPt_name = _hist_ZPt_ident;
-          string _hist_PhiStarEta_ident = "PhiStarEtaYs"+to_string(_ystar)+"Yb"+to_string(_yboost);
-          string _hist_PhiStarEta_name = _hist_PhiStarEta_ident;
-          
-          book(_h[_hist_ZPt_ident], _hist_ZPt_name, binedges_ZPt);
-          book(_h[_hist_PhiStarEta_ident], _hist_PhiStarEta_name, binedges_PhiStarEta);
+            string _hist_ZPt_ident = "ZPt"+to_string(_jettype)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+            string _hist_ZPt_name = _hist_ZPt_ident;
+            string _hist_PhiStarEta_ident = "PhiStarEta"+to_string(_jettype)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+            string _hist_PhiStarEta_name = _hist_PhiStarEta_ident;
+            
+            book(_h[_hist_ZPt_ident], _hist_ZPt_name, binedges_ZPt);
+            book(_h[_hist_PhiStarEta_ident], _hist_PhiStarEta_name, binedges_PhiStarEta);
 
+          }
         }
       }
-
     }
 
 
@@ -113,15 +116,25 @@ namespace Rivet {
       if (leptons.size() < 2) vetoEvent;
 
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
-      Jets jets = apply<FastJets>(event, "jets").jetsByPt(Cuts::absrap < 2.4 && Cuts::pT > 10*GeV);
+      map<string,Jets> _jetcollections;
+      _jetcollections["AK4"] = apply<FastJets>(event, "jetsAK4").jetsByPt(Cuts::absrap < 2.4 && Cuts::pT > 10*GeV);
+      _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < 2.4 && Cuts::pT > 10*GeV);
 
-      // Remove all jets within dR < 0.3 of a dressed lepton
-      idiscardIfAnyDeltaRLess(jets, leptons, 0.3);
-      MSG_DEBUG("Jet multiplicity = " << jets.size());
+      // Require at least one jet in any jet collection with a minimum pT 
+      bool jet1pass = false;
 
-      // Require at least one hard jet
-      if (jets.empty()) vetoEvent;      
-      if (jets.at(0).pT() <= 20*GeV) vetoEvent;
+      for (auto jets: _jetcollections) {
+        // Remove all jets within dR < 0.3 of a dressed lepton
+        idiscardIfAnyDeltaRLess(jets.second, leptons, 0.3);
+        MSG_DEBUG("Jet multiplicity = " << jets.second.size());
+
+        // Require at least one hard jet
+        if (!jets.second.empty()) {
+          if (jets.second.at(0).pT() > 20*GeV) jet1pass = true;
+        }
+      }
+
+      if (!jet1pass) vetoEvent;
 
       // Require at least two opposite sign leptons compatible with Z-boson mass and keep the pair closest to Zboson mass
       bool _bosoncandidateexists = false;
@@ -150,50 +163,55 @@ namespace Rivet {
 
       if (!(_bosoncandidateexists)) vetoEvent;
 
-
-      // Fill jet related histograms
-      _h["NJets"] -> fill(jets.size());
-
-      // Fill triple differential histograms
+      // Fill histograms with selected events
       const double rap_Z = (_muon.mom() + _antimuon.mom()).rap();
       const double pT_Z = (_muon.mom() + _antimuon.mom()).pT()/GeV;
 
       const double thetastar = acos(tanh((_antimuon.mom().eta() - _muon.mom().eta())/2));
       const double phistareta = tan(HALFPI - (_antimuon.mom().phi() - _muon.mom().phi())/2)*sin(thetastar);
 
-      const double rap_Jet1 = jets.at(0).rap();  
+      double rap_Jet1 = UndefinedDouble;
 
-      const double rap_star = 0.5 * abs(rap_Z - rap_Jet1);
-      const double rap_boost = 0.5 * abs(rap_Z + rap_Jet1);
+      double rap_star = UndefinedDouble;
+      double rap_boost = UndefinedDouble;
 
       /// Fill signal histograms
       vector<double> binedges_Ystar = {0.5, 1.0, 1.5, 2.0, 2.5};
       vector<double> binedges_Yboost = {0.5, 1.0, 1.5, 2.0, 2.5};
 
-      for(auto _ystar: binedges_Ystar){
-        for(auto _yboost: binedges_Yboost){
-          if(_ystar + _yboost > 3.) continue;
-          if((rap_star < _ystar) && (rap_boost < _yboost)){
+      for (auto jets: _jetcollections) {
+        // Fill jet related histograms
+        _h["NJets"+to_string(jets.first)] -> fill(jets.second.size());
+        
+        rap_Jet1 = jets.second.at(0).rap();
 
-            // The histograms are named with the left bin border
-            _ystar -= 0.5;
-            _yboost -= 0.5;
+        rap_star = 0.5 * abs(rap_Z - rap_Jet1);
+        rap_boost = 0.5 * abs(rap_Z + rap_Jet1);
 
-            string _hist_ZPt_ident = "ZPtYs"+to_string(_ystar)+"Yb"+to_string(_yboost);
-            string _hist_PhiStarEta_ident = "PhiStarEtaYs"+to_string(_ystar)+"Yb"+to_string(_yboost);
+        for(auto _ystar: binedges_Ystar){
+          for(auto _yboost: binedges_Yboost){
+            if(_ystar + _yboost > 3.) continue;
+            if((rap_star < _ystar) && (rap_boost < _yboost)){
 
-            // Fill the histograms
-            _h[_hist_ZPt_ident]->fill(pT_Z);
-            _h[_hist_PhiStarEta_ident]->fill(phistareta); 
+              // The histograms are named with the left bin border
+              _ystar -= 0.5;
+              _yboost -= 0.5;
 
-            // End the loop, when a matching bin has been found
-            goto theEnd;
+              string _hist_ZPt_ident = "ZPt"+to_string(jets.first)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+              string _hist_PhiStarEta_ident = "PhiStarEta"+to_string(jets.first)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+
+              // Fill the histograms
+              _h[_hist_ZPt_ident]->fill(pT_Z);
+              _h[_hist_PhiStarEta_ident]->fill(phistareta); 
+
+              // End the loop, when a matching bin has been found
+              goto theEnd;
+            }
+            else continue;
           }
-          else continue;
         }
+        theEnd:;
       }
-      theEnd:;
-
     }
 
 
@@ -217,6 +235,8 @@ namespace Rivet {
     ///@{
     map<string,Histo1DPtr> _h;
     ///@}
+
+    const double UndefinedDouble = -9999.0;
 
 
   };
