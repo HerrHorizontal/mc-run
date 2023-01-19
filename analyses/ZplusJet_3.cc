@@ -70,8 +70,8 @@ namespace Rivet {
       vector<double> binedges_ZPt;
       vector<double> binedges_PhiStarEta;
 
-      for(auto _jettype: {"AK4","AK8"}){
-        book(_h["NJets"+to_string(_jettype)], "NJets"+to_string(_jettype), 10, 0.5, 10.5);
+      for(string _jettype: {"AK4","AK8"}){
+        book(_h["NJets"+_jettype], "NJets"+_jettype, 10, 0.5, 10.5);
         for(auto _ystar: binedges_Ystar){
           for(auto _yboost: binedges_Yboost){
             if(_ystar + _yboost > 2.) continue;
@@ -91,9 +91,9 @@ namespace Rivet {
               binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 5., 10., 15., 50.};
             }
 
-            string _hist_ZPt_ident = "ZPt"+to_string(_jettype)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+            string _hist_ZPt_ident = "ZPt"+_jettype+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
             string _hist_ZPt_name = _hist_ZPt_ident;
-            string _hist_PhiStarEta_ident = "PhiStarEta"+to_string(_jettype)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+            string _hist_PhiStarEta_ident = "PhiStarEta"+_jettype+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
             string _hist_PhiStarEta_name = _hist_PhiStarEta_ident;
             
             book(_h[_hist_ZPt_ident], _hist_ZPt_name, binedges_ZPt);
@@ -195,7 +195,7 @@ namespace Rivet {
 
       for (auto jets: _jetcollections) {
         // Fill jet related histograms
-        _h["NJets"+to_string(jets.first)] -> fill(jets.second.size());
+        _h["NJets"+jets.first] -> fill(jets.second.size());
         
         rap_Jet1 = jets.second.at(0).rap();
 
@@ -211,8 +211,8 @@ namespace Rivet {
               _ystar -= 0.5;
               _yboost -= 0.5;
 
-              string _hist_ZPt_ident = "ZPt"+to_string(jets.first)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
-              string _hist_PhiStarEta_ident = "PhiStarEta"+to_string(jets.first)+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+              string _hist_ZPt_ident = "ZPt"+jets.first+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+              string _hist_PhiStarEta_ident = "PhiStarEta"+jets.first+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
 
               // Fill the histograms
               _h[_hist_ZPt_ident]->fill(pT_Z);
