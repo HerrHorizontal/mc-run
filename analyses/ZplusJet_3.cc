@@ -112,8 +112,9 @@ namespace Rivet {
       vector<DressedLepton> leptons = apply<DressedLeptons>(event, "leptons").dressedLeptons();
       MSG_DEBUG("Lepton multiplicity = " << leptons.size());
 
-      // discard events with less than two muons
+      // discard events with less than two and more than maximum number of leptons
       if (leptons.size() < 2) vetoEvent;
+      if (leptons.size() > _maxnleptons) vetoEvent;
 
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
       map<string,Jets> _jetcollections;
@@ -255,7 +256,8 @@ namespace Rivet {
     double _minptZ = 25*GeV;
     double _minjet1pt = 20*GeV; // minimum pT of hardest jet
     double _jetpt = 10*GeV; // minimum jet pT
-    double _maxabsjetrap = 2.4; //maximum absolute jet y 
+    double _maxabsjetrap = 2.4; // maximum absolute jet y
+    size_t _maxnleptons = 3; // numeric_limits<size_t>::max(); // maximium number of leptons
     double _maxleptoneta = 2.4; // maximum absolute lepton eta
     double _minleptonpt = 29*GeV; // minimum lepton pT
     ///@}
