@@ -123,6 +123,8 @@ namespace Rivet {
       // Require at least one jet in any jet collection with a minimum pT 
       bool jet1pass = false;
 
+      set<string> _jetcollectionstoerase;
+
       for (auto jets: _jetcollections) {
         // Remove all jets within dR < 0.3 of a dressed lepton
         idiscardIfAnyDeltaRLess(jets.second, leptons, 0.3);
@@ -130,11 +132,22 @@ namespace Rivet {
 
         // Require at least one hard jet
         if (!jets.second.empty()) {
-          if (jets.second.at(0).pT() > 20*GeV) jet1pass = true;
+          if (jets.second.at(0).pT() > 20*GeV) {
+            jet1pass = true;
+          } else {
+            _jetcollectionstoerase.insert(jets.first);
+          }
+        }
+        else {
+            _jetcollectionstoerase.insert(jets.first);
         }
       }
 
       if (!jet1pass) vetoEvent;
+
+      for (auto c: _jetcollectionstoerase) {
+        _jetcollections.erase(c);
+      }
 
       // Require at least two opposite sign leptons compatible with Z-boson mass and keep the pair closest to Zboson mass
       bool _bosoncandidateexists = false;
