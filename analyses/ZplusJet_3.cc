@@ -49,7 +49,7 @@ namespace Rivet {
 
       // Dress the prompt bare leptons with prompt photons within dR < 0.1,
       // and apply some fiducial cuts on the dressed leptons
-      Cut lepton_cuts = Cuts::abseta < 2.4 && Cuts::pT > 25*GeV;
+      Cut lepton_cuts = Cuts::abseta < _maxleptoneta && Cuts::pT > _minleptonpt;
       DressedLeptons dressed_leps(photons, bare_leps, 0.1, lepton_cuts);
       declare(dressed_leps, "leptons");
 
@@ -117,8 +117,8 @@ namespace Rivet {
 
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
       map<string,Jets> _jetcollections;
-      _jetcollections["AK4"] = apply<FastJets>(event, "jetsAK4").jetsByPt(Cuts::absrap < 2.4 && Cuts::pT > 10*GeV);
-      _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < 2.4 && Cuts::pT > 10*GeV);
+      _jetcollections["AK4"] = apply<FastJets>(event, "jetsAK4").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
+      _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
 
       // Require at least one jet in any jet collection with a minimum pT 
       bool jet1pass = false;
@@ -132,7 +132,7 @@ namespace Rivet {
 
         // Require at least one hard jet
         if (!jets.second.empty()) {
-          if (jets.second.at(0).pT() > 20*GeV) {
+          if (jets.second.at(0).pT() > _minjet1pt) {
             jet1pass = true;
           } else {
             _jetcollectionstoerase.insert(jets.first);
@@ -151,7 +151,6 @@ namespace Rivet {
 
       // Require at least two opposite sign leptons compatible with Z-boson mass and keep the pair closest to Zboson mass
       bool _bosoncandidateexists = false;
-      double _massdiff = 20*GeV;
       DressedLepton _muon = leptons.at(0);
       DressedLepton _antimuon = leptons.at(0);
 
@@ -179,6 +178,7 @@ namespace Rivet {
       // Fill histograms with selected events
       const double rap_Z = (_muon.mom() + _antimuon.mom()).rap();
       const double pT_Z = (_muon.mom() + _antimuon.mom()).pT()/GeV;
+      if (pT_Z <= _minptZ) vetoEvent;
 
       const double thetastar = acos(tanh((_antimuon.mom().eta() - _muon.mom().eta())/2));
       const double phistareta = tan(HALFPI - (_antimuon.mom().phi() - _muon.mom().phi())/2)*sin(thetastar);
@@ -247,6 +247,17 @@ namespace Rivet {
     /// @name Histograms
     ///@{
     map<string,Histo1DPtr> _h;
+    ///@}
+
+    /// @name Selections
+    ///@{
+    double _massdiff = 20*GeV; // mass window around Z-boson PDG mass
+    double _minptZ = 25*GeV;
+    double _minjet1pt = 20*GeV; // minimum pT of hardest jet
+    double _jetpt = 10*GeV; // minimum jet pT
+    double _maxabsjetrap = 2.4; //maximum absolute jet y 
+    double _maxleptoneta = 2.4; // maximum absolute lepton eta
+    double _minleptonpt = 29*GeV; // minimum lepton pT
     ///@}
 
     const double UndefinedDouble = -9999.0;
