@@ -179,6 +179,7 @@ namespace Rivet {
             _ystar -= 0.5;
             _yboost -= 0.5;
 
+            MSG_DEBUG("Selected y*-yb bin: Ys" << _ystar << "Yb" << _yboost);
             string _hist_ZPt_ident = "ZPtYs"+to_string(_ystar)+"Yb"+to_string(_yboost);
             string _hist_PhiStarEta_ident = "PhiStarEtaYs"+to_string(_ystar)+"Yb"+to_string(_yboost);
 
