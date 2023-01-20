@@ -145,7 +145,7 @@ namespace Rivet {
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
       map<string,Jets> _jetcollections;
       _jetcollections["AK4"] = apply<FastJets>(event, "jetsAK4").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
-      // _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
+      _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
 
       // Require at least one jet in any jet collection with a minimum pT 
       bool jet1pass = false;
