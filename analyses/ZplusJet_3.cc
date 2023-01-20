@@ -137,21 +137,29 @@ namespace Rivet {
       if (leptons.size() < 2) vetoEvent;
       if (leptons.size() > _maxnleptons) vetoEvent;
       MSG_DEBUG("Found " << leptons.size() << " leptons");
+      for (auto lep: leptons) {
+        MSG_DEBUG("\tlepton pt: " << lep.pT());
+        MSG_DEBUG("\tlepton y: " << lep.rap());
+      }
 
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
       map<string,Jets> _jetcollections;
       _jetcollections["AK4"] = apply<FastJets>(event, "jetsAK4").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
-      _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
+      // _jetcollections["AK8"] = apply<FastJets>(event, "jetsAK8").jetsByPt(Cuts::absrap < _maxabsjetrap && Cuts::pT > _jetpt);
 
       // Require at least one jet in any jet collection with a minimum pT 
       bool jet1pass = false;
 
       set<string> _jetcollectionstoerase;
 
-      for (auto jets: _jetcollections) {
+      for (auto& jets: _jetcollections) {
         // Remove all jets within dR < 0.3 of a dressed lepton
         idiscardIfAnyDeltaRLess(jets.second, leptons, 0.3);
         MSG_DEBUG("After lepton cleaning jet multiplicity " << jets.first << "= " << jets.second.size());
+        for (auto jet: jets.second) {
+          MSG_DEBUG("\tjet pt: " << jet.pT()/GeV);
+          MSG_DEBUG("\tjet y: " << jet.rap());
+        }
 
         // Require at least one hard jet
         if (!jets.second.empty()) {
@@ -180,46 +188,43 @@ namespace Rivet {
       }
 
       // Require at least two opposite sign leptons compatible with Z-boson mass and keep the pair closest to Zboson mass
-      bool _bosoncandidateexists = false;
-      DressedLepton _muon = leptons.at(0);
-      DressedLepton _antimuon = leptons.at(0);
+      bool bosoncandidateexists = false;
+      double massdiff = _massdiff;
+      DressedLepton muon = leptons.at(0);
+      DressedLepton antimuon = leptons.at(0);
 
       for (unsigned int it = 1; it < leptons.size(); ++it) {
         for (unsigned int jt = 0; jt < it; ++jt) {
-          double _candidatemass = (leptons.at(it).mom() + leptons.at(jt).mom()).mass();
-          if (leptons.at(it).pid() == -leptons.at(jt).pid() && abs(_candidatemass - 91.1876*GeV) < _massdiff) {
-            _bosoncandidateexists = true;
-            _massdiff = abs(_candidatemass - 91.1876*GeV);
+          double candidatemass = (leptons.at(it).mom() + leptons.at(jt).mom()).mass();
+          if (leptons.at(it).pid() == -leptons.at(jt).pid() && abs(candidatemass - 91.1876*GeV) < massdiff) {
+            bosoncandidateexists = true;
+            massdiff = abs(candidatemass - 91.1876*GeV);
             if (leptons.at(it).pid() > 0) {
-              _muon = leptons.at(it);
-              _antimuon = leptons.at(jt);
+              muon = leptons.at(it);
+              antimuon = leptons.at(jt);
             }
             else {
-              _muon = leptons.at(jt);
-              _antimuon = leptons.at(it);
+              muon = leptons.at(jt);
+              antimuon = leptons.at(it);
             }
           }
           else continue;
         }
       }
 
-      if (!(_bosoncandidateexists)) vetoEvent;
-      MSG_DEBUG("Found Z-boson candidate with mass " << (_muon.mom() + _antimuon.mom()).mass()/GeV << "GeV");
+      if (!(bosoncandidateexists)) vetoEvent;
+      MSG_DEBUG("Found Z-boson candidate with mass " << (muon.mom() + antimuon.mom()).mass()/GeV << "GeV");
 
       // Fill histograms with selected events
-      const double rap_Z = (_muon.mom() + _antimuon.mom()).rap();
-      const double pT_Z = (_muon.mom() + _antimuon.mom()).pT()/GeV;
+      const double rap_Z = (muon.mom() + antimuon.mom()).rap();
+      const double pT_Z = (muon.mom() + antimuon.mom()).pT()/GeV;
       if (pT_Z <= _minptZ) vetoEvent;
       MSG_DEBUG("\tZ-boson pt: " << pT_Z);
+      MSG_DEBUG("\tZ-boson y: " << rap_Z);
 
-      const double thetastar = acos(tanh((_antimuon.mom().eta() - _muon.mom().eta())/2));
-      const double phistareta = tan(HALFPI - (_antimuon.mom().phi() - _muon.mom().phi())/2)*sin(thetastar);
+      const double thetastar = acos(tanh((antimuon.mom().eta() - muon.mom().eta())/2));
+      const double phistareta = tan(HALFPI - (antimuon.mom().phi() - muon.mom().phi())/2)*sin(thetastar);
       MSG_DEBUG("\tphi*eta: " << phistareta);
-
-      double rap_Jet1 = UndefinedDouble;
-
-      double rap_star = UndefinedDouble;
-      double rap_boost = UndefinedDouble;
 
       /// Fill signal histograms
       vector<double> binedges_Ystar = {0.5, 1.0, 1.5, 2.0, 2.5};
@@ -229,10 +234,10 @@ namespace Rivet {
         // Fill jet related histograms
         _h["NJets"+jets.first] -> fill(jets.second.size());
         
-        rap_Jet1 = jets.second.at(0).rap();
+        double rap_Jet1 = jets.second.at(0).rap();
 
-        rap_star = 0.5 * abs(rap_Z - rap_Jet1);
-        rap_boost = 0.5 * abs(rap_Z + rap_Jet1);
+        double rap_star = 0.5 * abs(rap_Z - rap_Jet1);
+        double rap_boost = 0.5 * abs(rap_Z + rap_Jet1);
 
         for(auto _ystar: binedges_Ystar){
           for(auto _yboost: binedges_Yboost){
@@ -240,18 +245,16 @@ namespace Rivet {
             if((rap_star < _ystar) && (rap_boost < _yboost)){
 
               // The histograms are named with the left bin border
-              _ystar -= 0.5;
-              _yboost -= 0.5;
+              double _ystar_label = _ystar - 0.5;
+              double _yboost_label = _yboost - 0.5;
 
-              MSG_DEBUG("Selected y*-yb bin: Ys" << _ystar << "Yb" << _yboost);
-              string _hist_ZPt_ident = "ZPt"+jets.first+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
-              MSG_DEBUG("\tFill event into " << _hist_ZPt_ident);
-              string _hist_PhiStarEta_ident = "PhiStarEta"+jets.first+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
-              MSG_DEBUG("\tFill event into " << _hist_PhiStarEta_ident);
+              MSG_DEBUG("Selected y*-yb bin: Ys" << _ystar_label << "Yb" << _yboost_label);
+              string _hist_ZPt_ident = "ZPt"+jets.first+"Ys"+to_string(_ystar_label)+"Yb"+to_string(_yboost_label);
+              string _hist_PhiStarEta_ident = "PhiStarEta"+jets.first+"Ys"+to_string(_ystar_label)+"Yb"+to_string(_yboost_label);
 
               // Fill the histograms
-              _h[_hist_ZPt_ident]->fill(pT_Z, 1.);
-              _h[_hist_PhiStarEta_ident]->fill(phistareta, 1.); 
+              _h[_hist_ZPt_ident]->fill(pT_Z);
+              _h[_hist_PhiStarEta_ident]->fill(phistareta); 
 
               // End the loop, when a matching bin has been found
               goto theEnd;
@@ -287,14 +290,14 @@ namespace Rivet {
 
     /// @name Selections
     ///@{
-    double _massdiff = 20*GeV; // mass window around Z-boson PDG mass
-    double _minptZ = 25*GeV;
-    double _minjet1pt = 20*GeV; // minimum pT of hardest jet
-    double _jetpt = 10*GeV; // minimum jet pT
-    double _maxabsjetrap = 2.4; // maximum absolute jet y
-    size_t _maxnleptons = numeric_limits<size_t>::max(); // maximium number of leptons
-    double _maxleptoneta = 2.4; // maximum absolute lepton eta
-    double _minleptonpt = 29*GeV; // minimum lepton pT
+    const double _massdiff = 20*GeV; // mass window around Z-boson PDG mass
+    const double _minptZ = 25*GeV;
+    const double _minjet1pt = 20*GeV; // minimum pT of hardest jet
+    const double _jetpt = 10*GeV; // minimum jet pT
+    const double _maxabsjetrap = 2.4; // maximum absolute jet y
+    const size_t _maxnleptons = numeric_limits<size_t>::max(); // maximium number of leptons
+    const double _maxleptoneta = 2.4; // maximum absolute lepton eta
+    const double _minleptonpt = 25*GeV; // minimum lepton pT
     ///@}
 
     const double UndefinedDouble = -9999.0;
