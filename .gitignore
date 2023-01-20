@@ -1,5 +1,6 @@
 # user generated logs and temporary outputs
 data/
+rivet-plots/
 
 # Herwig outputs
 *.run
