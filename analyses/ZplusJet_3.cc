@@ -26,6 +26,18 @@ namespace Rivet {
     /// Book histograms and initialise projections before the run
     void init() {
 
+      MSG_INFO(
+        "Analysis cuts: \n" 
+        << "\tminimum jet pt for jet definition: " << _jetpt << "\n"
+        << "\tminimum jet1 pt: " << _minjet1pt << "\n"
+        << "\tjet rapidity cut: " << _maxabsjetrap << "\n"
+        << "\tmaximum number of leptons: " << _maxnleptons << "\n"
+        << "\tminimum lepton pt: " << _minleptonpt << "\n"
+        << "\tlepton eta cut: " << _maxleptoneta << "\n"
+        << "\tZ-mass window +/-: " << _massdiff << "\n"
+        << "\tminimum Z pt: " << _minptZ << "\n"
+      );
+
       // Initialise and register projections
 
       // The basic final-state projection:
@@ -71,24 +83,24 @@ namespace Rivet {
       vector<double> binedges_PhiStarEta;
 
       for(string _jettype: {"AK4","AK8"}){
-        book(_h["NJets"+_jettype], "NJets"+_jettype, 10, 0.5, 10.5);
+        book(_h["NJets"+_jettype], "NJets"+_jettype, 11, -0.5, 10.5);
         for(auto _ystar: binedges_Ystar){
           for(auto _yboost: binedges_Yboost){
             if(_ystar + _yboost > 2.) continue;
             // extreme bin
             if(_ystar>=2.0 && _yboost<0.5){
               binedges_ZPt = {25., 30., 40., 50., 70., 90., 110., 150., 250.};
-              binedges_PhiStarEta = {0.4, 0.6, 0.8, 1.0, 5.};
+              binedges_PhiStarEta = {0.2, 0.4, 0.6, 0.8, 1.0, 5.};
             }
             // central bins
             else if((_ystar<0.5 && _yboost<2.) || (_ystar<1. && _yboost<1.5) || (_ystar<1.5 && _yboost<1.)){
               binedges_ZPt = {25., 30., 35., 40., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 220., 250., 400., 1000.};
-              binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 4., 5., 7., 10., 15., 20., 30., 50.};
+              binedges_PhiStarEta = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 4., 5., 7., 10., 15., 20., 30., 50.};
             }
             // edge bins
             else {
               binedges_ZPt = {25., 30., 35., 40., 45., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 250., 1000.};
-              binedges_PhiStarEta = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 5., 10., 15., 50.};
+              binedges_PhiStarEta = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 5., 10., 15., 50.};
             }
 
             string _hist_ZPt_ident = "ZPt"+_jettype+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
@@ -102,6 +114,16 @@ namespace Rivet {
           }
         }
       }
+
+      MSG_INFO(
+        "Booked " << _h.size() << " histograms"
+      );
+      if (getLog().isActive(Log::DEBUG)) {
+        MSG_DEBUG("Histograms:");
+        for (auto h: _h) {
+          MSG_DEBUG("\t" << h.first);
+        }
+      }
     }
 
 
@@ -110,11 +132,11 @@ namespace Rivet {
 
       // Retrieve dressed leptons, sorted by pT
       vector<DressedLepton> leptons = apply<DressedLeptons>(event, "leptons").dressedLeptons();
-      MSG_DEBUG("Lepton multiplicity = " << leptons.size());
 
       // discard events with less than two and more than maximum number of leptons
       if (leptons.size() < 2) vetoEvent;
       if (leptons.size() > _maxnleptons) vetoEvent;
+      MSG_DEBUG("Found " << leptons.size() << " leptons");
 
       // Retrieve clustered jets, sorted by pT, with a minimum pT cut
       map<string,Jets> _jetcollections;
@@ -129,11 +151,12 @@ namespace Rivet {
       for (auto jets: _jetcollections) {
         // Remove all jets within dR < 0.3 of a dressed lepton
         idiscardIfAnyDeltaRLess(jets.second, leptons, 0.3);
-        MSG_DEBUG("Jet multiplicity = " << jets.second.size());
+        MSG_DEBUG("After lepton cleaning jet multiplicity " << jets.first << "= " << jets.second.size());
 
         // Require at least one hard jet
         if (!jets.second.empty()) {
           if (jets.second.at(0).pT() > _minjet1pt) {
+            MSG_DEBUG("Hardest " << jets.first << " jet pt: " << jets.second.at(0).pT());
             jet1pass = true;
           } else {
             _jetcollectionstoerase.insert(jets.first);
@@ -144,10 +167,16 @@ namespace Rivet {
         }
       }
 
-      if (!jet1pass) vetoEvent;
+      if (!(jet1pass)) vetoEvent;
 
       for (auto c: _jetcollectionstoerase) {
         _jetcollections.erase(c);
+      }
+      MSG_DEBUG("Remaining jet collections:");
+      if (getLog().isActive(Log::DEBUG)) {
+        for (auto jc: _jetcollections) {
+          MSG_DEBUG("\t" << jc.first);
+        }
       }
 
       // Require at least two opposite sign leptons compatible with Z-boson mass and keep the pair closest to Zboson mass
@@ -175,14 +204,17 @@ namespace Rivet {
       }
 
       if (!(_bosoncandidateexists)) vetoEvent;
+      MSG_DEBUG("Found Z-boson candidate with mass " << (_muon.mom() + _antimuon.mom()).mass()/GeV << "GeV");
 
       // Fill histograms with selected events
       const double rap_Z = (_muon.mom() + _antimuon.mom()).rap();
       const double pT_Z = (_muon.mom() + _antimuon.mom()).pT()/GeV;
       if (pT_Z <= _minptZ) vetoEvent;
+      MSG_DEBUG("\tZ-boson pt: " << pT_Z);
 
       const double thetastar = acos(tanh((_antimuon.mom().eta() - _muon.mom().eta())/2));
       const double phistareta = tan(HALFPI - (_antimuon.mom().phi() - _muon.mom().phi())/2)*sin(thetastar);
+      MSG_DEBUG("\tphi*eta: " << phistareta);
 
       double rap_Jet1 = UndefinedDouble;
 
@@ -211,12 +243,15 @@ namespace Rivet {
               _ystar -= 0.5;
               _yboost -= 0.5;
 
+              MSG_DEBUG("Selected y*-yb bin: Ys" << _ystar << "Yb" << _yboost);
               string _hist_ZPt_ident = "ZPt"+jets.first+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+              MSG_DEBUG("\tFill event into " << _hist_ZPt_ident);
               string _hist_PhiStarEta_ident = "PhiStarEta"+jets.first+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
+              MSG_DEBUG("\tFill event into " << _hist_PhiStarEta_ident);
 
               // Fill the histograms
-              _h[_hist_ZPt_ident]->fill(pT_Z);
-              _h[_hist_PhiStarEta_ident]->fill(phistareta); 
+              _h[_hist_ZPt_ident]->fill(pT_Z, 1.);
+              _h[_hist_PhiStarEta_ident]->fill(phistareta, 1.); 
 
               // End the loop, when a matching bin has been found
               goto theEnd;
@@ -257,7 +292,7 @@ namespace Rivet {
     double _minjet1pt = 20*GeV; // minimum pT of hardest jet
     double _jetpt = 10*GeV; // minimum jet pT
     double _maxabsjetrap = 2.4; // maximum absolute jet y
-    size_t _maxnleptons = 3; // numeric_limits<size_t>::max(); // maximium number of leptons
+    size_t _maxnleptons = numeric_limits<size_t>::max(); // maximium number of leptons
     double _maxleptoneta = 2.4; // maximum absolute lepton eta
     double _minleptonpt = 29*GeV; // minimum lepton pT
     ///@}
