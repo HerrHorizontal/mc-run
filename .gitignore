@@ -18,6 +18,7 @@ Herwig*/*
 
 # compilation outputs
 *.pyc
+*.so
 
 # Law outputs
 logs/*
