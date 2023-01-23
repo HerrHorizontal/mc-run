@@ -2,6 +2,9 @@
 data/
 rivet-plots/
 
+# law/luigi logs
+tmp/
+
 # Herwig outputs
 *.run
 *.log
