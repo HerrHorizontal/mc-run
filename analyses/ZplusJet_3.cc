@@ -177,7 +177,7 @@ namespace Rivet {
 
       if (!(jet1pass)) vetoEvent;
 
-      for (auto c: _jetcollectionstoerase) {
+      for (string c: _jetcollectionstoerase) {
         _jetcollections.erase(c);
       }
       MSG_DEBUG("Remaining jet collections:");
