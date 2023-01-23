@@ -181,18 +181,20 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
         config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
         config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
 
-        prevdir = os.getcwd()
-        os.system('cd $ANALYSIS_PATH')
-        if os.path.isfile('generation.tar.gz'):
-            from shutil import move
-            move('generation.tar.gz', 'old_generation.tar.gz')
-            print("Tarball already exists! Preparing a new one!")
-        os.system(
-            "tar --exclude=*.git* "
-            + "-czf generation.tar.gz "
-            + "generation analyses inputfiles setup luigi.cfg law.cfg luigi law six enum34-1.1.10"
-        )
-        os.chdir(prevdir)
+        if self.branch == -1:
+            prevdir = os.getcwd()
+            os.system('cd $ANALYSIS_PATH')
+            if not os.path.isfile('generation.tar.gz'):
+                # if os.path.isfile('generation.tar.gz'):
+                #     from shutil import move
+                    # move('generation.tar.gz', 'old_generation.tar.gz')
+                    # print("Tarball already exists! Preparing a new one!")
+                os.system(
+                    "tar --exclude=*.git* "
+                    + "-czf generation.tar.gz "
+                    + "generation analyses inputfiles setup luigi.cfg law.cfg luigi law six enum34-1.1.10"
+                )
+            os.chdir(prevdir)
 
         config.input_files["TARBALL"] = law.util.rel_path(__file__, '..', '../generation.tar.gz')
 
