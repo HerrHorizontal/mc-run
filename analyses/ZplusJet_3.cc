@@ -154,7 +154,7 @@ namespace Rivet {
 
       for (auto& jets: _jetcollections) {
         // Remove all jets within dR < 0.3 of a dressed lepton
-        idiscardIfAnyDeltaRLess(jets.second, leptons, 0.3);
+        idiscardIfAnyDeltaRLess(jets.second, leptons, _lepCleaningDeltaR);
         MSG_DEBUG("After lepton cleaning jet multiplicity " << jets.first << "= " << jets.second.size());
         for (auto jet: jets.second) {
           MSG_DEBUG("\tjet pt: " << jet.pT()/GeV);
@@ -298,6 +298,7 @@ namespace Rivet {
     const size_t _maxnleptons = numeric_limits<size_t>::max(); // maximium number of leptons
     const double _maxleptoneta = 2.4; // maximum absolute lepton eta
     const double _minleptonpt = 25*GeV; // minimum lepton pT
+    const double _lepCleaningDeltaR = 0.3; // DeltaR between leptons and jets to clean former from latter
     ///@}
 
     const double UndefinedDouble = -9999.0;
