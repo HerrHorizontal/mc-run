@@ -271,7 +271,7 @@ namespace Rivet {
     void finalize() {
 
       /// Normalise histograms
-      const double sf = crossSection()/picobarn/sumW();
+      const double sf = crossSection()/picobarn/sumOfWeights();
       // const double sf = 1.0;
       
       for(auto const& _hist : _h){
