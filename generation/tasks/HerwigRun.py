@@ -150,9 +150,9 @@ class HerwigRun(Task, HTCondorWorkflow):
                     _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
                     _setupfile_suffix = "-" + setupfile_path
                 else:
-                    raise FileNotFoundError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+                    raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
             else:
-                raise FileNotFoundError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+                raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
@@ -206,7 +206,7 @@ class HerwigRun(Task, HTCondorWorkflow):
                 ))
         else:
             os.system("ls -l")
-            raise FileNotFoundError("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
+            raise IOError("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
 
         output_file = os.path.abspath(output_file)
 
@@ -214,7 +214,7 @@ class HerwigRun(Task, HTCondorWorkflow):
             # copy the compressed outputs to save them
             output.copy_from_local(output_file)
         else:
-            raise FileNotFoundError("Output file '{}' doesn't exist! Abort!".format(output_file))
+            raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
 
         print("=======================================================")

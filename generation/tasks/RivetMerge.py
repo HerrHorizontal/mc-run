@@ -87,7 +87,7 @@ class RivetMerge(Task):
         
         run_command(_rivet_exec+_rivet_args+_rivet_in, env=rivet_env)
         if not os.path.exists(output_file):
-            raise FileNotFoundError("Could not find output file {}!".format(output_file))
+            raise IOError("Could not find output file {}!".format(output_file))
         
         print("-------------------------------------------------------")
 
@@ -153,7 +153,7 @@ class RivetMerge(Task):
                 for _outfile in final_input_files:
                     os.remove(_outfile)
             else:
-                raise FileNotFoundError("Could not find output file {}!".format(_output_file))
+                raise IOError("Could not find output file {}!".format(_output_file))
         except Exception as e:
             self.output().remove()
             raise e

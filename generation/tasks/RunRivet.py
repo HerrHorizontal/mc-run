@@ -150,7 +150,7 @@ class RunRivet(Task, HTCondorWorkflow):
         if os.path.exists(_output_file):
             output.copy_from_local(_output_file)
         else:
-            raise FileNotFoundError("Could not find output file {}!".format(_output_file))
+            raise IOError("Could not find output file {}!".format(_output_file))
 
 
         print("=======================================================")

@@ -25,7 +25,7 @@ def valid_yoda_file(param):
 
     Raises:
         argparse.ArgumentTypeError: Wrong file extension
-        FileNotFoundError: No such file
+        IOError: No such file
 
     Returns:
         AnyStr@abspath: 
@@ -34,7 +34,7 @@ def valid_yoda_file(param):
     if ext.lower() not in ('.yoda'):
         raise argparse.ArgumentTypeError('File must have a yoda extension')
     if not os.path.exists(param):
-        raise FileNotFoundError('{}: No such file'.format(param))
+        raise IOError('{}: No such file'.format(param))
     return os.path.abspath(param)
 
 

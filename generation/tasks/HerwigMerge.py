@@ -81,7 +81,7 @@ class HerwigMerge(Task):
             os.remove(output_file)
             os.remove(input_file)
         else:
-            raise FileNotFoundError("Output file '{}' doesn't exist! Abort!".format(output_file))
+            raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
         print("=======================================================")
         

@@ -103,7 +103,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
                 )
             )
         else:
-            raise FileNotFoundError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
+            raise IOError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
 
         output_file = os.path.abspath("Herwig-int.tar.gz")
         if os.path.exists(output_file):
