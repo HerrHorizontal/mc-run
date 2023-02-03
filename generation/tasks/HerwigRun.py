@@ -32,9 +32,11 @@ class HerwigRun(Task, HTCondorWorkflow):
         description="Start seed for random generation of individual job seeds. Currently not used!"
     )
     number_of_jobs = luigi.IntParameter(
+        default = 1,
         description="Number of individual generation jobs. Each will generate statistically independent events."
     )
     events_per_job = luigi.IntParameter(
+        default = 10000,
         description="Number of events generated in each job."
     )
     setupfile = luigi.Parameter(
