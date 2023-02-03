@@ -5,6 +5,10 @@ from subprocess import PIPE
 from law.util import interruptable_popen
 
 
+# source_env = dict()
+# for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH"):
+#     source_env[var]=os.environ[var]
+
 def _convert_env_to_dict(env):
     my_env = {}
     for line in env.splitlines():
@@ -31,7 +35,8 @@ def set_environment_variables(source_script_path):
     code, out, error = interruptable_popen("source {}; env".format(source_script_path),
                                             shell=True, 
                                             stdout=PIPE, 
-                                            stderr=PIPE
+                                            stderr=PIPE,
+                                            # env=source_env
                                             )
     if code != 0:
         raise RuntimeError(
@@ -71,6 +76,10 @@ def run_command(executable, env, *args, **kwargs):
     )
     # if successful return merged YODA file and plots
     if(code != 0):
+        print('Env:\n')
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(env)
         raise RuntimeError(
             'Command {command} returned non-zero exit status {code}!\n'.format(command=executable, code=code)
             + '\tError:\n{}\n'.format(error)
@@ -78,4 +87,5 @@ def run_command(executable, env, *args, **kwargs):
         )
     else:
         print('Output:\n{}'.format(out))
+        print('Error:\n{}'.format(error))
     return code, out, error
