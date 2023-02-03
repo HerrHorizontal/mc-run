@@ -51,7 +51,7 @@ set MergingFactory:OrderInAlphaEW 2
 
 do MergingFactory:Process p p -> mu+ mu- [ j j j ]
 
-set MergingFactory:NLOProcesses 3
+set MergingFactory:NLOProcesses 2
 
 # Set the merging scale deviding the parton shower
 # from the matrix element region in phase space.
