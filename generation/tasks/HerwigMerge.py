@@ -72,14 +72,15 @@ class HerwigMerge(Task):
             raise e
 
         output_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-cache.tar.gz"))
-        os.system('tar -czf {OUTPUT_FILE} Herwig-cache {INPUT_FILE_NAME}.run'.format(
+        run_file = os.path.abspath("{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=input_file))
+        os.system('tar -czf {OUTPUT_FILE} Herwig-cache {RUN_FILE}'.format(
             OUTPUT_FILE=output_file,
-            INPUT_FILE_NAME=input_file
+            RUN_FILE=os.path.relpath(run_file)
         ))
         if os.path.exists(output_file):
             output.copy_from_local(output_file)
             os.remove(output_file)
-            os.remove(input_file)
+            os.remove(run_file)
         else:
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
