@@ -116,7 +116,7 @@ class DeriveNPCorr(Task):
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
             output_yoda = os.path.abspath(output_yoda)
             if not os.path.exists(output_yoda):
-                raise FileNotFoundError("Could not find output file {}!".format(output_yoda))
+                raise IOError("Could not find output file {}!".format(output_yoda))
             output.copy_from_local(output_yoda)
             os.remove(output_yoda)
         except RuntimeError as e:
