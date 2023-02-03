@@ -2,7 +2,7 @@
 
 import luigi
 from luigi.util import inherits
-import os
+import os, shutil
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, herwig_env
@@ -24,7 +24,7 @@ class HerwigBuild(Task):
                 Should not be greater than the number of subprocesses."
     )
     config_path = luigi.Parameter(
-        significant=False,
+        significant=True,
         default=os.path.join("$ANALYSIS_PATH","inputfiles"),
         description="Directory where the Herwig config file resides."
     )
@@ -35,7 +35,7 @@ class HerwigBuild(Task):
 
     def run(self):
         # data
-        _my_input_file_name = str(self.input_file_name)
+        input_file_name = str(self.input_file_name)
         _max_integration_jobs = str(self.integration_maxjobs)
         _config_path = str(self.config_path)
 
@@ -43,13 +43,14 @@ class HerwigBuild(Task):
             _my_input_file = os.path.join(
                 "$ANALYSIS_PATH",
                 "inputfiles",
-                "{}.in".format(self.input_file_name)
+                "{}.in".format(input_file_name)
             )
         else:
             _my_input_file = os.path.join(
                 _config_path,
-                "{}.in".format(self.input_file_name)
+                "{}.in".format(input_file_name)
             )
+        _my_input_file = os.path.abspath(os.path.expandvars(_my_input_file))
 
         # ensure that the output directory exists
         output = self.output()
@@ -77,24 +78,28 @@ class HerwigBuild(Task):
 
         cache_dir = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-cache"))
         output_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-build.tar.gz"))
+        run_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/{}.run".format(input_file_name)))
 
-        if(os.path.exists(cache_dir)):
+        if(os.path.exists(cache_dir) and os.path.isfile(run_file)):
+            print("Checking {} ...".format(cache_dir))
             if not os.listdir(cache_dir):
                 raise LookupError("Herwig cache directory {} is empty!".format(cache_dir))
+            print("Tarring {0} and {1} into {2} ...".format(cache_dir,run_file,output_file))
             os.system('tar -czf {OUTPUT_FILE} {HERWIGCACHE} {INPUT_FILE_NAME}.run'.format(
                 OUTPUT_FILE=output_file,
-                HERWIGCACHE = cache_dir,
-                INPUT_FILE_NAME=_my_input_file_name
+                HERWIGCACHE = os.path.relpath(cache_dir),
+                INPUT_FILE_NAME=input_file_name
             ))
         else:
-            raise FileNotFoundError("Something went wrong, Herwig-cache doesn't exist! Abort!")
+            raise IOError("Something went wrong, Herwig-cache or run-file doesn't exist! Abort!")
 
         if os.path.exists(output_file):
             output.copy_from_local(output_file)
             os.remove(output_file)
-            os.remove(_my_input_file_name)
+            os.remove(run_file)
+            shutil.rmtree(cache_dir)
         else:
-            raise FileNotFoundError("Could not find output file {}!".format(output_file))
+            raise IOError("Could not find output file {}!".format(output_file))
 
         print("=======================================================")
 
