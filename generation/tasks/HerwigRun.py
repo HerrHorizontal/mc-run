@@ -142,19 +142,22 @@ class HerwigRun(Task, HTCondorWorkflow):
         _setupfile_suffix = ""
         if all(self.setupfile != defaultval for defaultval in [None, "None"]):
             setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"inputfiles","setupfiles",str(self.setupfile))
+        else:
+            print("No setupfile given. Trying to identify setupfile via mc_setting ...")
+            setupfile_path = os.path.join(os.path.expandvars("$ANALYSIS_PATH"),"inputfiles","setupfiles","{}.txt".format(str(self.mc_setting)))
+        if os.path.exists(setupfile_path):
+            print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
+            # for python3 the next two lines can be merged
+            shutil.copy(setupfile_path, work_dir)
+            setupfile_path = os.path.basename(setupfile_path)
+            # end of merge
             if os.path.exists(setupfile_path):
-                print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
-                # for python3 the next two lines can be merged
-                shutil.copy(setupfile_path, work_dir)
-                setupfile_path = os.path.basename(setupfile_path)
-                # end of merge
-                if os.path.exists(setupfile_path):
-                    _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
-                    _setupfile_suffix = "-" + setupfile_path
-                else:
-                    raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+                _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
+                _setupfile_suffix = "-" + setupfile_path
             else:
                 raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+        else:
+            raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
