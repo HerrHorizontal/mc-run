@@ -8,7 +8,7 @@ RatioPlotMode=default
 RatioPlotYMin=0.8
 RatioPlotYMax=1.2
 RatioPlotYLabel=Ratio
-NormalizeToIntegral=1
+NormalizeToIntegral=0
 # END PLOT
 
 # BEGIN HISTOGRAM /ZplusJet_3/*
