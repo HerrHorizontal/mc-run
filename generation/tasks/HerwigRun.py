@@ -41,7 +41,8 @@ class HerwigRun(Task, HTCondorWorkflow):
     )
     setupfile = luigi.Parameter(
         default=None,
-        description="Setupfile to adjust Herwig parameters in the event generation. \
+        description="Overwrite setupfile to adjust Herwig parameters in the event generation. \
+                Default setupfile will be chosen according to mc_setting. \
                 Those parameters should not involve the hard process generation. \
                 Setupfiles have to be stored in `inputfiles/setupfiles/`."
     )
@@ -201,13 +202,13 @@ class HerwigRun(Task, HTCondorWorkflow):
                 # also add already existing YODA files if existant
                 os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}'.format(
                     OUTPUT_FILE=output_file,
-                    HEPMC_FILE=output_file_hepmc,
-                    YODA_FILE=output_file_yoda
+                    HEPMC_FILE=os.path.relpath(output_file_hepmc),
+                    YODA_FILE=os.path.relpath(output_file_yoda)
                 ))
             else:
                 os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}'.format(
                     OUTPUT_FILE=output_file,
-                    HEPMC_FILE=output_file_hepmc
+                    HEPMC_FILE=os.path.relpath(output_file_hepmc)
                 ))
         else:
             os.system("ls -l")

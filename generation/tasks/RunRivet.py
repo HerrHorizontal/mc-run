@@ -127,13 +127,14 @@ class RunRivet(Task, HTCondorWorkflow):
                 os.system('tar -xvjf {}'.format(input_file.path))
 
         input_files = glob.glob('*.hepmc')
+        output_file = "Rivet.yoda"
 
         # run Rivet analysis
         _rivet_exec = ["rivet"]
         _rivet_args = [
             "--analysis={RIVET_ANALYSIS}".format(RIVET_ANALYSIS=_rivet_analysis) for _rivet_analysis in _rivet_analyses
         ] + [
-            "--histo-file={OUTPUT_NAME}".format(OUTPUT_NAME="Rivet.yoda")
+            "--histo-file={OUTPUT_NAME}".format(OUTPUT_NAME=output_file)
         ] + glob.glob('*.hepmc')
 
         print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
@@ -144,8 +145,7 @@ class RunRivet(Task, HTCondorWorkflow):
             output.remove()
             raise e
 
-        _output_file = "Rivet.yoda"
-        _output_file = os.path.abspath(_output_file)
+        _output_file = os.path.abspath(output_file)
 
         if os.path.exists(_output_file):
             output.copy_from_local(_output_file)
