@@ -163,7 +163,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
-            run_command(_herwig_exec + _herwig_args, env=my_env)
+            run_command(_herwig_exec + _herwig_args, env=my_env, cwd=work_dir)
             print("Seed: {}".format(seed))
         except RuntimeError as e:
             output.remove()
@@ -195,6 +195,8 @@ class HerwigRun(Task, HTCondorWorkflow):
 
         output_file_hepmc = os.path.abspath(output_file_hepmc)
         output_file_yoda = os.path.abspath(output_file_yoda)
+
+        os.chdir(work_dir)
         
         if os.path.exists(output_file_hepmc):
             # tar and compress the output HepMC files to save disk space
