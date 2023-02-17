@@ -275,7 +275,7 @@ namespace Rivet {
       // const double sf = 1.0;
       
       for(auto const& _hist : _h){
-        normalize(_hist.second, sf);
+        scale(_hist.second, sf);
       }
 
     }
@@ -301,7 +301,7 @@ namespace Rivet {
     const double _lepCleaningDeltaR = 0.3; // DeltaR between leptons and jets to clean former from latter
     ///@}
 
-    const double UndefinedDouble = -9999.0;
+    const double UndefinedDouble = -9999.9999;
 
 
   };
