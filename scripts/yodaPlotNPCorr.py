@@ -71,6 +71,18 @@ parser.add_argument(
     help = "YODA file containing the analyzed objects of the denominator (e.g. partial) simulation run"
 )
 parser.add_argument(
+    "--full-label",
+    type = str,
+    default = "full",
+    help = "Legend label for the nominator (i.e. full) simulation"
+)
+parser.add_argument(
+    "--partial-label",
+    type = str,
+    default = "partial",
+    help = "Legend label for the denominator (i.e. partial) simulation"
+)
+parser.add_argument(
     "--ratio",
     type = valid_yoda_file,
     required = True,
@@ -141,6 +153,8 @@ yoda_file_partial = args.partial
 yoda_file_ratio = args.ratio
 
 origin = args.ORIGIN
+
+LABELS = [args.full_label, args.partial_label]
 
 if origin:
     aos_full = yoda.readYODA(yoda_file_full, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH)
@@ -229,11 +243,13 @@ for name, ao in aos_ratios.items():
             yEdges = np.append(aotop.yVals(), aotop.yVals()[-1])
 
             axorigin.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[i], linestyle="none", linewidth=1.4, capthick=1.4)
-            axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4)
+            axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=LABELS[i])
 
         # plt.setp(axorigin.get_xticklabels(), visible=False)
         axmain.set_xticks(xticks)
         axorigin.set_xticklabels([])
+
+        axorigin.legend()
 
     axmain.axhline(1.0, color="gray") #< Ratio = 1 marker line
 
@@ -252,10 +268,12 @@ for name, ao in aos_ratios.items():
     yEdges = np.append(ao.yVals(), ao.yVals()[-1])
 
     axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4)
-    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4)
+    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label="{}/{}".format(LABELS[0], LABELS[1]))
 
     axmain.set_xticks(xticks)
     axmain.set_xticklabels(xticks)
+
+    axmain.legend()
 
     name = name.replace("/","_").strip("_")
 

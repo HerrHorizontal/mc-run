@@ -158,6 +158,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir)
         ]
+        executable += ["--full-label", "{}".format(self.mc_setting_full)]
+        executable += ["--partial-label", "{}".format(self.mc_setting_partial)]
         executable += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
         executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
