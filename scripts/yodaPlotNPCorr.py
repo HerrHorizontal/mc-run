@@ -218,7 +218,7 @@ for name, ao in aos_ratios.items():
             axmain = fig.add_subplot(gs[1])
             axorigin = fig.add_subplot(gs[0])#, sharex=axmain)
         except:
-            sys.stderr.write("matplotlib.gridspec not available: falling back to plotting without a ratio\n")
+            sys.stderr.write("matplotlib.gridspec not available: falling back to plotting without the original distributions\n")
             origin = False
     if not origin:
         axmain = fig.add_subplot(1,1,1)
