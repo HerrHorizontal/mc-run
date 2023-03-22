@@ -135,6 +135,12 @@ parser.add_argument(
     default="plots",
     help="output path for the directory containing the ratio plots"
 )
+parser.add_argument(
+    "--summary-match", "-s",
+    dest="SUMMARIES",
+    nargs="*",
+    help="list of strings used to match the analysis objects to produce a respective summary plot for"
+)
 
 args = parser.parse_args()
 
@@ -208,6 +214,8 @@ xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 xlabel=args.XLABEL
 ylabel=args.YLABEL
 
+summaries = dict()
+
 for name, ao in aos_ratios.items():
     # aa = plot_hist_on_axes_1d(axmain, axratio, h, href, COLORS[ih % len(COLORS)], LSTYLES[ih % len(LSTYLES)], errbar=True)
 
@@ -221,6 +229,7 @@ for name, ao in aos_ratios.items():
             sys.stderr.write("matplotlib.gridspec not available: falling back to plotting without the original distributions\n")
             origin = False
     if not origin:
+        fig.set_size_inches(6,2)
         axmain = fig.add_subplot(1,1,1)
 
     if origin:
