@@ -252,7 +252,7 @@ for name, ao in aos_ratios.items():
             yEdges = np.append(aotop.yVals(), aotop.yVals()[-1])
 
             axorigin.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[i], linestyle="none", linewidth=1.4, capthick=1.4)
-            axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=LABELS[i])
+            axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=r"${}$".format(LABELS[i]))
 
         # plt.setp(axorigin.get_xticklabels(), visible=False)
         axmain.set_xticks(xticks)
@@ -277,7 +277,7 @@ for name, ao in aos_ratios.items():
     yEdges = np.append(ao.yVals(), ao.yVals()[-1])
 
     axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4)
-    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label="{}/{}".format(LABELS[0], LABELS[1]))
+    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=r"$\frac{{{}}}{{{}}}$".format(LABELS[0], LABELS[1]))
 
     axmain.set_xticks(xticks)
     axmain.set_xticklabels(xticks)

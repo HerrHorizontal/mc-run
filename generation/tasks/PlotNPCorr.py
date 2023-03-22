@@ -5,6 +5,7 @@ import os
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
+from generation.framework.config import MCCHAIN_SCENARIO_LABELS
 
 from generation.framework.tasks import Task, CommonConfig
 
@@ -158,8 +159,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir)
         ]
-        executable += ["--full-label", "{}".format(self.mc_setting_full)]
-        executable += ["--partial-label", "{}".format(self.mc_setting_partial)]
+        executable += ["--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full))]
+        executable += ["--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))]
         executable += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
         executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
