@@ -52,7 +52,7 @@ action() {
     # law
     _addpy "$base/law"
     _addbin "$base/law/bin"
-    source "$( law completion )"
+    source "$( law2 completion )"
     #source /cvmfs/grid.cern.ch/emi3ui-latest/etc/profile.d/setup-ui-example.sh
     source /cvmfs/grid.cern.ch/centos7-ui-4.0.3-1_umd4v1/etc/profile.d/setup-c7-ui-example.sh
 }
