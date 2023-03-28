@@ -136,6 +136,12 @@ parser.add_argument(
     help="output path for the directory containing the ratio plots"
 )
 parser.add_argument(
+    "--supress-legend", "-l",
+    dest="NOLEGEND",
+    action='store_true',
+    help="supress plotting the legend"
+)
+parser.add_argument(
     "--summary-match", "-s",
     dest="SUMMARIES",
     nargs="*",
@@ -206,8 +212,8 @@ yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=17, mfont=
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
-yminmain = float(min(min(h.yVals()) for h in aos_ratios.values()))
-ymaxmain = float(1.1*max(max(h.yVals()) for h in aos_ratios.values()))
+yminmain = 0.8 #float(min(min(h.yVals()) for h in aos_ratios.values()))
+ymaxmain = 1.3 #float(1.1*max(max(h.yVals()) for h in aos_ratios.values()))
 
 xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 
@@ -229,7 +235,7 @@ for name, ao in aos_ratios.items():
             sys.stderr.write("matplotlib.gridspec not available: falling back to plotting without the original distributions\n")
             origin = False
     if not origin:
-        fig.set_size_inches(6,2)
+        fig.set_size_inches(6,2.67)
         axmain = fig.add_subplot(1,1,1)
 
     if origin:
@@ -251,8 +257,10 @@ for name, ao in aos_ratios.items():
             xEdges = np.append(aotop.xMins(), aotop.xMax())
             yEdges = np.append(aotop.yVals(), aotop.yVals()[-1])
 
+            label=r"${}$".format(LABELS[i])
+
             axorigin.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[i], linestyle="none", linewidth=1.4, capthick=1.4)
-            axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=r"${}$".format(LABELS[i]))
+            axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=label)
 
         # plt.setp(axorigin.get_xticklabels(), visible=False)
         axmain.set_xticks(xticks)
@@ -276,13 +284,16 @@ for name, ao in aos_ratios.items():
     xEdges = np.append(ao.xMins(), ao.xMax())
     yEdges = np.append(ao.yVals(), ao.yVals()[-1])
 
+    label=r"$\frac{{{}}}{{{}}}$".format(LABELS[0], LABELS[1])
+
     axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4)
-    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=r"$\frac{{{}}}{{{}}}$".format(LABELS[0], LABELS[1]))
+    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
     axmain.set_xticks(xticks)
     axmain.set_xticklabels(xticks)
 
-    axmain.legend()
+    if not args.NOLEGEND:
+        axmain.legend()
 
     name = name.replace("/","_").strip("_")
 
