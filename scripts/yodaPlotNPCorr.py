@@ -123,6 +123,14 @@ parser.add_argument(
     help="label for the y-axis to plot"
 )
 parser.add_argument(
+    "--yrange",
+    nargs=2,
+    type=float,
+    default=[0.8,1.3],
+    metavar=("ymin","ymax"),
+    help="range for the y-axis of the ratio plot"
+)
+parser.add_argument(
     "--origin-ylabel",
     dest="YORIGIN",
     type=str,
@@ -212,8 +220,8 @@ yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=17, mfont=
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
-yminmain = 0.8
-ymaxmain = 1.3
+yminmain = args.yrange[0]
+ymaxmain = args.yrange[1]
 
 xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 

@@ -49,6 +49,11 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             - OPTIONAL: the label for a top pad showing the original distributions used to derive the ratio \n\
             ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", [\"origin-ylabel\"]), (...), ...)"
     )
+    yrange = luigi.TupleParameter(
+        default=[0.8,1.3],
+        significant=False,
+        description="Value range for the y-axis of the ratio plot."
+    )
 
     exclude_params_req = {
         "source_script",
@@ -157,7 +162,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--full", "{}".format(input_yoda_file_full),
             "--partial", "{}".format(input_yoda_file_partial),
             "--ratio", "{}".format(input_yoda_file_ratio),
-            "--plot-dir", "{}".format(plot_dir)
+            "--plot-dir", "{}".format(plot_dir),
+            "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1])
         ]
         executable += ["--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full))]
         executable += ["--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))]
