@@ -220,8 +220,6 @@ yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=17, mfont=
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
-yminmain = args.yrange[0]
-ymaxmain = args.yrange[1]
 
 xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 
@@ -282,10 +280,12 @@ for name, ao in aos_ratios.items():
     axmain.set_ylabel(ylabel=r"{}".format(ylabel), y=1, ha="right", labelpad=None)
 
     axmain.set_xlim([xmin, xmax])
-    if float(min(min(ao.yVals()))) < yminmain:
-        yminmain = float(min(min(ao.yVals())))
-    if float(1.1*max(max(ao.yVals()))) > ymaxmain:
-        ymaxmain = float(1.1*max(max(ao.yVals())))
+    yminmain = args.yrange[0]
+    ymaxmain = args.yrange[1]
+    if float(min(ao.yVals())) < yminmain:
+        yminmain = float(min(ao.yVals()))
+    if float(1.1*max(ao.yVals())) > ymaxmain:
+        ymaxmain = float(1.1*max(ao.yVals()))
     axmain.set_ylim([yminmain, ymaxmain])
     axmain.set_xscale("log")
 
