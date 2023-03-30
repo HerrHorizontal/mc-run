@@ -136,6 +136,9 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             print("Output target doesn't exist!")
             output.makedirs()
 
+        if len(self.yrange) != 2:
+            raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
+
         # actual payload:
         print("=======================================================")
         print("Starting NP-factor plotting with YODA")
