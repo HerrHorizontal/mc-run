@@ -118,7 +118,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
 
     def output(self):
         return self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format( #TODO save multiple plot files without tarring them
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
