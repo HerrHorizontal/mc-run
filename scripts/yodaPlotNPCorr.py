@@ -39,22 +39,23 @@ def valid_yoda_file(param):
     return os.path.abspath(param)
 
 
-# def fit(xVal, yVal, yErr):
-#     """Fit function to NP points."""
-#     import scipy.optimize as opt
+def fit(xVal, yVal, yErr):
+    """Fit function to ratio points."""
+    import scipy.optimize as opt
 
-#     N_PARS = 3
-#     def _f(x, pars):
-#         return pars[0] + pars[1]/x**pars[2]
+    N_PARS = 3
+    def _f(x, pars):
+        return pars[0]*x**(pars[1]) + pars[2]
 
-#     def _chi2(pars):
-#         _res = (_f(xVal, pars) - yVal) / yErr
-#         return np.sum(_res**2)
+    def _chi2(pars):
+        _res = (_f(xVal, pars) - yVal) / yErr
+        return np.sum(_res**2)
 
-#     # minimize function and take resulting azimuth
-#     #result = opt.minimize_scalar(_chi2)
-#     result = opt.minimize(_chi2, x0=(1,1,1))
-#     return dict(result=result, pars=result.x, ys=_f(xVal, result.x), chi2ndf=result.fun/(len(xVal)-N_PARS), chi2=result.fun, ndf=(len(xVal)-N_PARS))
+    # minimize function and take resulting azimuth
+    #result = opt.minimize_scalar(_chi2)
+    result = opt.minimize(_chi2, x0=(1,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)))
+    print(result)
+    return dict(result=result, pars=result.x, ys=_f(xVal, result.x), chi2ndf=result.fun/(len(xVal)-N_PARS), chi2=result.fun, ndf=(len(xVal)-N_PARS))
 
 
 parser = argparse.ArgumentParser(
@@ -217,7 +218,7 @@ pp.pprint(aos_ratios)
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=17, mfont=None, textfigs=True)
+yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
@@ -310,8 +311,29 @@ for name, ao in aos_ratios.items():
 
     label=r"$\frac{{{}}}{{{}}}$".format(LABELS[0], LABELS[1])
 
-    axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4)
-    axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
+    axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4, label=label)
+    # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
+
+    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+    fit_params = []
+    for p in fit_results["pars"]:
+        fit_params.append(float(p))
+        print(p)
+    print(len(fit_params))
+
+    axmain.plot(
+        xVals, fit_results["ys"],
+        color='black', linestyle='-',
+        label="fit"
+    )
+
+    axmain.text(
+        x=0.97, y=0.03,
+        s=r"$\chi^2/\mathrm{ndof}=$"+"{:5.3f}/{}".format(fit_results["chi2"],fit_results["ndf"])+"={:5.3f}".format(fit_results["chi2ndf"]),
+        fontsize=10,
+        ha='right', va='bottom',
+        transform=axmain.transAxes
+    )
 
     axmain.set_xticks(xticks)
     axmain.set_xticklabels(xticks)
