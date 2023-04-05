@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import json
 import sys
 from os import mkdir
 import os.path
@@ -150,10 +151,10 @@ parser.add_argument(
     help="supress plotting the legend"
 )
 parser.add_argument(
-    "--summary-match", "-s",
-    dest="SUMMARIES",
-    nargs="*",
-    help="list of strings used to match the analysis objects to produce a respective summary plot for"
+    "--splittings", "-s",
+    dest="SPLITTINGS",
+    type=json.loads,
+    help="optional dictionary containing identifier used to match the analysis objects to plot and additional labels and axis-limits"
 )
 
 args = parser.parse_args()
@@ -226,7 +227,8 @@ xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 xlabel=args.XLABEL
 ylabel=args.YLABEL
 
-summaries = dict()
+if args.SPLITTINGS:
+    splittings = args.SPLITTINGS
 
 for name, ao in aos_ratios.items():
     # aa = plot_hist_on_axes_1d(axmain, axratio, h, href, COLORS[ih % len(COLORS)], LSTYLES[ih % len(LSTYLES)], errbar=True)
@@ -279,9 +281,19 @@ for name, ao in aos_ratios.items():
     axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
     axmain.set_ylabel(ylabel=r"{}".format(ylabel), y=1, ha="right", labelpad=None)
 
-    axmain.set_xlim([xmin, xmax])
     yminmain = args.yrange[0]
     ymaxmain = args.yrange[1]
+    binlabel = ""
+
+    if splittings:
+        for k,v in splittings.items():
+            if v["ident"] in name:
+                yminmain = v["ylim"][0]
+                ymaxmain = v["ylim"][1]
+                binlabel = r"{}".format(v["label"])
+                name = name.replace(v["ident"],k)
+
+    axmain.set_xlim([xmin, xmax])
     if float(min(ao.yVals())) < yminmain:
         yminmain = float(min(ao.yVals()))
     if float(1.1*max(ao.yVals())) > ymaxmain:
@@ -305,9 +317,19 @@ for name, ao in aos_ratios.items():
     axmain.set_xticklabels(xticks)
 
     if not args.NOLEGEND:
-        axmain.legend()
+        axmain.legend(frameon=False, handlelength=1, loc='upper right')
+
+    if binlabel:
+        axmain.text(
+            x=0.03, y=0.97,
+            s=binlabel,
+            fontsize=10,
+            ha='left', va='top',
+            transform=axmain.transAxes
+        )
 
     name = name.replace("/","_").strip("_")
+    print("name: {}".format(name))
 
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")

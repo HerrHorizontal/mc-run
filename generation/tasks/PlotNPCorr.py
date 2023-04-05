@@ -2,10 +2,11 @@
 import luigi, law
 from luigi.util import inherits
 import os
+import json
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
-from generation.framework.config import MCCHAIN_SCENARIO_LABELS
+from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS
 
 from generation.framework.tasks import Task, CommonConfig
 
@@ -166,7 +167,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--partial", "{}".format(input_yoda_file_partial),
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir),
-            "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1])
+            "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
+            "--splittings", "{}".format(json.dumps(BINS["all"]))
         ]
         executable += ["--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full))]
         executable += ["--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))]
