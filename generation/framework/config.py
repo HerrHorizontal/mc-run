@@ -9,6 +9,11 @@ MCCHAIN_SCENARIO_LABELS = {
     "NPoff": "ME+PS"
 }
 
+JETS = {
+    "AK4": dict(ident="AK4", label="Anti-kt\n$R=0.4$", linestyle="solid"),
+    "AK8": dict(ident="AK8", label="Anti-kt\n$R=0.8$", linestyle="dashed"),
+}
+
 BINS = {
     "all": OrderedDict({
         'YB_00_05_YS_00_05' : dict(

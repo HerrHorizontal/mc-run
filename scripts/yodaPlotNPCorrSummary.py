@@ -132,8 +132,13 @@ parser.add_argument(
     "--splittings", "-s",
     dest="SPLITTINGS",
     type=json.loads,
-    nargs='+',
     help="optional dictionary containing identifier used to match the analysis objects to plot and additional labels and axis-limits"
+)
+parser.add_argument(
+    "--jets", "-j",
+    dest="JETS",
+    type=json.loads,
+    help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles"
 )
 
 args = parser.parse_args()
@@ -166,77 +171,89 @@ ylabel=args.YLABEL
 
 if args.SPLITTINGS:
     splittings = args.SPLITTINGS
+if args.JETS:
+    jets = args.JETS
 
-for splits in splittings:
-    fig = plt.figure()
-    fig.set_size_inches(6,2*0.5*len(splits))
-    axmain = fig.add_subplot(1,1,1)
+for sname, splits in splittings.items():
+    for jet in jets.values():
+        fig = plt.figure()
+        fig.set_size_inches(6,2*0.5*len(splits))
+        axmain = fig.add_subplot(1,1,1)
 
-    axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
-    axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
+        axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
 
-    yminmain = args.yrange[0]
-    ymaxmain = args.yrange[1]
+        yminmain = args.yrange[0]
+        ymaxmain = args.yrange[1]
 
-    axmain.set_xlim([xmin, xmax])
-    axmain.set_xscale("log")
+        axmain.set_xlim([xmin, xmax])
+        axmain.set_xscale("log")
 
-    binlabels = []
-    colors = []
-    markers = []
-    name = ""
-    aos = []
-    for i,(k,v) in enumerate(sorted(splits.items())):
-        for name, ao in aos_ratios.items():
-            if v["ident"] in name:
-                yminmain = min(v["ylim"][0], yminmain)
-                ymaxmain = max(v["ylim"][1], ymaxmain)
-                binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
-                colors.append(v["color"])
-                markers.append(v["marker"])
-                name = name.replace(v["ident"],"")
-                aos.append(ao)
-            else:
-                continue
-        axmain.set_ylim([yminmain, (ymaxmain-1)+(i+1)])
-        axmain.axhline(1.0*(0.5*i+1), color="gray") #< Ratio = 1 marker line
+        binlabels = []
+        colors = []
+        markers = []
+        aos = []
+        for i,(k,v) in enumerate(sorted(splits.items())):
+            for name, ao in aos_ratios.items():
+                if v["ident"] in name and jet["ident"] in name:
+                    yminmain = min(v["ylim"][0], yminmain)
+                    ymaxmain = max(v["ylim"][1], ymaxmain)
+                    binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
+                    colors.append(v["color"])
+                    markers.append(v["marker"])
+                    aos.append(ao)
+                else:
+                    continue
+            axmain.set_ylim([yminmain, (ymaxmain-1)+(i+1)])
+            axmain.axhline(1.0*(0.5*i+1), color="gray") #< Ratio = 1 marker line
 
-    assert(len(binlabels) == len(aos))
+        assert(len(binlabels) == len(aos))
 
-    for i, (label, color, marker, ao) in enumerate(reversed(zip(binlabels, colors, markers, aos))):
-        print("Plot bin {}...".format(label))
-        xErrs = np.array(ao.xErrs())
-        yErrs = np.array(ao.yErrs())
-        xVals = np.array(ao.xVals())
-        yVals = np.array(ao.yVals())
-        xEdges = np.append(ao.xMins(), ao.xMax())
-        yEdges = np.append(ao.yVals(), ao.yVals()[-1])
+        for i, (label, color, marker, ao) in enumerate(reversed(zip(binlabels, colors, markers, aos))):
+            print("Plot bin {}...".format(label))
+            xErrs = np.array(ao.xErrs())
+            yErrs = np.array(ao.yErrs())
+            xVals = np.array(ao.xVals())
+            yVals = np.array(ao.yVals())
+            xEdges = np.append(ao.xMins(), ao.xMax())
+            yEdges = np.append(ao.yVals(), ao.yVals()[-1])
 
-        label = label+" (+{:.1f})".format(0.5*i)
-        # axmain.errorbar(xVals, yVals+(0.5*i), xerr=xErrs.T, yerr=yErrs.T, color=color, marker=marker, linestyle="none", linewidth=1.4, capthick=1.4, label=label)
-        # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
+            label = label+" (+{:.1f})".format(0.5*i)
+            # axmain.errorbar(xVals, yVals+(0.5*i), xerr=xErrs.T, yerr=yErrs.T, color=color, marker=marker, linestyle="none", linewidth=1.4, capthick=1.4, label=label)
+            # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
-        fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+            fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
 
-        xEdgesF = xEdges
-        yEdgesF = np.append(fit_results["ys"], fit_results["ys"][-1])
-        # axmain.plot(
-        #     xVals, fit_results["ys"]+(0.5*i),
-        #     color=color, linestyle='-'
-        # )
-        axmain.step(xEdgesF, yEdgesF+(0.5*i), where="post", color=color, linestyle="-", linewidth=1.8, label=label)
+            xEdgesF = xEdges
+            yEdgesF = np.append(fit_results["ys"], fit_results["ys"][-1])
+            # axmain.plot(
+            #     xVals, fit_results["ys"]+(0.5*i),
+            #     color=color, linestyle='-'
+            # )
+            axmain.step(xEdgesF, yEdgesF+(0.5*i), where="post", color=color, linestyle="-", linewidth=1.8, label=label)
 
-    axmain.set_xticks(xticks)
-    axmain.set_xticklabels(xticks)
-    axmain.yaxis.get_ticklocs(minor=True)
-    axmain.minorticks_on()
+        axmain.set_xticks(xticks)
+        axmain.set_xticklabels(xticks)
+        axmain.yaxis.get_ticklocs(minor=True)
+        axmain.minorticks_on()
 
-    if not args.NOLEGEND:
-        handles, labels = axmain.get_legend_handles_labels()
-        axmain.legend(reversed(handles), reversed(labels), frameon=False, handlelength=1, loc='upper right')
+        if not args.NOLEGEND:
+            handles, labels = axmain.get_legend_handles_labels()
+            axmain.legend(reversed(handles), reversed(labels), frameon=False, handlelength=1, loc='upper right')
 
-    name = name.replace("/","_").strip("_")+"_summary"
-    print("name: {}".format(name))
+        axmain.text(
+            x=0.03, y=0.97,
+            s=jet["label"],
+            fontsize=12,
+            ha='left', va='top',
+            transform=axmain.transAxes
+        )
+        axmain.set_title(label=r"MG $\oplus$ Herwig7", loc='left')
 
-    fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
-    fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")
+        name = "{}_{}_{}_summary".format(args.MATCH, jet["ident"], sname)
+        print("name: {}".format(name))
+
+        fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
+        fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")
+
+        plt.close()

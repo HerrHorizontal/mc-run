@@ -350,11 +350,4 @@ for name, ao in aos_ratios.items():
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")
 
-    # yoda.plot(
-    #     ao,
-    #     outfile=os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)),
-    #     ratio=False,
-    #     show=False,
-    #     axmain=axmain
-    # )
-
+    plt.close()

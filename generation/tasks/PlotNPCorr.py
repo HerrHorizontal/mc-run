@@ -6,7 +6,7 @@ import json
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
-from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS
+from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import Task, CommonConfig
 
@@ -192,7 +192,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(BINS["YS0"])),
+            "--splittings", "{}".format(json.dumps(dict(YS0=BINS["YS0"],YB0=BINS["YB0"]))),
+            "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
