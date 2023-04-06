@@ -82,8 +82,8 @@ def run_command(executable, env, *args, **kwargs):
         pp.pprint(env)
         raise RuntimeError(
             'Command {command} returned non-zero exit status {code}!\n'.format(command=executable, code=code)
-            + '\tError:\n{}\n'.format(error)
             + '\tOutput:\n{}\n'.format(out) 
+            + '\tError:\n{}\n'.format(error)
         )
     else:
         print('Output:\n{}'.format(out))
