@@ -53,7 +53,7 @@ def fit(xVal, yVal, yErr):
 
     # minimize function and take resulting azimuth
     #result = opt.minimize_scalar(_chi2)
-    result = opt.minimize(_chi2, x0=(1,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)))
+    result = opt.minimize(_chi2, x0=(0,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)))
     return dict(result=result, pars=result.x, ys=_f(xVal, result.x), chi2ndf=result.fun/(len(xVal)-N_PARS), chi2=result.fun, ndf=(len(xVal)-N_PARS))
 
 
