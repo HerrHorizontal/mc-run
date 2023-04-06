@@ -168,10 +168,10 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(BINS["all"]))
+            "--splittings", "{}".format(json.dumps(BINS["all"])),
+            "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
+            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
-        executable += ["--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full))]
-        executable += ["--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))]
         executable += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
         executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
@@ -183,6 +183,30 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
+            output.remove()
+            raise e
+        
+        # plot also summary plots
+        executable_summary = [
+            "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorrSummary.py"),
+            "--ratio", "{}".format(input_yoda_file_ratio),
+            "--plot-dir", "{}".format(plot_dir),
+            "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
+            "--splittings", "{}".format(json.dumps(BINS["YS0"])),
+            "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
+            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
+        ]
+        executable_summary += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
+        executable_summary += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
+        executable_summary += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
+        executable_summary += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
+
+        print("Executable: {}".format(" ".join(executable_summary)))
+
+        try:
+            run_command(executable_summary, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
+        except RuntimeError as e:
+            print("Summary plots creation failed!")
             output.remove()
             raise e
         
