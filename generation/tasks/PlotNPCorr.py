@@ -118,24 +118,35 @@ class PlotNPCorr(Task, law.LocalWorkflow):
 
 
     def output(self):
-        return self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
+        out = dict()
+        out["single"] = self.local_target(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/single/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"]
             )
         )
+        out["summary"] = self.local_target(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/summary/".format(
+                full = self.mc_setting_full,
+                partial = self.mc_setting_partial,
+                match=self.branch_data["match"],
+                unmatch=self.branch_data["unmatch"]
+            )
+        )
+        return out
 
 
     def run(self):
         # ensure that the output directory exists
-        output = self.output()
-        try:
-            output.parent.touch()
-        except IOError:
-            print("Output target doesn't exist!")
-            output.makedirs()
+        outputs = self.output()
+        for output in outputs.values():
+            try:
+                output.parent.touch()
+            except IOError:
+                print("Output target {} doesn't exist!".format(output.parent))
+                output.makedirs()
 
         if len(self.yrange) != 2:
             raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
@@ -158,7 +169,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             input_yoda_file_ratio = _file.path
 
         # assign paths for output YODA file and plots
-        plot_dir = output.parent.path
+        plot_dir_single = outputs["single"].parent.path
+        plot_dir_summary = outputs["summary"].parent.path
 
         # execute the script deriving the NP correction plots and files
         executable = [
@@ -166,7 +178,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--full", "{}".format(input_yoda_file_full),
             "--partial", "{}".format(input_yoda_file_partial),
             "--ratio", "{}".format(input_yoda_file_ratio),
-            "--plot-dir", "{}".format(plot_dir),
+            "--plot-dir", "{}".format(plot_dir_single),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
             "--splittings", "{}".format(json.dumps(BINS["all"])),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
@@ -183,16 +195,25 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
-            output.remove()
+            print("Individual bins' plots creation failed!")
+            output["single"].remove()
             raise e
         
+        if not os.listdir(plot_dir_single):
+            output.remove()
+            raise LookupError("Plot directory {} is empty!".format(plot_dir_single))
+
+        print("=======================================================")
+        print("Starting NP-factor summary plotting with YODA")
+        print("=======================================================")
+
         # plot also summary plots
         executable_summary = [
             "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorrSummary.py"),
             "--ratio", "{}".format(input_yoda_file_ratio),
-            "--plot-dir", "{}".format(plot_dir),
+            "--plot-dir", "{}".format(plot_dir_summary),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(dict(YS0=BINS["YS0"],YB0=BINS["YB0"]))),
+            "--splittings", "{}".format(json.dumps(dict(YS0=BINS["YS0"],YB0=BINS["YB0"],YSYBAll=BINS["all"]))),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
@@ -211,8 +232,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             output.remove()
             raise e
         
-        if not os.listdir(plot_dir):
+        if not os.listdir(plot_dir_summary):
             output.remove()
-            raise LookupError("Plot directory {} is empty!".format(plot_dir))
+            raise LookupError("Plot directory {} is empty!".format(plot_dir_summary))
 
         print("-------------------------------------------------------")
