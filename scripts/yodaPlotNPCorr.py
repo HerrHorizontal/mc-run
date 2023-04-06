@@ -54,7 +54,6 @@ def fit(xVal, yVal, yErr):
     # minimize function and take resulting azimuth
     #result = opt.minimize_scalar(_chi2)
     result = opt.minimize(_chi2, x0=(1,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)))
-    print(result)
     return dict(result=result, pars=result.x, ys=_f(xVal, result.x), chi2ndf=result.fun/(len(xVal)-N_PARS), chi2=result.fun, ndf=(len(xVal)-N_PARS))
 
 
@@ -315,11 +314,6 @@ for name, ao in aos_ratios.items():
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
     fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
-    fit_params = []
-    for p in fit_results["pars"]:
-        fit_params.append(float(p))
-        print(p)
-    print(len(fit_params))
 
     axmain.plot(
         xVals, fit_results["ys"],
