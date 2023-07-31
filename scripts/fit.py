@@ -1,0 +1,63 @@
+
+import scipy.optimize as opt
+import numpy as np
+
+def fit(xVal, yVal, yErr):
+    """Fit function to ratio points."""
+
+    N_PARS = 3
+    def model(x, pars):
+        return pars[0]*x**(pars[1]) + pars[2]
+
+    def objective(pars):
+        _res = (model(xVal, pars) - yVal) / yErr
+        return np.sum(_res**2)
+
+    # minimize function and take resulting azimuth
+    result = opt.minimize(objective, x0=(0,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)), tol=1e-9)
+
+    def fit_error(xVal,popt=result.x, pcov=result.hess_inv):
+        """compute the uncertainty on the fitted function
+
+        Args:
+            xVal (np.ndarray): input space
+            cov (np.ndarray): COvariance matrix of the fit result
+        """
+        def jac(x):
+            """Jacobian vector of model function"""
+            return np.array(
+                [x**popt[1],
+                 popt[0]*popt[1]*x**(popt[1]-1),
+                 np.ones(x.shape)]
+            )
+        
+        print("jac: ", jac(xVal).shape, jac(xVal))
+        print("cov: ", pcov.shape, pcov.todense())
+        # import pdb; pdb.set_trace()
+
+        return np.sqrt(
+            np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal), pcov.todense()), jac(xVal))
+        )
+
+    return dict(
+        result=result,
+        pars=result.x,
+        cov=result.hess_inv,
+        ys=model(xVal, result.x),
+        yerrs=fit_error(xVal),
+        chi2ndf=result.fun/(len(xVal)-N_PARS),
+        chi2=result.fun, ndf=(len(xVal)-N_PARS)
+    )
+    # result = opt.curve_fit(
+    #     objective,
+    #     xdata=xVal, ydata=yVal, sigma=yErr,
+    #     bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)),
+    #     full_output=True
+    # )
+    # return dict(
+    #     result=result,
+    #     pars=result.popt,
+    #     cov=result.pcov,
+    #     ys=model(xVal, result.popt)
+    # )
+

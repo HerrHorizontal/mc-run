@@ -10,8 +10,8 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import yoda
-# import pandas as pd
-# import seaborn as sns
+
+from fit import fit
 
 
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
@@ -37,24 +37,6 @@ def valid_yoda_file(param):
     if not os.path.exists(param):
         raise IOError('{}: No such file'.format(param))
     return os.path.abspath(param)
-
-
-def fit(xVal, yVal, yErr):
-    """Fit function to ratio points."""
-    import scipy.optimize as opt
-
-    N_PARS = 3
-    def _f(x, pars):
-        return pars[0]*x**(pars[1]) + pars[2]
-
-    def _chi2(pars):
-        _res = (_f(xVal, pars) - yVal) / yErr
-        return np.sum(_res**2)
-
-    # minimize function and take resulting azimuth
-    #result = opt.minimize_scalar(_chi2)
-    result = opt.minimize(_chi2, x0=(0,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)))
-    return dict(result=result, pars=result.x, ys=_f(xVal, result.x), chi2ndf=result.fun/(len(xVal)-N_PARS), chi2=result.fun, ndf=(len(xVal)-N_PARS))
 
 
 parser = argparse.ArgumentParser(
@@ -314,11 +296,17 @@ for name, ao in aos_ratios.items():
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
     fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+    print("Vals: ", fit_results["ys"])
+    print("Errs: ", fit_results["yerrs"])
+    print("Up: ", fit_results["ys"]+fit_results["yerrs"])
 
     axmain.plot(
         xVals, fit_results["ys"],
         color='black', linestyle='-',
         label="fit"
+    )
+    axmain.fill_between(
+        xVals, fit_results["ys"]+fit_results["yerrs"], fit_results["ys"]-fit_results["yerrs"]
     )
 
     axmain.text(
