@@ -196,7 +196,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
             print("Individual bins' plots creation failed!")
-            output["single"].remove()
+            output.remove()
             raise e
         
         if not os.listdir(plot_dir_single):
