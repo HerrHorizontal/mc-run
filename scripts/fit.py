@@ -2,6 +2,33 @@
 import scipy.optimize as opt
 import numpy as np
 
+def kafe_fit(xVal, yVal, yErr):
+    import kafe2
+    data = kafe2.XYContainer(xVal, yVal)
+    data.add_error(axis="y",err_val=yErr)
+
+    def model(x, a=0, b=-1, c=1):
+        return a*x**(b) + c
+    
+    fit = kafe2.Fit(data, model, minimizer="scipy")
+    # fit.limit_parameter("a", lower=None, upper=None)
+    fit.limit_parameter("b", lower=None, upper=0)
+    fit.limit_parameter("c", lower=-10, upper=10)
+
+    result = fit.do_fit()
+
+    print(result)
+    return dict(
+        result=result,
+        pars=[result["parameter_values"]["a"],result["parameter_values"]["b"],result["parameter_values"]["c"]],
+        ys=fit.y_model,
+        yerrs=fit.error_band(),
+        chi2ndf=result["gof/ndf"],
+        chi2=result["goodness_of_fit"], ndf=result["ndf"]
+    )
+
+    
+
 def fit(xVal, yVal, yErr):
     """Fit function to ratio points."""
 
@@ -25,6 +52,10 @@ def fit(xVal, yVal, yErr):
         """
         def jac(x):
             """Jacobian vector of model function"""
+            # from scipy.misc import derivative
+            # return np.array(
+            #     [derivative(,)]
+            # )
             return np.array(
                 [x**popt[1],
                  popt[0]*popt[1]*x**(popt[1]-1),

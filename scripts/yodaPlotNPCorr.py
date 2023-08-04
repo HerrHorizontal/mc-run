@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yoda
 
-from fit import fit
+from fit import kafe_fit as fit
 
 
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
