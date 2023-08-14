@@ -213,6 +213,19 @@ if args.SPLITTINGS:
     splittings = args.SPLITTINGS
 
 for name, ao in aos_ratios.items():
+    if splittings:
+        # Matching to configured splittings...
+        match = False
+        for k,v in splittings.items():
+            if v["ident"] in name:
+                yminmain = v["ylim"][0]
+                ymaxmain = v["ylim"][1]
+                binlabel = r"{}".format(v["label"])
+                lname = name.replace(v["ident"],k)
+                match = True
+        if not match:
+            continue
+        
     # aa = plot_hist_on_axes_1d(axmain, axratio, h, href, COLORS[ih % len(COLORS)], LSTYLES[ih % len(LSTYLES)], errbar=True)
 
     fig = plt.figure(figsize=(8,6))
@@ -267,14 +280,6 @@ for name, ao in aos_ratios.items():
     ymaxmain = args.yrange[1]
     binlabel = ""
 
-    if splittings:
-        for k,v in splittings.items():
-            if v["ident"] in name:
-                yminmain = v["ylim"][0]
-                ymaxmain = v["ylim"][1]
-                binlabel = r"{}".format(v["label"])
-                name = name.replace(v["ident"],k)
-
     axmain.set_xlim([xmin, xmax])
     if float(min(ao.yVals())) < yminmain:
         yminmain = float(min(ao.yVals()))
@@ -296,9 +301,6 @@ for name, ao in aos_ratios.items():
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
     fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
-    print("Vals: ", fit_results["ys"])
-    print("Errs: ", fit_results["yerrs"])
-    print("Up: ", fit_results["ys"]+fit_results["yerrs"])
 
     axmain.plot(
         xVals, fit_results["ys"],
@@ -332,8 +334,11 @@ for name, ao in aos_ratios.items():
             transform=axmain.transAxes
         )
 
-    name = name.replace("/","_").strip("_")
+    name = lname.replace("/","_").strip("_")
     print("name: {}".format(name))
+    print("Vals: ", fit_results["ys"])
+    print("Errs: ", fit_results["yerrs"])
+    print("Up: ", fit_results["ys"]+fit_results["yerrs"])
 
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")
