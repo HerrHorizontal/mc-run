@@ -140,3 +140,4 @@ BINS = {
 }
 BINS["YB0"] = {k: v for k,v in BINS["all"].items() if "YB_00_05" in k}
 BINS["YS0"] = {k: v for k,v in BINS["all"].items() if "YS_00_05" in k}
+BINS["test"] = {k: v for k,v in BINS["all"].items() if "YB_05_10_YS_10_15" in k}
