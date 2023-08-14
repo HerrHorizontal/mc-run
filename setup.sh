@@ -55,5 +55,8 @@ action() {
     source "$( law completion )"
     #source /cvmfs/grid.cern.ch/emi3ui-latest/etc/profile.d/setup-ui-example.sh
     source /cvmfs/grid.cern.ch/centos7-ui-4.0.3-1_umd4v1/etc/profile.d/setup-c7-ui-example.sh
+
+    # kafe for fitting
+    python -m pip install "kafe2<2.4.0"
 }
 action "$@"
