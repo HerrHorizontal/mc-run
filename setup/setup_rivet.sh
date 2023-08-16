@@ -23,6 +23,9 @@ action(){
 
     export RIVET_ANALYSIS_PATH="$parent/analyses:$RIVET_ANALYSIS_PATH"
     #export RIVET_INFO_PATH="$RIVET_ANALYSIS_PATH"
+
+    # kafe for fitting
+    python -m pip install "kafe2<2.4.0"
 }
 
 action "$@"
