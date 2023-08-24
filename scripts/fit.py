@@ -27,55 +27,119 @@ def kafe_fit(xVal, yVal, yErr):
         chi2=result["goodness_of_fit"], ndf=result["ndf"]
     )
 
-    
 
-def fit(xVal, yVal, yErr):
+def scipy_fit(xVal, yVal, yErr, N_PARS=2):
     """Fit function to ratio points."""
 
-    N_PARS = 3
+    N_PARS = N_PARS
     def model(x, pars):
-        return pars[0]*x**(pars[1]) + pars[2]
+        """model function"""
+        if N_PARS == 3:
+            a,b,c = pars
+            return a*x**(b) + c
+        elif N_PARS == 2:
+            a,b, = pars
+            return a*x**(b) + 1
+        else:
+            raise NotImplementedError("No model function implemented for N_PARS={}".format(N_PARS))
 
     def objective(pars):
         _res = (model(xVal, pars) - yVal) / yErr
         return np.sum(_res**2)
+    
+    def jac(pars):
+        """gradient of objective function"""
+        if N_PARS == 3:
+            a,b,c = pars
+            return np.array(
+                [np.sum(xVal**(2*b)/yErr**2),
+                    np.sum(a**2*b**2*xVal**(2*b-2)/yErr**2),
+                    np.sum(1/yErr**2)]
+            )
+        elif N_PARS == 2:
+            a,b = pars
+            return np.array(
+                [np.sum(xVal**(2*b)/yErr**2),
+                    np.sum(a**2*b**2*xVal**(2*b-2)/yErr**2)]
+            )
+        else:
+            raise NotImplementedError("Gradient for N_PARS={} not implemented".format(N_PARS))
 
-    # minimize function and take resulting azimuth
-    result = opt.minimize(objective, x0=(0,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)), tol=1e-9)
+    def hess(pars):
+        if N_PARS == 3:
+            a,b,c = pars
+            return np.array(
+                [[0, np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2), 0],
+                [np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2), np.sum(2*a**2*b*xVal**(2*b-2)*(b*np.log(xVal)+1)/yErr**2), 0],
+                [0, 0, 0]]
+            )
+        elif N_PARS == 2:
+            a,b = pars
+            return np.array(
+                [[0, np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2)],
+                [np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2), np.sum(2*a**2*b*xVal**(2*b-2)*(b*np.log(xVal)+1)/yErr**2)]]
+            )
+        else:
+            raise NotImplementedError("Hessian for N_PARS={} not implemented".format(N_PARS))
 
-    def fit_error(xVal,popt=result.x, pcov=result.hess_inv):
+
+    def fit_error(xVal, popt, pcov):
         """compute the uncertainty on the fitted function
 
         Args:
             xVal (np.ndarray): input space
-            cov (np.ndarray): COvariance matrix of the fit result
+            popt (np.ndarray): optimized model parameter values
+            pcov (np.ndarray): Covariance matrix of the fit result
         """
-        def jac(x):
-            """Jacobian vector of model function"""
+        def jac(x, pars):
+            """Jacobian vector of model function
+            evaluated at parameter values pars
+            """
             # from scipy.misc import derivative
             # return np.array(
             #     [derivative(,)]
             # )
-            return np.array(
-                [x**popt[1],
-                 popt[0]*popt[1]*x**(popt[1]-1),
-                 np.ones(x.shape)]
-            )
-        
-        print("jac: ", jac(xVal).shape, jac(xVal))
-        print("cov: ", pcov.shape, pcov.todense())
-        # import pdb; pdb.set_trace()
+            if N_PARS == 3:
+                a,b,c = pars
+                return np.array(
+                    [x**b,
+                    a*b*x**(b-1),
+                    np.ones(x.shape)]
+                )
+            elif N_PARS == 2:
+                a,b = pars
+                return np.array(
+                    [x**b,
+                    a*b*x**(b-1)]
+                )
+            else:
+                return NotImplementedError("No Jacobian vector implemented for model with N_PARS={}".format(N_PARS))
+
+        print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
+        print("cov: ", pcov.shape, pcov)
 
         return np.sqrt(
-            np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal), pcov.todense()), jac(xVal))
+            np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
         )
+
+    # minimize function and take resulting azimuth
+    # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
+    if N_PARS==3:
+        result = opt.minimize(objective, x0=(0,-1,1), bounds=None, tol=1e-10, method='BFGS')
+    elif N_PARS==2:
+        result = opt.minimize(objective, x0=(0,-1), bounds=None, tol=1e-10, method='BFGS')
+    else:
+        raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
+
+    print(result)
+    print(hess(result.x))
 
     return dict(
         result=result,
         pars=result.x,
-        cov=result.hess_inv,
+        cov=result.hess_inv, #np.linalg.inv(hess(result.x)),
         ys=model(xVal, result.x),
-        yerrs=fit_error(xVal),
+        yerrs=fit_error(xVal, result.x, result.hess_inv),
         chi2ndf=result.fun/(len(xVal)-N_PARS),
         chi2=result.fun, ndf=(len(xVal)-N_PARS)
     )
