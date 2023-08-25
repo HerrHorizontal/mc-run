@@ -2,31 +2,6 @@
 import scipy.optimize as opt
 import numpy as np
 
-def kafe_fit(xVal, yVal, yErr):
-    import kafe2
-    data = kafe2.XYContainer(xVal, yVal)
-    data.add_error(axis="y",err_val=yErr)
-
-    def model(x, a=0, b=-1, c=1):
-        return a*x**(b) + c
-    
-    fit = kafe2.Fit(data, model, minimizer="scipy")
-    # fit.limit_parameter("a", lower=None, upper=None)
-    fit.limit_parameter("b", lower=None, upper=0)
-    fit.limit_parameter("c", lower=-10, upper=10)
-
-    result = fit.do_fit()
-
-    print(result)
-    return dict(
-        result=result,
-        pars=[result["parameter_values"]["a"],result["parameter_values"]["b"],result["parameter_values"]["c"]],
-        ys=fit.y_model,
-        yerrs=fit.error_band(),
-        chi2ndf=result["gof/ndf"],
-        chi2=result["goodness_of_fit"], ndf=result["ndf"]
-    )
-
 
 def scipy_fit(xVal, yVal, yErr, N_PARS=2):
     """Fit function to ratio points."""
@@ -143,72 +118,87 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=2):
         chi2ndf=result.fun/(len(xVal)-N_PARS),
         chi2=result.fun, ndf=(len(xVal)-N_PARS)
     )
-    # result = opt.curve_fit(
-    #     objective,
-    #     xdata=xVal, ydata=yVal, sigma=yErr,
-    #     bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)),
-    #     full_output=True
-    # )
-    # return dict(
-    #     result=result,
-    #     pars=result.popt,
-    #     cov=result.pcov,
-    #     ys=model(xVal, result.popt)
-    # )
 
 
-def minuit_fit(xVal, yVal, yErr):
-    from iminuit import Minuit
+def kafe_fit(xVal, yVal, yErr):
+    import kafe2
+    data = kafe2.XYContainer(xVal, yVal)
+    data.add_error(axis="y",err_val=yErr)
 
-    def model(x, a, b):
-        return a*np.power(x,b)+1
+    def model(x, a=0, b=-1, c=1):
+        return a*x**(b) + c
     
-    def least_squares(a,b):
-        _res = (model(xVal, a,b) - yVal) / yErr
-        return np.sum(_res**2)
+    fit = kafe2.Fit(data, model, minimizer="scipy")
+    # fit.limit_parameter("a", lower=None, upper=None)
+    fit.limit_parameter("b", lower=None, upper=0)
+    fit.limit_parameter("c", lower=-10, upper=10)
 
-    try:
-        m = Minuit(least_squares, a=1, b=-1)
-    except:
-        import traceback
-        traceback.print_exc()
-    m.migrad()
-    m.hesse()
+    result = fit.do_fit()
 
-    def fit_error(xVal, popt, pcov):
-        """compute the uncertainty on the fitted function
-
-        Args:
-            xVal (np.ndarray): input space
-            popt (np.ndarray): optimized model parameter values
-            pcov (np.ndarray): Covariance matrix of the fit result
-        """
-        def jac(x, pars):
-            """Jacobian vector of model function
-            evaluated at parameter values pars
-            """
-            a,b,c = pars
-            return np.array(
-                [x**b,
-                a*b*x**(b-1),
-                np.ones(x.shape)]
-            )
-
-        print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
-        print("cov: ", pcov.shape, pcov)
-
-        return np.sqrt(
-            np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
-        )
-    
+    print(result)
     return dict(
-        result=m,
-        pars=m.values,
-        cov=m.covariance,
-        ys=model(xVal, *m.values),
-        yerrs=fit_error(xVal, m.values, m.covariance),
-        chi2ndf=m.fmin.reduced_chi2,
-        chi2=m.fval, ndf=m.ndof
+        result=result,
+        pars=[result["parameter_values"]["a"],result["parameter_values"]["b"],result["parameter_values"]["c"]],
+        ys=fit.y_model,
+        yerrs=fit.error_band(),
+        chi2ndf=result["gof/ndf"],
+        chi2=result["goodness_of_fit"], ndf=result["ndf"]
     )
+
+
+# EXPERIMENTAL: doesn't work
+# def minuit_fit(xVal, yVal, yErr):
+#     from iminuit import Minuit
+
+#     def model(x, a, b):
+#         return a*np.power(x,b)+1
+    
+#     def least_squares(a,b):
+#         _res = (model(xVal, a,b) - yVal) / yErr
+#         return np.sum(_res**2)
+
+#     try:
+#         m = Minuit(least_squares, a=1, b=-1)
+#     except:
+#         import traceback
+#         traceback.print_exc()
+#     m.migrad()
+#     m.hesse()
+
+#     def fit_error(xVal, popt, pcov):
+#         """compute the uncertainty on the fitted function
+
+#         Args:
+#             xVal (np.ndarray): input space
+#             popt (np.ndarray): optimized model parameter values
+#             pcov (np.ndarray): Covariance matrix of the fit result
+#         """
+#         def jac(x, pars):
+#             """Jacobian vector of model function
+#             evaluated at parameter values pars
+#             """
+#             a,b,c = pars
+#             return np.array(
+#                 [x**b,
+#                 a*b*x**(b-1),
+#                 np.ones(x.shape)]
+#             )
+
+#         print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
+#         print("cov: ", pcov.shape, pcov)
+
+#         return np.sqrt(
+#             np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
+#         )
+    
+#     return dict(
+#         result=m,
+#         pars=m.values,
+#         cov=m.covariance,
+#         ys=model(xVal, *m.values),
+#         yerrs=fit_error(xVal, m.values, m.covariance),
+#         chi2ndf=m.fmin.reduced_chi2,
+#         chi2=m.fval, ndf=m.ndof
+#     )
 
 
