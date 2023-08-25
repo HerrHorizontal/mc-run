@@ -156,3 +156,59 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=2):
     #     ys=model(xVal, result.popt)
     # )
 
+
+def minuit_fit(xVal, yVal, yErr):
+    from iminuit import Minuit
+
+    def model(x, a, b):
+        return a*np.power(x,b)+1
+    
+    def least_squares(a,b):
+        _res = (model(xVal, a,b) - yVal) / yErr
+        return np.sum(_res**2)
+
+    try:
+        m = Minuit(least_squares, a=1, b=-1)
+    except:
+        import traceback
+        traceback.print_exc()
+    m.migrad()
+    m.hesse()
+
+    def fit_error(xVal, popt, pcov):
+        """compute the uncertainty on the fitted function
+
+        Args:
+            xVal (np.ndarray): input space
+            popt (np.ndarray): optimized model parameter values
+            pcov (np.ndarray): Covariance matrix of the fit result
+        """
+        def jac(x, pars):
+            """Jacobian vector of model function
+            evaluated at parameter values pars
+            """
+            a,b,c = pars
+            return np.array(
+                [x**b,
+                a*b*x**(b-1),
+                np.ones(x.shape)]
+            )
+
+        print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
+        print("cov: ", pcov.shape, pcov)
+
+        return np.sqrt(
+            np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
+        )
+    
+    return dict(
+        result=m,
+        pars=m.values,
+        cov=m.covariance,
+        ys=model(xVal, *m.values),
+        yerrs=fit_error(xVal, m.values, m.covariance),
+        chi2ndf=m.fmin.reduced_chi2,
+        chi2=m.fval, ndf=m.ndof
+    )
+
+
