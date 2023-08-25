@@ -3,7 +3,7 @@ import scipy.optimize as opt
 import numpy as np
 
 
-def scipy_fit(xVal, yVal, yErr, N_PARS=2):
+def scipy_fit(xVal, yVal, yErr, N_PARS=3):
     """Fit function to ratio points."""
 
     N_PARS = N_PARS
@@ -23,36 +23,37 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=2):
         return np.sum(_res**2)
     
     def jac(pars):
-        """gradient of objective function"""
+        """Analytical gradient of objective function"""
         if N_PARS == 3:
             a,b,c = pars
             return np.array(
-                [np.sum(xVal**(2*b)/yErr**2),
-                    np.sum(a**2*b**2*xVal**(2*b-2)/yErr**2),
-                    np.sum(1/yErr**2)]
+                [np.sum(2*(a*(xVal**(2*b))+(c-yVal)*(xVal**b))/(yErr**2)),
+                 np.sum(2*((a**2)*(xVal**(2*b))+a*(c-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)),
+                 np.sum(2*(a*(xVal**b)+c-yVal)/(yErr**2))]
             )
         elif N_PARS == 2:
             a,b = pars
             return np.array(
-                [np.sum(xVal**(2*b)/yErr**2),
-                    np.sum(a**2*b**2*xVal**(2*b-2)/yErr**2)]
+                [np.sum(2*(a*(xVal**(2*b))+(1-yVal)*(xVal**b))/(yErr**2)),
+                 np.sum(2*((a**2)*(xVal**(2*b))+a*(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2))]
             )
         else:
             raise NotImplementedError("Gradient for N_PARS={} not implemented".format(N_PARS))
 
     def hess(pars):
+        """Analytical hessian matrix of objective function"""
         if N_PARS == 3:
             a,b,c = pars
             return np.array(
-                [[0, np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2), 0],
-                [np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2), np.sum(2*a**2*b*xVal**(2*b-2)*(b*np.log(xVal)+1)/yErr**2), 0],
-                [0, 0, 0]]
+                [[np.sum(2*(xVal**(2*b))/(yErr**2)), np.sum(2*(2*a*(xVal**(2*b))+(c-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(xVal**b)/(yErr**2))],
+                [np.sum(2*(2*a*(xVal**(2*b))+(c-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(2*(a**2)*(xVal**(2*b))+a*(c-yVal)*(xVal**b))*np.log(xVal)*np.log(xVal)/(yErr**2)), np.sum(2*a*(xVal**b)*np.log(xVal)/(yErr**2))],
+                [np.sum(2*(xVal**b)/(yErr**2)), np.sum(2*a*(xVal**b)*np.log(xVal)/(yErr**2)), np.sum(2/yErr**2)]]
             )
         elif N_PARS == 2:
             a,b = pars
             return np.array(
-                [[0, np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2)],
-                [np.sum(2*np.log(xVal)*xVal**(2*b)/yErr**2), np.sum(2*a**2*b*xVal**(2*b-2)*(b*np.log(xVal)+1)/yErr**2)]]
+                [[np.sum(2*(xVal**(2*b))/(yErr**2)), np.sum(2*(2*a*(xVal**(2*b))+(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2))],
+                [np.sum(2*(2*a*(xVal**(2*b))+(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(2*(a**2)*(xVal**(2*b))+a*(1-yVal)*(xVal**b))*np.log(xVal)*np.log(xVal)/(yErr**2))]]
             )
         else:
             raise NotImplementedError("Hessian for N_PARS={} not implemented".format(N_PARS))
@@ -99,22 +100,50 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=2):
 
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    if N_PARS==3:
-        result = opt.minimize(objective, x0=(0,-1,1), bounds=None, tol=1e-10, method='BFGS')
-    elif N_PARS==2:
-        result = opt.minimize(objective, x0=(0,-1), bounds=None, tol=1e-10, method='BFGS')
+    method = 'Nelder-Mead'
+    # method = 'trust-exact'
+    # method = 'BFGS'
+    if any(method == m for m in ['BFGS','Nelder-Mead']):
+        _jac = None
+        _hess = None
+        options = dict(maxiter=1e6, gtol=1e-6)
     else:
-        raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
+        _jac = jac
+        _hess = hess
+        options = dict(maxiter=1e6, gtol=1e-6)
+
+    def _fit(N_PARS):
+        if N_PARS==3:
+            result = opt.minimize(objective, x0=(1,-1,1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+        elif N_PARS==2:
+            result = opt.minimize(objective, x0=(0,-1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+        else:
+            raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
+        return result
+
+    result = _fit(N_PARS)
+
+    # repeat fit with less complex model
+    while (not result.success):
+        print(result)
+        print("\n\tRetry fitting with less complex model!\n")
+        N_PARS -= 1
+        result = _fit(N_PARS)
+        
 
     print(result)
-    print(hess(result.x))
+
+    if method == 'BFGS':
+        covm = result.hess_inv
+    else:
+        covm = np.linalg.inv(hess(result.x))
 
     return dict(
         result=result,
         pars=result.x,
-        cov=result.hess_inv, #np.linalg.inv(hess(result.x)),
+        cov=covm,
         ys=model(xVal, result.x),
-        yerrs=fit_error(xVal, result.x, result.hess_inv),
+        yerrs=fit_error(xVal, result.x, covm),
         chi2ndf=result.fun/(len(xVal)-N_PARS),
         chi2=result.fun, ndf=(len(xVal)-N_PARS)
     )
@@ -146,7 +175,7 @@ def kafe_fit(xVal, yVal, yErr):
     )
 
 
-# EXPERIMENTAL: doesn't work
+# EXPERIMENTAL: doesn't work, python3 required
 # def minuit_fit(xVal, yVal, yErr):
 #     from iminuit import Minuit
 
