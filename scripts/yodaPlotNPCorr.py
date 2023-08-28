@@ -12,6 +12,7 @@ import numpy as np
 import yoda
 
 from fit import scipy_fit as fit
+from util import NumpyEncoder, json_numpy_obj_hook
 
 
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
@@ -42,6 +43,12 @@ def valid_yoda_file(param):
 parser = argparse.ArgumentParser(
     description = "Plot (non-perturbative correction factors by computing) the ratio of analysis objects in (and origin nominator and denominator) YODA file(s)",
     add_help = True
+)
+parser.add_argument(
+    "--fit",
+    dest = "FIT",
+    type = dict,
+    help = "Optional dictionary of histogram names and corresponding JSON files containing fit results. If not given or non-existent, fits will be rerun."
 )
 parser.add_argument(
     "--full",
@@ -212,6 +219,11 @@ ylabel=args.YLABEL
 if args.SPLITTINGS:
     splittings = args.SPLITTINGS
 
+if args.FIT:
+    fits_given = args.FIT
+else:
+    fits_given = None
+
 for name, ao in aos_ratios.items():
     if splittings:
         # Matching to configured splittings...
@@ -300,7 +312,21 @@ for name, ao in aos_ratios.items():
     axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4, label=label)
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
-    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+    if fits_given:
+        match = False
+        for k,v in fits_given.items():
+            if k in name:
+                if os.path.isfile(v):
+                    with open(v, "r") as f:
+                        fit_results = json.load(f, object_hook=json_numpy_obj_hook)
+                    match = True
+                break
+        if not match:
+            fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+            with open(v, "w") as f:
+                json.dump(fit_results, f, indent=4, cls=NumpyEncoder)
+    else:
+        fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
 
     axmain.plot(
         xVals, fit_results["ys"],
@@ -308,7 +334,8 @@ for name, ao in aos_ratios.items():
         label="fit"
     )
     axmain.fill_between(
-        xVals, fit_results["ys"]+fit_results["yerrs"], fit_results["ys"]-fit_results["yerrs"]
+        xVals, fit_results["ys"]+fit_results["yerrs"], fit_results["ys"]-fit_results["yerrs"],
+        facecolor='black', alpha=0.5
     )
 
     axmain.text(
@@ -336,9 +363,14 @@ for name, ao in aos_ratios.items():
 
     name = lname.replace("/","_").strip("_")
     print("name: {}".format(name))
+    print("fit results: {}".format(fit_results))
     print("Vals: ", fit_results["ys"])
     print("Errs: ", fit_results["yerrs"])
     print("Up: ", fit_results["ys"]+fit_results["yerrs"])
+
+    if not fits_given:
+        with open(os.path.join(os.getcwd(), args.PLOTDIR, "{}.json".format(name)), "w") as f:
+            json.dump(fit_results, f, cls=NumpyEncoder)
 
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
     fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")

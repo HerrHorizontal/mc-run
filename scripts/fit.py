@@ -184,7 +184,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
         return model
 
     return dict(
-        result=result,
+        # result=result,
         pars=result.x,
         cov=covm,
         fitfunc=get_model_str(N_PARS, result.x),
