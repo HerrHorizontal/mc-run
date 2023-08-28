@@ -161,19 +161,33 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
         print("\n\tRetry fitting with less complex model!\n")
         N_PARS -= 1
         result = _fit(N_PARS)
-        
 
-    print(result)
+    # print(result)
 
     if method == 'BFGS':
         covm = result.hess_inv
     else:
         covm = np.linalg.inv(hess(result.x))
 
+    def get_model_str(N_PARS, pars):
+        if N_PARS==3:
+            a,b,c = pars
+            model = "${a:5.3f}x^{b:5.3f}+{c:5.3f}$".format(a=a, b=b, c=c)
+        elif N_PARS==2:
+            a,b = pars
+            model = "${a:5.3f}x^{b:5.3f}+1$".format(a=a, b=b)
+        elif N_PARS==1:
+            a,b = pars
+            model = "${a:5.3f}x+{b:5.3f}$".format(a=a, b=b)
+        else:
+            raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
+        return model
+
     return dict(
         result=result,
         pars=result.x,
         cov=covm,
+        fitfunc=get_model_str(N_PARS, result.x),
         ys=model(xVal, result.x),
         yerrs=fit_error(xVal, result.x, covm),
         chi2ndf=result.fun/(len(xVal)-N_PARS),
