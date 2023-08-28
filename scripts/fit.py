@@ -13,8 +13,11 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
             a,b,c = pars
             return a*x**(b) + c
         elif N_PARS == 2:
-            a,b, = pars
+            a,b = pars
             return a*x**(b) + 1
+        elif N_PARS == 1:
+            a,b = pars
+            return a*x + b
         else:
             raise NotImplementedError("No model function implemented for N_PARS={}".format(N_PARS))
 
@@ -37,6 +40,12 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
                 [np.sum(2*(a*(xVal**(2*b))+(1-yVal)*(xVal**b))/(yErr**2)),
                  np.sum(2*((a**2)*(xVal**(2*b))+a*(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2))]
             )
+        elif N_PARS == 1:
+            a,b = pars
+            return np.array(
+                [np.sum(2*(a*(xVal**2)+(b-yVal)*xVal)/(yErr**2)),
+                 np.sum(2*(a*xVal+b-yVal)/(yErr**2))]
+            )
         else:
             raise NotImplementedError("Gradient for N_PARS={} not implemented".format(N_PARS))
 
@@ -54,6 +63,12 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
             return np.array(
                 [[np.sum(2*(xVal**(2*b))/(yErr**2)), np.sum(2*(2*a*(xVal**(2*b))+(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2))],
                 [np.sum(2*(2*a*(xVal**(2*b))+(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(2*(a**2)*(xVal**(2*b))+a*(1-yVal)*(xVal**b))*np.log(xVal)*np.log(xVal)/(yErr**2))]]
+            )
+        elif N_PARS == 1:
+            a,b = pars
+            return np.array(
+                [[np.sum(2*(xVal**2)/(yErr**2)), np.sum(2*xVal/(yErr**2))],
+                 [np.sum(2*xVal/(yErr**2)), np.sum(2/(yErr**2))]]
             )
         else:
             raise NotImplementedError("Hessian for N_PARS={} not implemented".format(N_PARS))
@@ -79,14 +94,20 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
                 a,b,c = pars
                 return np.array(
                     [x**b,
-                    a*b*x**(b-1),
+                    a*np.log(x)*(x**b),
                     np.ones(x.shape)]
                 )
             elif N_PARS == 2:
                 a,b = pars
                 return np.array(
                     [x**b,
-                    a*b*x**(b-1)]
+                    a*np.log(x)*(x**b)]
+                )
+            elif N_PARS == 1:
+                a,b = pars
+                return np.array(
+                    [x,
+                     np.ones(x.shape)]
                 )
             else:
                 return NotImplementedError("No Jacobian vector implemented for model with N_PARS={}".format(N_PARS))
@@ -100,8 +121,8 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
 
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    method = 'Nelder-Mead'
-    # method = 'trust-exact'
+    # method = 'Nelder-Mead'
+    method = 'trust-exact'
     # method = 'BFGS'
     if any(method == m for m in ['BFGS','Nelder-Mead']):
         _jac = None
@@ -116,7 +137,9 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
         if N_PARS==3:
             result = opt.minimize(objective, x0=(1,-1,1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
         elif N_PARS==2:
-            result = opt.minimize(objective, x0=(0,-1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+            result = opt.minimize(objective, x0=(1,-1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+        elif N_PARS==1:
+            result = opt.minimize(objective, x0=(0,1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
         else:
             raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
         return result
