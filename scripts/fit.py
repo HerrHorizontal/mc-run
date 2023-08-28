@@ -121,8 +121,8 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
             else:
                 return NotImplementedError("No Jacobian vector implemented for model with N_PARS={}".format(N_PARS))
 
-        print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
-        print("cov: ", pcov.shape, pcov)
+        # print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
+        # print("cov: ", pcov.shape, pcov)
 
         return np.sqrt(
             np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
