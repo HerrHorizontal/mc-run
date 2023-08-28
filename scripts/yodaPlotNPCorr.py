@@ -315,7 +315,7 @@ for name, ao in aos_ratios.items():
     if fits_given:
         match = False
         for k,v in fits_given.items():
-            if k in name:
+            if k in lname:
                 if os.path.isfile(v):
                     with open(v, "r") as f:
                         fit_results = json.load(f, object_hook=json_numpy_obj_hook)

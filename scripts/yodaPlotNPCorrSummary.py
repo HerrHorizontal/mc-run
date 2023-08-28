@@ -10,8 +10,9 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import yoda
-# import pandas as pd
-# import seaborn as sns
+
+from fit import scipy_fit as fit
+from util import NumpyEncoder, json_numpy_obj_hook
 
 
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
@@ -39,27 +40,15 @@ def valid_yoda_file(param):
     return os.path.abspath(param)
 
 
-def fit(xVal, yVal, yErr):
-    """Fit function to ratio points."""
-    import scipy.optimize as opt
-
-    N_PARS = 3
-    def _f(x, pars):
-        return pars[0]*x**(pars[1]) + pars[2]
-
-    def _chi2(pars):
-        _res = (_f(xVal, pars) - yVal) / yErr
-        return np.sum(_res**2)
-
-    # minimize function and take resulting azimuth
-    #result = opt.minimize_scalar(_chi2)
-    result = opt.minimize(_chi2, x0=(0,-1,1), bounds=((-np.inf,np.inf),(-np.inf,0),(-10,10)))
-    return dict(result=result, pars=result.x, ys=_f(xVal, result.x), chi2ndf=result.fun/(len(xVal)-N_PARS), chi2=result.fun, ndf=(len(xVal)-N_PARS))
-
-
 parser = argparse.ArgumentParser(
     description = "Plot (non-perturbative correction factors by computing) the ratio of analysis objects in (and origin nominator and denominator) YODA file(s)",
     add_help = True
+)
+parser.add_argument(
+    "--fit",
+    dest = "FIT",
+    type = dict,
+    help = "Optional dictionary of histogram names and corresponding JSON files containing fit results. If not given or non-existent, fits will be rerun."
 )
 parser.add_argument(
     "--full-label",
@@ -174,6 +163,11 @@ if args.SPLITTINGS:
 if args.JETS:
     jets = args.JETS
 
+if args.FIT:
+    fits_given = args.FIT
+else:
+    fits_given = None
+
 for sname, splits in splittings.items():
     for jet in jets.values():
         fig = plt.figure()
@@ -192,6 +186,7 @@ for sname, splits in splittings.items():
         binlabels = []
         colors = []
         markers = []
+        lnames = []
         aos = []
         for i,(k,v) in enumerate(sorted(splits.items())):
             for name, ao in aos_ratios.items():
@@ -201,6 +196,7 @@ for sname, splits in splittings.items():
                     binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
                     colors.append(v["color"])
                     markers.append(v["marker"])
+                    lnames.append(name.replace(v["ident"],k))
                     aos.append(ao)
                 else:
                     continue
@@ -209,7 +205,7 @@ for sname, splits in splittings.items():
 
         assert(len(binlabels) == len(aos))
 
-        for i, (label, color, marker, ao) in enumerate(reversed(zip(binlabels, colors, markers, aos))):
+        for i, (label, color, marker, lname, ao) in enumerate(reversed(zip(binlabels, colors, markers, lnames, aos))):
             print("Plot bin {}...".format(label))
             xErrs = np.array(ao.xErrs())
             yErrs = np.array(ao.yErrs())
@@ -222,15 +218,40 @@ for sname, splits in splittings.items():
             # axmain.errorbar(xVals, yVals+(0.5*i), xerr=xErrs.T, yerr=yErrs.T, color=color, marker=marker, linestyle="none", linewidth=1.4, capthick=1.4, label=label)
             # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
-            fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+            if fits_given:
+                match = False
+                for k,v in fits_given.items():
+                    if k in lname:
+                        if os.path.isfile(v):
+                            with open(v, "r") as f:
+                                fit_results = json.load(f, object_hook=json_numpy_obj_hook)
+                            match = True
+                        break
+                if not match:
+                    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+                    with open(v, "w") as f:
+                        json.dump(fit_results, f, cls=NumpyEncoder)
+            else:
+                fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
 
             xEdgesF = xEdges
             yEdgesF = np.append(fit_results["ys"], fit_results["ys"][-1])
+            yEdgesFup = np.append(fit_results["ys"]+fit_results["yerrs"], (fit_results["ys"]+fit_results["yerrs"])[-1])
+            yEdgesFdown = np.append(fit_results["ys"]-fit_results["yerrs"], (fit_results["ys"]-fit_results["yerrs"])[-1])
             # axmain.plot(
             #     xVals, fit_results["ys"]+(0.5*i),
             #     color=color, linestyle='-'
             # )
-            axmain.step(xEdgesF, yEdgesF+(0.5*i), where="post", color=color, linestyle="-", linewidth=1.8, label=label)
+            # axmain.fill_between(
+            #     xVals, fit_results["ys"]+fit_results["yerrs"]+(0.5*i), fit_results["ys"]-fit_results["yerrs"]+(0.5*i),
+            #     facecolor=color, alpha=0.5
+            # )
+            axmain.step(xEdgesF, yEdgesF+(0.5*i), where="post", color=color, linestyle="-", label=label)
+            axmain.fill_between(
+                xEdgesF, yEdgesFup+(0.5*i), yEdgesFdown+(0.5*i),
+                step="post",
+                facecolor=color, alpha=0.5
+            )
 
         axmain.set_xticks(xticks)
         axmain.set_xticklabels(xticks)
