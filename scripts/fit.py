@@ -4,7 +4,16 @@ import numpy as np
 
 
 def scipy_fit(xVal, yVal, yErr, N_PARS=3):
-    """Fit function to ratio points."""
+    """Fit function to data points.
+
+    Args:
+        xVal (numpy.array): x-positions of data points to fit
+        yVal (numpy.array): y-positions of data points to fit
+        yErr (numpy.array): uncertainty estimate in y of data points to fit
+
+    Returns:
+        dict: dictionary containing fitted function values/uncertainties at data points and evaluation metrics
+    """
 
     N_PARS = N_PARS
     def model(x, pars):
@@ -121,8 +130,8 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
 
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    # method = 'Nelder-Mead'
-    method = 'trust-exact'
+    method = 'Nelder-Mead'
+    # method = 'trust-exact'
     # method = 'BFGS'
     if any(method == m for m in ['BFGS','Nelder-Mead']):
         _jac = None
@@ -173,6 +182,16 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
 
 
 def kafe_fit(xVal, yVal, yErr):
+    """Alternative fit method with kafe2 for cross-checks
+
+    Args:
+        xVal (numpy.array): x-positions of data points to fit
+        yVal (numpy.array): y-positions of data points to fit
+        yErr (numpy.array): uncertainty estimate in y of data points to fit
+
+    Returns:
+        dict: dictionary containing fitted function values/uncertainties at data points and evaluation metrics
+    """
     import kafe2
     data = kafe2.XYContainer(xVal, yVal)
     data.add_error(axis="y",err_val=yErr)
