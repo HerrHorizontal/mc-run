@@ -20,9 +20,14 @@ parser = argparse.ArgumentParser(
     add_help=True
 )
 parser.add_argument(
+    "-c", "--campaign",
+    action="append",
+    type=str,
+    help="Campaign identifier and dictionary containing the bins as key and corresponding fitting files as values"
+)
+parser.add_argument(
     "-f", "--fit",
     action="append",
-    nargs=2,
     type=json.loads,
     help="Campaign identifier and dictionary containing the bins as key and corresponding fitting files as values"
 )
@@ -86,6 +91,12 @@ parser.add_argument(
     type=json.loads,
     help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles"
 )
+parser.add_argument(
+    "--supress-legend", "-l",
+    dest="NOLEGEND",
+    action='store_true',
+    help="supress plotting the legend"
+)
 
 args = parser.parse_args()
 
@@ -95,11 +106,11 @@ if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
 aos_dicts = dict()
-for campaign, fitfiles in args.fit:
+for campaign, fitfiles in zip(args.campaign, args.fit):
     for bin,fitfile in fitfiles.items():
         with open(fitfile) as f:
-            aos_dicts["_".join(campaign, bin)] = json.load(f, object_hook=json_numpy_obj_hook)
-            aos_dicts["_".join(campaign, bin)]["path"] = fitfile
+            aos_dicts["_".join([campaign, bin])] = json.load(f, object_hook=json_numpy_obj_hook)
+            aos_dicts["_".join([campaign, bin])]["path"] = fitfile
 
 
 xmin = min(np.min(ao["xs"]) for ao in aos_dicts.values())
@@ -199,7 +210,7 @@ for sname, splits in splittings.items():
         )
         axmain.set_title(label=CAMPAIGN_MODS["LHC-LO-ZplusJet"]["label"], loc='left')
 
-        name = "{}_{}_{}_summary".format(args.MATCH, jet["ident"], sname)
+        name = "{}_{}_summary".format(jet["ident"], sname)
         print("name: {}".format(name))
 
         fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")

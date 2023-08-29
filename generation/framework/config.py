@@ -9,6 +9,21 @@ MCCHAIN_SCENARIO_LABELS = {
     "NPoff": "ME+PS"
 }
 
+CAMPAIGN_MODS = {
+    "LHC-LO-ZplusJet": dict(
+        order="LO",
+        label=r"MG\@LO $\oplus$ Herwig7",
+        lightencolor=1.3,
+        linestyle="solid"
+    ),
+    "LHC-NLO-ZplusJet": dict(
+        order="NLO",
+        label=r"MG\@NLO $\oplus$ Herwig7",
+        lightencolor=1.0,
+        linestyle="dashed"
+    )
+}
+
 JETS = {
     "AK4": dict(ident="AK4", label="Anti-kt\n$R=0.4$", linestyle="solid"),
     "AK8": dict(ident="AK8", label="Anti-kt\n$R=0.8$", linestyle="dashed"),

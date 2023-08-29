@@ -2,10 +2,11 @@
 import luigi, law
 from luigi.util import inherits
 import os
+import json
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
-from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
+from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS, CAMPAIGN_MODS
 
 from generation.framework.tasks import Task, CommonConfig
 
@@ -34,9 +35,9 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 where parts of the generation chain are turned off."
     )
 
-    campaigns = luigi.DictParameter(
-        default={"LHC-LO-ZplusJet": "LO", "LHC-NLO-ZplusJet": "NLO"},
-        description="Campaigns to compare identified by the name of their Herwig input file as key and label as value"
+    campaigns = luigi.ListParameter(
+        default=["LHC-LO-ZplusJet", "LHC-NLO-ZplusJet"],
+        description="Campaigns to compare identified by the name of their Herwig input file"
     )
 
     match = luigi.Parameter(
@@ -57,13 +58,18 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
             - OPTIONAL: the label for a top pad showing the original distributions used to derive the ratio \n\
             ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", [\"origin-ylabel\"]), (...), ...)"
     )
+    yrange = luigi.TupleParameter(
+        default=[0.8,1.3],
+        significant=False,
+        description="Value range for the y-axis of the ratio plot."
+    )
 
     fits = luigi.DictParameter(
         default=None,
         description="Dictionary of keys and paths to the files containing the fit information"
     )
 
-    def _default_fits(self, input_file_name):
+    def _default_fits(self):
         return {k: "{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k)
             for k in BINS["all"]
             for ana in self.rivet_analyses
@@ -73,11 +79,11 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def workflow_requires(self):
         req = super(PlotScenarioComparison, self).workflow_requires()
-        for scen in self.campaigns.keys():
+        for scen in self.campaigns:
             if self.fits:
                 fits = self.fits
             else:
-                fits = self._default_fits(input_file_name=scen)
+                fits = self._default_fits()
             req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits)
         return req
     
@@ -97,11 +103,11 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def requires(self):
         req = dict()
-        for scen in self.campaigns.keys():
+        for scen in self.campaigns:
             if self.fits:
                 fits = self.fits
             else:
-                fits = self._default_fits(input_file_name=scen)
+                fits = self._default_fits()
             req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits)
         return req
     
@@ -119,4 +125,60 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
 
     def run(self):
-        pass
+        # ensure that the output directory exists
+        output = self.output()
+        try:
+            output.parent.touch()
+        except IOError:
+            print("Output target {} doesn't exist!".format(output.parent))
+            output.makedirs()
+
+        if len(self.yrange) != 2:
+            raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
+        
+        # actual payload:
+        print("=======================================================")
+        print("Starting comparison NP-factor plotting for campaigns {}".format(self.campaigns))
+        print("=======================================================")
+
+        plot_dir = output.parent.path
+        
+        if self.fits:
+            fits = self.fits
+        else:
+            fits = self._default_fits()
+        fits_dict = dict()
+        print(self.input())
+        for campaign in self.campaigns:
+            fits_dict[campaign] = {k: os.path.join(self.input()[campaign]["single"].path, v) for k,v in fits.items()}
+
+        # execute the script reading the fitted NP correctiuons and plotting the comparison
+        executable = ["python", os.path.expandvars("$ANALYSIS_PATH/scripts/plotCampaignComparison.py")]
+        for campaign, fits in fits_dict.items():
+            executable += ["--campaign", "{}".format(campaign), "--fit", "{}".format(json.dumps(fits))]
+        executable += ["--mods", "{}".format(json.dumps(CAMPAIGN_MODS))]
+        executable += [
+            "--plot-dir", "{}".format(plot_dir),
+            "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
+            "--splittings", "{}".format(json.dumps(dict(YS0=BINS["YS0"],YB0=BINS["YB0"],YSYBAll=BINS["all"]))),
+            "--jets", "{}".format(json.dumps(JETS)),
+            "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
+            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
+        ]
+        executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
+        executable += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
+
+        print("Executable: {}".format(" ".join(executable)))
+
+        try:
+            run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
+        except RuntimeError as e:
+            print("Summary plots creation failed!")
+            output.remove()
+            raise e
+        
+        if not os.listdir(plot_dir):
+            output.remove()
+            raise LookupError("Plot directory {} is empty!".format(plot_dir))
+
+        print("-------------------------------------------------------")
