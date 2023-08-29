@@ -47,7 +47,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--fit",
     dest = "FIT",
-    type = dict,
+    type = json.loads,
     help = "Optional dictionary of histogram names and corresponding JSON files containing fit results. If not given or non-existent, fits will be rerun."
 )
 parser.add_argument(
@@ -158,15 +158,17 @@ xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 xlabel=args.XLABEL
 ylabel=args.YLABEL
 
+splittings = None
 if args.SPLITTINGS:
     splittings = args.SPLITTINGS
+
+jets = None
 if args.JETS:
     jets = args.JETS
 
+fits_given = None
 if args.FIT:
     fits_given = args.FIT
-else:
-    fits_given = None
 
 for sname, splits in splittings.items():
     for jet in jets.values():

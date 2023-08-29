@@ -47,7 +47,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--fit",
     dest = "FIT",
-    type = dict,
+    type = json.loads,
     help = "Optional dictionary of histogram names and corresponding JSON files containing fit results. If not given or non-existent, fits will be rerun."
 )
 parser.add_argument(

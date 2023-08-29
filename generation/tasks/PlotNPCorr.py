@@ -56,6 +56,11 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         description="Value range for the y-axis of the ratio plot."
     )
 
+    fits = luigi.DictParameter(
+        default = None,
+        description="Dictionary of keys and paths to the files containing the fit information"
+    )
+
     exclude_params_req = {
         "source_script",
         "mc_setting_full",
@@ -184,6 +189,9 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
+        executable += ["--fit", "{}".format(json.dumps(
+            dict({k: os.path.join(plot_dir_single, v) for k,v in self.fits.items()})
+        ))] if self.fits else []
         executable += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
         executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
@@ -218,6 +226,9 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
+        executable_summary += ["--fit", "{}".format(json.dumps(
+            dict({k: os.path.join(plot_dir_single, v) for k,v in self.fits.items()})
+        ))] if self.fits else []
         executable_summary += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable_summary += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
         executable_summary += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
