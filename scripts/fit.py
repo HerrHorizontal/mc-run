@@ -196,40 +196,40 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
     )
 
 
-def kafe_fit(xVal, yVal, yErr):
-    """Alternative fit method with kafe2 for cross-checks
+# def kafe_fit(xVal, yVal, yErr):
+#     """Alternative fit method with kafe2 for cross-checks
 
-    Args:
-        xVal (numpy.array): x-positions of data points to fit
-        yVal (numpy.array): y-positions of data points to fit
-        yErr (numpy.array): uncertainty estimate in y of data points to fit
+#     Args:
+#         xVal (numpy.array): x-positions of data points to fit
+#         yVal (numpy.array): y-positions of data points to fit
+#         yErr (numpy.array): uncertainty estimate in y of data points to fit
 
-    Returns:
-        dict: dictionary containing fitted function values/uncertainties at data points and evaluation metrics
-    """
-    import kafe2
-    data = kafe2.XYContainer(xVal, yVal)
-    data.add_error(axis="y",err_val=yErr)
+#     Returns:
+#         dict: dictionary containing fitted function values/uncertainties at data points and evaluation metrics
+#     """
+#     import kafe2
+#     data = kafe2.XYContainer(xVal, yVal)
+#     data.add_error(axis="y",err_val=yErr)
 
-    def model(x, a=0, b=-1, c=1):
-        return a*x**(b) + c
+#     def model(x, a=0, b=-1, c=1):
+#         return a*x**(b) + c
     
-    fit = kafe2.Fit(data, model, minimizer="scipy")
-    # fit.limit_parameter("a", lower=None, upper=None)
-    fit.limit_parameter("b", lower=None, upper=0)
-    fit.limit_parameter("c", lower=-10, upper=10)
+#     fit = kafe2.Fit(data, model, minimizer="scipy")
+#     # fit.limit_parameter("a", lower=None, upper=None)
+#     fit.limit_parameter("b", lower=None, upper=0)
+#     fit.limit_parameter("c", lower=-10, upper=10)
 
-    result = fit.do_fit()
+#     result = fit.do_fit()
 
-    print(result)
-    return dict(
-        result=result,
-        pars=[result["parameter_values"]["a"],result["parameter_values"]["b"],result["parameter_values"]["c"]],
-        ys=fit.y_model,
-        yerrs=fit.error_band(),
-        chi2ndf=result["gof/ndf"],
-        chi2=result["goodness_of_fit"], ndf=result["ndf"]
-    )
+#     print(result)
+#     return dict(
+#         result=result,
+#         pars=[result["parameter_values"]["a"],result["parameter_values"]["b"],result["parameter_values"]["c"]],
+#         ys=fit.y_model,
+#         yerrs=fit.error_band(),
+#         chi2ndf=result["gof/ndf"],
+#         chi2=result["goodness_of_fit"], ndf=result["ndf"]
+#     )
 
 
 # EXPERIMENTAL: doesn't work, python3 required

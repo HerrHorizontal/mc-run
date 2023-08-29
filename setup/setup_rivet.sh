@@ -2,9 +2,6 @@
 
 action(){
 
-    # kafe for fitting
-    python -m pip install "kafe2<2.4.0"
-
     # source grid environment
     source /cvmfs/grid.cern.ch/centos7-wn-4.0.5-1_umd4v1/etc/profile.d/setup-c7-wn-example.sh
 
