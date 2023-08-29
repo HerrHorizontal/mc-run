@@ -10,3 +10,5 @@ import RivetMerge
 
 import DeriveNPCorr
 import PlotNPCorr
+
+import PlotScenarioComparison

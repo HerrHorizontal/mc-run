@@ -17,6 +17,11 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     input_file_name = "Comparison"
 
+    rivet_analyses = luigi.ListParameter(
+        default=["ZplusJet_3"],
+        description="List of IDs of Rivet analyses to run"
+    )
+
     mc_setting_full = luigi.Parameter(
         default="withNP",
         description="Scenario identifier for the full MC production, typically `withNP`. \
@@ -29,9 +34,9 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 where parts of the generation chain are turned off."
     )
 
-    input_file_names = luigi.ListParameter(
-        default=["LHC-LO-ZplusJet", "LHC-NLO-ZplusJet"],
-        description="Campaigns to compare identified by the name of their Herwig input file"
+    campaigns = luigi.DictParameter(
+        default={"LHC-LO-ZplusJet": "LO", "LHC-NLO-ZplusJet": "NLO"},
+        description="Campaigns to compare identified by the name of their Herwig input file as key and label as value"
     )
 
     match = luigi.Parameter(
@@ -53,11 +58,27 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
             ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", [\"origin-ylabel\"]), (...), ...)"
     )
 
+    fits = luigi.DictParameter(
+        default=None,
+        description="Dictionary of keys and paths to the files containing the fit information"
+    )
+
+    def _default_fits(self, input_file_name):
+        return {k: "{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k)
+            for k in BINS["all"]
+            for ana in self.rivet_analyses
+            for jet in JETS.keys()
+        }
+
 
     def workflow_requires(self):
         req = super(PlotScenarioComparison, self).workflow_requires()
-        for scen in self.input_file_names:
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen)
+        for scen in self.campaigns.keys():
+            if self.fits:
+                fits = self.fits
+            else:
+                fits = self._default_fits(input_file_name=scen)
+            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits)
         return req
     
 
@@ -76,21 +97,23 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def requires(self):
         req = dict()
-        for scen in self.input_file_names:
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen)
+        for scen in self.campaigns.keys():
+            if self.fits:
+                fits = self.fits
+            else:
+                fits = self._default_fits(input_file_name=scen)
+            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits)
         return req
     
 
     def output(self):
         return self.local_target(
-            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{scenarios}/{full}-{partial}/".format(
+            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
-                scenarios="-".join(self.input_file_names),
-                full=self.mc_setting_full,
-                partial=self.mc_setting_partial
+                campaigns="-".join(self.campaigns)
             )
         )
 
