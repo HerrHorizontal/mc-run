@@ -162,7 +162,7 @@ for sname, splits in splittings.items():
         lnames = []
         aos = []
         print("splits: {}".format(len(splits)))
-        for i,(k,v) in enumerate(sorted(splits.items())):
+        for i,(k,v) in enumerate(reversed(sorted(splits.items()))):
             print("aos: {}".format(len(aos_dicts)))
             for name, ao in aos_dicts.items():
                 if k in name and jet["ident"] in name:
@@ -202,11 +202,14 @@ for sname, splits in splittings.items():
             assert(xVals.shape == yVals.shape)
             assert(yVals.shape == yErrs.shape)
 
-            label = label+" (+{:.1f})".format(0.5*i)
+            if i % len(args.campaign) == 1:
+                label = label+" (+{:.1f})".format(0.5*shift)
+            else:
+                label = None
 
             axmain.plot(
                 xVals, yVals+(0.5*shift),
-                color=color, linestyle=linestyle
+                color=color, linestyle=linestyle, label=label
             )
             axmain.fill_between(
                 xVals, yVals+yErrs+(0.5*shift), yVals-yErrs+(0.5*shift),
@@ -220,7 +223,24 @@ for sname, splits in splittings.items():
 
         if not args.NOLEGEND:
             handles, labels = axmain.get_legend_handles_labels()
-            axmain.legend(reversed(handles), reversed(labels), frameon=False, handlelength=1, loc='upper right')
+            campaign_handles = []
+            for handle in handles:
+                campaign_handle = mpl.lines.Line2D([0],[0],color="black")
+                campaign_handle.update_from(handle)
+                campaign_handle.set_linestyle("solid")
+                campaign_handles.append(campaign_handle)
+            for campaign in args.campaign:
+                # import pickle
+                # campaign_handle = pickle.loads(pickle.dumps(handles[-1]))
+                add_handle = mpl.lines.Line2D([0],[0],color="black")
+                add_handle.update_from(handles[-1])
+                add_handle.set_color(adjust_lightness("black",CAMPAIGN_MODS[campaign]["lightencolor"]))
+                add_handle.set_linestyle(CAMPAIGN_MODS[campaign]["linestyle"])
+                campaign_handles = [add_handle] + campaign_handles
+                campaign_label = CAMPAIGN_MODS[campaign]["label"]
+                labels = [campaign_label] + labels
+            assert(len(handles)+len(args.campaign) == len(campaign_handles))
+            axmain.legend(campaign_handles, labels, frameon=False, handlelength=1, loc='upper right')
 
         axmain.text(
             x=0.03, y=0.97,
@@ -229,7 +249,7 @@ for sname, splits in splittings.items():
             ha='left', va='top',
             transform=axmain.transAxes
         )
-        axmain.set_title(label=CAMPAIGN_MODS["LHC-LO-ZplusJet"]["label"], loc='left')
+        # axmain.set_title(label=CAMPAIGN_MODS["LHC-LO-ZplusJet"]["label"], loc='left')
 
         name = "{}_{}_summary".format(jet["ident"], sname)
         print("name: {}".format(name))
