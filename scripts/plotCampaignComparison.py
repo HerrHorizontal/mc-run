@@ -105,19 +105,6 @@ LABELS = [args.full_label, args.partial_label]
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-aos_dicts = dict()
-for campaign, fitfiles in zip(args.campaign, args.fit):
-    for bin,fitfile in fitfiles.items():
-        with open(fitfile) as f:
-            aos_dicts["_".join([campaign, bin])] = json.load(f, object_hook=json_numpy_obj_hook)
-            aos_dicts["_".join([campaign, bin])]["path"] = fitfile
-
-
-xmin = min(np.min(ao["xs"]) for ao in aos_dicts.values())
-xmax = max(np.min(ao["xs"]) for ao in aos_dicts.values())
-
-xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
-
 xlabel=args.XLABEL
 ylabel=args.YLABEL#
 
@@ -130,6 +117,24 @@ if args.JETS:
 splittings = None
 if args.SPLITTINGS:
     splittings = args.SPLITTINGS
+
+aos_dicts = dict()
+for campaign, fitfiles in zip(args.campaign, args.fit):
+    for fitfile, bin in fitfiles.items():
+        for jet in jets.values():
+            if jet["ident"] in fitfile:
+                with open(fitfile) as f:
+                    aos_dicts["_".join([campaign, jet["ident"], bin])] = json.load(f, object_hook=json_numpy_obj_hook)
+                    aos_dicts["_".join([campaign, jet["ident"], bin])]["path"] = fitfile
+
+
+xmin = min(np.min(ao["xs"]) for ao in aos_dicts.values())*0.9
+xmax = max(np.max(ao["xs"]) for ao in aos_dicts.values())*1.1
+
+print("x-Range: ", xmin, xmax)
+
+xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
+
 
 # make a plot for each splitting and jet combination
 for sname, splits in splittings.items():
@@ -149,20 +154,25 @@ for sname, splits in splittings.items():
 
         # set styles for individual analysis objects
         campaigns = []
+        shifts = []
         labels = []
         colors = []
         markers = []
         linestyles = []
         lnames = []
         aos = []
+        print("splits: {}".format(len(splits)))
         for i,(k,v) in enumerate(sorted(splits.items())):
+            print("aos: {}".format(len(aos_dicts)))
             for name, ao in aos_dicts.items():
-                if v["ident"] in name and jet["ident"] in ao["path"]:
-                    for campaign, _  in args.fit:
+                if k in name and jet["ident"] in name:
+                    print("campaigns: {}".format(len(args.fit)))
+                    for campaign in args.campaign:
                         if campaign in name:
                             yminmain = min(v["ylim"][0], yminmain)
                             ymaxmain = max(v["ylim"][1], ymaxmain)
                             campaigns.append(campaign)
+                            shifts.append(i)
                             labels.append(r"{}".format(v["label"]).replace("\n", " "))
                             colors.append(adjust_lightness(v["color"],CAMPAIGN_MODS[campaign]["lightencolor"]))
                             markers.append(v["marker"])
@@ -172,23 +182,34 @@ for sname, splits in splittings.items():
             axmain.set_ylim([yminmain, (ymaxmain-1)+(i+1)])
             axmain.axhline(1.0*(0.5*i+1), color="gray") #< Ratio = 1 marker line
 
+        assert(len(campaigns) > 0)
+        assert(len(campaigns) == len(aos))
+        assert(len(shifts) == len(aos))
+        assert(len(colors) == len(aos))
+        assert(len(linestyles) == len(aos))
         assert(len(labels) == len(aos))
 
         # plot
-        for i, (campaign, label, color, marker, linestyle, lname, ao) in enumerate(reversed(zip(campaigns, labels, colors, markers, linestyles, lnames, aos))):
+        for i, (campaign, shift, label, color, marker, linestyle, lname, ao) in enumerate(reversed(zip(campaigns, shifts, labels, colors, markers, linestyles, lnames, aos))):
             print("Plot bin {} for campaign {} ...".format(label, campaign))
-            xVals = ao["xs"]
-            yVals = ao["ys"]
-            yErrs = ao["yerrs"]
+            print(shift, color, marker, linestyle, lname)
+            xVals = np.array(ao["xs"])
+            # print("x: {}".format(xVals))
+            yVals = np.array(ao["ys"])
+            # print("y: {}".format(yVals))
+            yErrs = np.array(ao["yerrs"])
+            # print("y_err: {}".format(yErrs))
+            assert(xVals.shape == yVals.shape)
+            assert(yVals.shape == yErrs.shape)
 
             label = label+" (+{:.1f})".format(0.5*i)
 
             axmain.plot(
-                xVals, yVals+(0.5*i),
+                xVals, yVals+(0.5*shift),
                 color=color, linestyle=linestyle
             )
             axmain.fill_between(
-                xVals, yVals+yErrs+(0.5*i), yVals-yErrs+(0.5*i),
+                xVals, yVals+yErrs+(0.5*shift), yVals-yErrs+(0.5*shift),
                 facecolor=color, alpha=0.5
             )
 

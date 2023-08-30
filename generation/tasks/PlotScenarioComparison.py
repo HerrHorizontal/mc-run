@@ -70,7 +70,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
     )
 
     def _default_fits(self):
-        return {k: "{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k)
+        return {"{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k): k
             for k in BINS["all"]
             for ana in self.rivet_analyses
             for jet in JETS.keys()
@@ -148,9 +148,12 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         else:
             fits = self._default_fits()
         fits_dict = dict()
-        print(self.input())
+        # print(self.input())
         for campaign in self.campaigns:
-            fits_dict[campaign] = {k: os.path.join(self.input()[campaign]["single"].path, v) for k,v in fits.items()}
+            fits_dict[campaign] = {os.path.join(self.input()[campaign]["single"].path, k): v for k,v in fits.items()}
+        # print("fits_dict: ")
+        # from pprint import pprint
+        # pprint(fits_dict)
 
         # execute the script reading the fitted NP correctiuons and plotting the comparison
         executable = ["python", os.path.expandvars("$ANALYSIS_PATH/scripts/plotCampaignComparison.py")]

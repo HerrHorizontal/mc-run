@@ -13,14 +13,14 @@ CAMPAIGN_MODS = {
     "LHC-LO-ZplusJet": dict(
         order="LO",
         label=r"MG\@LO $\oplus$ Herwig7",
-        lightencolor=1.3,
-        linestyle="solid"
+        lightencolor=1.0,
+        linestyle="dashed"
     ),
     "LHC-NLO-ZplusJet": dict(
         order="NLO",
         label=r"MG\@NLO $\oplus$ Herwig7",
-        lightencolor=1.0,
-        linestyle="dashed"
+        lightencolor=0.7,
+        linestyle="solid"
     )
 }
 
