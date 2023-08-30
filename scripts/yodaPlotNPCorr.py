@@ -48,7 +48,7 @@ parser.add_argument(
     "--fit",
     dest = "FIT",
     type = json.loads,
-    help = "Optional dictionary of histogram names and corresponding JSON files containing fit results. If not given or non-existent, fits will be rerun."
+    help = "Optional dictionary of histogram names and corresponding JSON files where fit results will be stored."
 )
 parser.add_argument(
     "--full",
