@@ -312,21 +312,7 @@ for name, ao in aos_ratios.items():
     axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4, label=label)
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
-    if fits_given:
-        match = False
-        for k,v in fits_given.items():
-            if k in lname:
-                if os.path.isfile(v):
-                    with open(v, "r") as f:
-                        fit_results = json.load(f, object_hook=json_numpy_obj_hook)
-                    match = True
-                break
-        if not match:
-            fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
-            with open(v, "w") as f:
-                json.dump(fit_results, f, indent=4, cls=NumpyEncoder)
-    else:
-        fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
 
     axmain.plot(
         xVals, fit_results["ys"],
@@ -368,7 +354,14 @@ for name, ao in aos_ratios.items():
     print("Errs: ", fit_results["yerrs"])
     print("Up: ", fit_results["ys"]+fit_results["yerrs"])
 
-    if not fits_given:
+    match = False
+    if fits_given:
+        for k,v in fits_given.items():
+            if v in lname:
+                match = True
+                with open(k, "w") as f:
+                    json.dump(fit_results, f, indent=4, cls=NumpyEncoder)
+    if not match:
         with open(os.path.join(os.getcwd(), args.PLOTDIR, "{}.json".format(name)), "w") as f:
             json.dump(fit_results, f, cls=NumpyEncoder)
 

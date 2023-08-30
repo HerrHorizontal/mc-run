@@ -190,7 +190,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
         executable += ["--fit", "{}".format(json.dumps(
-            dict({k: os.path.join(plot_dir_single, v) for k,v in self.fits.items()})
+            dict({os.path.join(plot_dir_single, k): v for k,v in self.fits.items()})
         ))] if self.fits else []
         executable += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
@@ -227,7 +227,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
         executable_summary += ["--fit", "{}".format(json.dumps(
-            dict({k: os.path.join(plot_dir_single, v) for k,v in self.fits.items()})
+            dict({os.path.join(plot_dir_single, k): v for k,v in self.fits.items()})
         ))] if self.fits else []
         executable_summary += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable_summary += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []

@@ -223,7 +223,7 @@ for sname, splits in splittings.items():
             if fits_given:
                 match = False
                 for k,v in fits_given.items():
-                    if k in lname:
+                    if v in lname and jet["ident"] in lname:
                         if os.path.isfile(v):
                             with open(v, "r") as f:
                                 fit_results = json.load(f, object_hook=json_numpy_obj_hook)
