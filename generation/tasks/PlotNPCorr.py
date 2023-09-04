@@ -63,8 +63,6 @@ class PlotNPCorr(Task, law.LocalWorkflow):
 
     exclude_params_req = {
         "source_script",
-        "mc_setting_full",
-        "mc_setting_partial",
         "filter_label_pad_dicts"
     }
 
