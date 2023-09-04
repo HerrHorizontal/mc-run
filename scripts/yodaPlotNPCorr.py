@@ -145,6 +145,12 @@ parser.add_argument(
     type=json.loads,
     help="optional dictionary containing identifier used to match the analysis objects to plot and additional labels and axis-limits"
 )
+parser.add_argument(
+    "--jets", "-j",
+    dest="JETS",
+    type=json.loads,
+    help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles"
+)
 
 args = parser.parse_args()
 
@@ -216,8 +222,13 @@ xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 xlabel=args.XLABEL
 ylabel=args.YLABEL
 
+splittings = None
 if args.SPLITTINGS:
     splittings = args.SPLITTINGS
+
+jets = None
+if args.JETS:
+    jets = args.JETS
 
 if args.FIT:
     fits_given = args.FIT
@@ -237,8 +248,6 @@ for name, ao in aos_ratios.items():
                 match = True
         if not match:
             continue
-        
-    # aa = plot_hist_on_axes_1d(axmain, axratio, h, href, COLORS[ih % len(COLORS)], LSTYLES[ih % len(LSTYLES)], errbar=True)
 
     fig = plt.figure(figsize=(8,6))
     if origin:
@@ -349,19 +358,32 @@ for name, ao in aos_ratios.items():
 
     name = lname.replace("/","_").strip("_")
     print("name: {}".format(name))
-    print("fit results: {}".format(fit_results))
-    print("Vals: ", fit_results["ys"])
-    print("Errs: ", fit_results["yerrs"])
-    print("Up: ", fit_results["ys"]+fit_results["yerrs"])
+    # print("fit results: {}".format(fit_results))
+    # print("Vals: ", fit_results["ys"])
+    # print("Errs: ", fit_results["yerrs"])
+    # print("Up: ", fit_results["ys"]+fit_results["yerrs"])
 
     match = False
     if fits_given:
-        for k,v in fits_given.items():
-            if v in lname:
-                match = True
-                with open(k, "w") as f:
-                    json.dump(fit_results, f, indent=4, cls=NumpyEncoder)
+        if jets:
+            # Matching to configured jets
+            for jet in jets.values():
+                print("\t\tMatching {} in {}".format(jet["ident"], lname))
+                if jet["ident"] in lname:
+                    for k,v in fits_given.items():
+                        print("\tMatching {} in {}?".format(v,lname))
+                        if v in lname and jet["ident"] in k:
+                            print("\t\t\tMatch found! \n\t\t\t{} \n\t\t\tfor {}".format(k,name))
+                            match = True
+                            with open(k, "w") as f:
+                                json.dump(fit_results, f, indent=4, cls=NumpyEncoder)
+                        if match:
+                            break
+                    if match:
+                        break
+
     if not match:
+        print("No match found for {}".format(name))
         with open(os.path.join(os.getcwd(), args.PLOTDIR, "{}.json".format(name)), "w") as f:
             json.dump(fit_results, f, cls=NumpyEncoder)
 
