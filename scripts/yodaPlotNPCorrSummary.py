@@ -225,13 +225,13 @@ for sname, splits in splittings.items():
                 for k,v in fits_given.items():
                     if v in lname and jet["ident"] in lname:
                         if os.path.isfile(v):
-                            with open(v, "r") as f:
+                            with open(k, "r") as f:
                                 fit_results = json.load(f, object_hook=json_numpy_obj_hook)
                             match = True
                         break
                 if not match:
                     fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
-                    with open(v, "w") as f:
+                    with open(k, "w") as f:
                         json.dump(fit_results, f, cls=NumpyEncoder)
             else:
                 fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
