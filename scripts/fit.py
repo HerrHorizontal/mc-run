@@ -142,18 +142,22 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
         _hess = hess
         options = dict(maxiter=1e6, gtol=1e-6)
 
-    def _fit(N_PARS):
+    def _fit(N_PARS=3, sign=1):
         if N_PARS==3:
-            result = opt.minimize(objective, x0=(1,-1,1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+            result = opt.minimize(objective, x0=(sign*1,-1,1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
         elif N_PARS==2:
-            result = opt.minimize(objective, x0=(1,-1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+            result = opt.minimize(objective, x0=(sign*1,-1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
         elif N_PARS==1:
-            result = opt.minimize(objective, x0=(0,1), bounds=None, tol=1e-7, method=method, jac=_jac, hess=_hess, options=options)
+            result = opt.minimize(objective, x0=(0,1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
         else:
             raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
         return result
 
     result = _fit(N_PARS)
+    if not result.success:
+        print(result)
+        print("\n\tRetry fitting with new start point!\n")
+        result = _fit(N_PARS, -1)
 
     # repeat fit with less complex model
     while (not result.success):
@@ -161,6 +165,9 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
         print("\n\tRetry fitting with less complex model!\n")
         N_PARS -= 1
         result = _fit(N_PARS)
+        if not result.success:
+            print("\n\tRetry fitting with new start point!\n")
+            result = _fit(N_PARS, -1)
 
     # print(result)
 
