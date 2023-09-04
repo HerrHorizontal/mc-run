@@ -186,6 +186,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--plot-dir", "{}".format(plot_dir_single),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
             "--splittings", "{}".format(json.dumps(BINS["all"])),
+            "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
         ]
