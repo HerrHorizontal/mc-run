@@ -368,12 +368,12 @@ for name, ao in aos_ratios.items():
         if jets:
             # Matching to configured jets
             for jet in jets.values():
-                print("\t\tMatching {} in {}".format(jet["ident"], lname))
+                # print("\t\tMatching {} in {}".format(jet["ident"], lname))
                 if jet["ident"] in lname:
                     for k,v in fits_given.items():
-                        print("\tMatching {} in {}?".format(v,lname))
+                        # print("\tMatching {} in {}?".format(v,lname))
                         if v in lname and jet["ident"] in k:
-                            print("\t\t\tMatch found! \n\t\t\t{} \n\t\t\tfor {}".format(k,name))
+                            # print("\t\t\tMatch found! \n\t\t\t{} \n\t\t\tfor {}".format(k,name))
                             match = True
                             with open(k, "w") as f:
                                 json.dump(fit_results, f, indent=4, cls=NumpyEncoder)
