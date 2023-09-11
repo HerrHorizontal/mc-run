@@ -130,17 +130,17 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
 
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    method = 'Nelder-Mead'
-    # method = 'trust-exact'
+    # method = 'Nelder-Mead'
+    method = 'trust-exact'
     # method = 'BFGS'
     if any(method == m for m in ['BFGS','Nelder-Mead']):
         _jac = None
         _hess = None
-        options = dict(maxiter=1e6, gtol=1e-6)
+        options = dict(maxiter=1e6)
     else:
         _jac = jac
         _hess = hess
-        options = dict(maxiter=1e6, gtol=1e-6)
+        options = dict(maxiter=1e4, gtol=1e-3)
 
     def _fit(N_PARS=3, sign=1):
         if N_PARS==3:
@@ -148,7 +148,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
         elif N_PARS==2:
             result = opt.minimize(objective, x0=(sign*1,-1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
         elif N_PARS==1:
-            result = opt.minimize(objective, x0=(0,1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
+            result = opt.minimize(objective, x0=(sign*1,1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
         else:
             raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
         return result
