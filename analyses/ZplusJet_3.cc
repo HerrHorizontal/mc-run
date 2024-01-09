@@ -215,8 +215,6 @@ namespace Rivet {
       MSG_DEBUG("\tZ-boson pt: " << pT_Z);
       MSG_DEBUG("\tZ-boson y: " << rap_Z);
 
-      const double thetastar = acos(tanh((antimuon.mom().eta() - muon.mom().eta())/2));
-
       /// Fill signal histograms
       vector<double> binedges_Ystar = {0.5, 1.0, 1.5, 2.0, 2.5};
       vector<double> binedges_Yboost = {0.5, 1.0, 1.5, 2.0, 2.5};
