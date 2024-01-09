@@ -80,7 +80,6 @@ namespace Rivet {
       vector<double> binedges_Yboost = {0.0, 0.5, 1.0, 1.5, 2.0};
       
       vector<double> binedges_ZPt;
-      vector<double> binedges_PhiStarEta;
 
       for(string _jettype: {"AK4","AK8"}){
         book(_h["NJets"+_jettype], "NJets"+_jettype, 11, -0.5, 10.5);
@@ -90,26 +89,20 @@ namespace Rivet {
             // extreme bin
             if(_ystar>=2.0 && _yboost<0.5){
               binedges_ZPt = {25., 30., 40., 50., 70., 90., 110., 150., 250.};
-              binedges_PhiStarEta = {0.2, 0.4, 0.6, 0.8, 1.0, 5.};
             }
             // central bins
             else if((_ystar<0.5 && _yboost<2.) || (_ystar<1. && _yboost<1.5) || (_ystar<1.5 && _yboost<1.)){
               binedges_ZPt = {25., 30., 35., 40., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 220., 250., 400., 1000.};
-              binedges_PhiStarEta = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 4., 5., 7., 10., 15., 20., 30., 50.};
             }
             // edge bins
             else {
               binedges_ZPt = {25., 30., 35., 40., 45., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 250., 1000.};
-              binedges_PhiStarEta = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 5., 10., 15., 50.};
             }
 
             string _hist_ZPt_ident = "ZPt"+_jettype+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
             string _hist_ZPt_name = _hist_ZPt_ident;
-            string _hist_PhiStarEta_ident = "PhiStarEta"+_jettype+"Ys"+to_string(_ystar)+"Yb"+to_string(_yboost);
-            string _hist_PhiStarEta_name = _hist_PhiStarEta_ident;
             
             book(_h[_hist_ZPt_ident], _hist_ZPt_name, binedges_ZPt);
-            book(_h[_hist_PhiStarEta_ident], _hist_PhiStarEta_name, binedges_PhiStarEta);
 
           }
         }
@@ -223,8 +216,6 @@ namespace Rivet {
       MSG_DEBUG("\tZ-boson y: " << rap_Z);
 
       const double thetastar = acos(tanh((antimuon.mom().eta() - muon.mom().eta())/2));
-      const double phistareta = tan(HALFPI - (antimuon.mom().phi() - muon.mom().phi())/2)*sin(thetastar);
-      MSG_DEBUG("\tphi*eta: " << phistareta);
 
       /// Fill signal histograms
       vector<double> binedges_Ystar = {0.5, 1.0, 1.5, 2.0, 2.5};
@@ -250,11 +241,9 @@ namespace Rivet {
 
               MSG_DEBUG("Selected y*-yb bin: Ys" << _ystar_label << "Yb" << _yboost_label);
               string _hist_ZPt_ident = "ZPt"+jets.first+"Ys"+to_string(_ystar_label)+"Yb"+to_string(_yboost_label);
-              string _hist_PhiStarEta_ident = "PhiStarEta"+jets.first+"Ys"+to_string(_ystar_label)+"Yb"+to_string(_yboost_label);
 
               // Fill the histograms
               _h[_hist_ZPt_ident]->fill(pT_Z);
-              _h[_hist_PhiStarEta_ident]->fill(phistareta); 
 
               // End the loop, when a matching bin has been found
               goto theEnd;
