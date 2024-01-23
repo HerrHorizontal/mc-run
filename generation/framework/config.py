@@ -21,7 +21,19 @@ CAMPAIGN_MODS = {
         label=r"MG@NLO $\oplus$ Herwig7",
         lightencolor=0.7,
         linestyle="solid"
-    )
+    ),
+    "Dijets_LO": dict(
+        order="LO",
+        label=r"MG@LO $\oplus$ Herwig7",
+        lightencolor=1.0,
+        linestyle="dotted"
+    ),
+    "Dijets_NLO": dict(
+        order="NLO",
+        label=r"MG@NLO $\oplus$ Herwig7",
+        lightencolor=0.7,
+        linestyle="solid"
+    ),
 }
 
 JETS = {
@@ -153,6 +165,12 @@ BINS = {
         ),
     }),
 }
+BINS["dijets"] = {k: v.copy().update(ident=k) for k,v in BINS["all"].items()}
+
 BINS["YB0"] = {k: v for k,v in BINS["all"].items() if "YB_00_05" in k}
 BINS["YS0"] = {k: v for k,v in BINS["all"].items() if "YS_00_05" in k}
+
+BINS["YB0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YB_00_05" in k}
+BINS["YS0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YS_00_05" in k}
+
 BINS["test"] = {k: v for k,v in BINS["all"].items() if "YB_05_10_YS_10_15" in k}
