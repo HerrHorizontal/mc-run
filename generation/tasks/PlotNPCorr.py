@@ -61,6 +61,11 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         description="Dictionary of keys and paths to the files containing the fit information"
     )
 
+    fit_method = luigi.Parameter(
+        default="Nelder-Mead",
+        description="Optimizer method for performing the smoothing fit"
+    )
+
     exclude_params_req = {
         "source_script",
         "filter_label_pad_dicts"
@@ -186,7 +191,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--splittings", "{}".format(json.dumps(BINS["all"])),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
-            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
+            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial)),
+            "--fit-method", "{}".format(self.fit_method),
         ]
         executable += ["--fit", "{}".format(json.dumps(
             dict({os.path.join(plot_dir_single, k): v for k,v in self.fits.items()})

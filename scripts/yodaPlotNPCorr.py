@@ -151,6 +151,13 @@ parser.add_argument(
     type=json.loads,
     help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles"
 )
+parser.add_argument(
+    "--fit-method",
+    dest="METHOD",
+    choices=("Nelder-Mead","trust-exact","BFGS"),
+    default="Nelder-Mead",
+    help="optimizer method for performing the smoothing fit"
+)
 
 args = parser.parse_args()
 
@@ -322,7 +329,7 @@ for name, ao in aos_ratios.items():
     axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4, label=label)
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
-    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1), N_PARS=3, method=args.METHOD)
 
     axmain.plot(
         xVals, fit_results["ys"],

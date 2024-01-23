@@ -129,6 +129,13 @@ parser.add_argument(
     type=json.loads,
     help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles"
 )
+parser.add_argument(
+    "--fit-method",
+    dest="METHOD",
+    choices=("Nelder-Mead","trust-exact","BFGS"),
+    default="Nelder-Mead",
+    help="optimizer method for performing the smoothing fit"
+)
 
 args = parser.parse_args()
 
@@ -230,7 +237,7 @@ for sname, splits in splittings.items():
                             match = True
                         break
                 if not match:
-                    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1))
+                    fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1), N_PARS=3, method=args.METHOD)
                     with open(k, "w") as f:
                         json.dump(fit_results, f, cls=NumpyEncoder)
             else:

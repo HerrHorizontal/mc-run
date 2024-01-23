@@ -3,13 +3,16 @@ import scipy.optimize as opt
 import numpy as np
 
 
-def scipy_fit(xVal, yVal, yErr, N_PARS=3):
+def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
     """Fit function to data points.
 
     Args:
         xVal (numpy.array): x-positions of data points to fit
         yVal (numpy.array): y-positions of data points to fit
         yErr (numpy.array): uncertainty estimate in y of data points to fit
+        N_PARS (int)      : complexity of model function
+        method (str)      : optimizer method for fit
+
 
     Returns:
         dict: dictionary containing fitted function values/uncertainties at data points and evaluation metrics
@@ -130,9 +133,11 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3):
 
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    # method = 'Nelder-Mead'
-    method = 'trust-exact'
-    # method = 'BFGS'
+    if method in ['Nelder-Mead','trust-exact','BFGS']:
+        method = method
+    else:
+        raise NotImplementedError("Fitting with optimizer {} not implemented!".format(method))
+    
     if any(method == m for m in ['BFGS','Nelder-Mead']):
         _jac = None
         _hess = None
