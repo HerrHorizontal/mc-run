@@ -42,7 +42,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     match = luigi.Parameter(
         # significant=False,
-        default="ZplusJet",
+        default="",
         description="Require presence of analysis objects which names match this regex in the YODA files."
     )
     unmatch = luigi.Parameter(
@@ -68,6 +68,17 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         default=None,
         description="Dictionary of keys and paths to the files containing the fit information"
     )
+
+    splittings_conf = luigi.DictParameter(
+        default=dict(YS0="YS0", YB0="YB0", YSYBAll="all"),
+        description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py). Will set parameter 'splittings' if not defined"
+    )
+
+    splittings = luigi.DictParameter(
+        default=None,
+        description="Dictionary of identifier and splittings plot settings"
+    )
+
 
     def _default_fits(self):
         return {"{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k): k
@@ -148,6 +159,11 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         else:
             fits = self._default_fits()
         fits_dict = dict()
+        # check whether explicit defnition for splittings exists
+        if self.splittings:
+            splittings = self.splittings
+        else:
+            splittings = {k: BINS[v] for k,v in self.splittings_conf.items()}
         # print(self.input())
         for campaign in self.campaigns:
             fits_dict[campaign] = {os.path.join(self.input()[campaign]["single"].path, k): v for k,v in fits.items()}
@@ -163,7 +179,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         executable += [
             "--plot-dir", "{}".format(plot_dir),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(dict(YS0=BINS["YS0"],YB0=BINS["YB0"],YSYBAll=BINS["all"]))),
+            "--splittings", "{}".format(json.dumps(splittings)),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
