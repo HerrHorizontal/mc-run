@@ -70,13 +70,13 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
     )
 
     splittings_conf = luigi.DictParameter(
-        default=dict(YS0="YS0", YB0="YB0", YSYBAll="all"),
-        description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py). Will set parameter 'splittings' if not defined"
+        description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py). \
+             Will set parameter 'splittings'. Overwritten by --splittings."
     )
 
     splittings = luigi.DictParameter(
         default=None,
-        description="Dictionary of identifier and splittings plot settings"
+        description="Dictionary of identifier and splittings plot settings. Set via --splittings-conf from config, if None."
     )
 
 
@@ -90,12 +90,21 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def workflow_requires(self):
         req = super(PlotScenarioComparison, self).workflow_requires()
+        if self.splittings:
+            splits_all = dict()
+            for v in (self.splittings).values():
+                splits_all.update(v)
+        else:
+            splits_all = None
         for scen in self.campaigns:
             if self.fits:
                 fits = self.fits
             else:
                 fits = self._default_fits()
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits)
+            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits,
+                                       splittings_all=splits_all,
+                                       splittings_summary=self.splittings,
+                                       splittings_conf_summary=self.splittings_conf)
         return req
     
 
@@ -114,12 +123,21 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def requires(self):
         req = dict()
+        if self.splittings:
+            splits_all = dict()
+            for v in (self.splittings).values():
+                splits_all.update(v)
+        else:
+            splits_all = None
         for scen in self.campaigns:
             if self.fits:
                 fits = self.fits
             else:
                 fits = self._default_fits()
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits)
+            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits,
+                                       splittings_all=splits_all,
+                                       splittings_summary=self.splittings,
+                                       splittings_conf_summary=self.splittings_conf)
         return req
     
 
@@ -163,7 +181,10 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         if self.splittings:
             splittings = self.splittings
         else:
-            splittings = {k: BINS[v] for k,v in self.splittings_conf.items()}
+            if self.splittings_conf:
+                splittings = {k: BINS[v] for k,v in self.splittings_conf.items()}
+            else:
+                raise TypeError("Splittings undefined (None), configuration for --splittings or --splittings-conf needed!")
         # print(self.input())
         for campaign in self.campaigns:
             fits_dict[campaign] = {os.path.join(self.input()[campaign]["single"].path, k): v for k,v in fits.items()}

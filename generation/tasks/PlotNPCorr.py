@@ -66,9 +66,30 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         description="Optimizer method for performing the smoothing fit"
     )
 
+    splittings_conf_all = luigi.Parameter(
+        default="all",
+        description="BINS identifier (predefined binning configuration in generation/framework/config.py) for all splittings. \
+             Will set parameter 'splittings'. Overwritten by --splittings-all."
+    )
+
+    splittings_all = luigi.DictParameter(
+        default=None,
+        description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None."
+    )
+
+    splittings_conf_summary = luigi.DictParameter(
+        # default=dict(YS0="YS0", YB0="YB0", YSYBAll="all"),
+        description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py) for summary splittings. \
+             Will set parameter 'splittings'. Overwritten by --splittings-summary."
+    )
+
+    splittings_summary = luigi.DictParameter(
+        default=None,
+        description="Dictionary of identifier and splittings plot settings for all bins. Set via --splittings-conf-summary from config, if None."
+    )
+
     exclude_params_req = {
         "source_script",
-        "filter_label_pad_dicts"
     }
 
 
@@ -180,6 +201,15 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         plot_dir_single = outputs["single"].parent.path
         plot_dir_summary = outputs["summary"].parent.path
 
+        # check whether explicit defnition for splittings exists
+        if self.splittings_all:
+            splittings_all = self.splittings_all
+        else:
+            if self.splittings_conf_all:
+                splittings_all = BINS[self.splittings_conf_all]
+            else:
+                raise TypeError("Splittings undefined (None), configuration for --splittings-all or --splittings-conf-all needed!")
+
         # execute the script deriving the NP correction plots and files
         executable = [
             "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorr.py"),
@@ -188,7 +218,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir_single),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(BINS["all"])),
+            "--splittings", "{}".format(json.dumps(splittings_all)),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial)),
@@ -220,13 +250,23 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")
 
+        # check whether explicit defnition for splittings exists
+        if self.splittings_summary:
+            splittings_summary = self.splittings_summary
+        else:
+            if self.splittings_conf_summary:
+                splittings_summary = {k: BINS[v] for k,v in self.splittings_conf_summary.items()}
+            else:
+                raise TypeError("Splittings undefined (None), configuration for --splittings-summary or --splittings-conf-summary needed!")
+
+
         # plot also summary plots
         executable_summary = [
             "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorrSummary.py"),
             "--ratio", "{}".format(input_yoda_file_ratio),
             "--plot-dir", "{}".format(plot_dir_summary),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(dict(YS0=BINS["YS0"],YB0=BINS["YB0"],YSYBAll=BINS["all"]))),
+            "--splittings", "{}".format(json.dumps(splittings_summary)),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
             "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
