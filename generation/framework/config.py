@@ -165,7 +165,7 @@ BINS = {
         ),
     }),
 }
-BINS["dijets"] = {k: v.copy().update(ident=k) for k,v in BINS["all"].items()}
+BINS["dijets"] = {k: dict(v, ident=k) for k,v in BINS["all"].items()}
 
 BINS["YB0"] = {k: v for k,v in BINS["all"].items() if "YB_00_05" in k}
 BINS["YS0"] = {k: v for k,v in BINS["all"].items() if "YS_00_05" in k}
