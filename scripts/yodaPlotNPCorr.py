@@ -247,6 +247,7 @@ for name, ao in aos_ratios.items():
                 lname = name.replace(v["ident"],k)
                 match = True
         if not match:
+            print("No matching splitting found for {}! Misconfiguration?".format(name))
             continue
 
     fig = plt.figure(figsize=(8,6))
@@ -383,7 +384,7 @@ for name, ao in aos_ratios.items():
                         break
 
     if not match:
-        print("No match found for {}".format(name))
+        print("No matching fit file found for {}! Misconfiguration?".format(name))
         with open(os.path.join(os.getcwd(), args.PLOTDIR, "{}.json".format(name)), "w") as f:
             json.dump(fit_results, f, cls=NumpyEncoder)
 
