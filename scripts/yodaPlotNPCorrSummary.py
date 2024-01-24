@@ -229,14 +229,21 @@ for sname, splits in splittings.items():
 
             if fits_given:
                 match = False
+                # print("\t\tMatching {} in {}".format(jet["ident"], lname))
                 for k,v in fits_given.items():
-                    if v in lname and jet["ident"] in lname:
-                        if os.path.isfile(v):
+                    # print("\tMatching {} in {}?".format(v,lname))
+                    if v in lname and jet["ident"] in k:
+                        # print("\t\t\tMatch found! \n\t\t\t{} \n\t\t\tfor {}".format(k,lname))
+                        match = True
+                        if os.path.isfile(k):
                             with open(k, "r") as f:
                                 fit_results = json.load(f, object_hook=json_numpy_obj_hook)
-                            match = True
-                        break
+                        else:
+                            raise RuntimeError("Found match, but fit file {} doesn't exist!".format(k))
+                        if match:
+                            break
                 if not match:
+                    print("No matching fit file found for {}! Misconfiguration? Writing to {}".format(lname, k))
                     fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1), N_PARS=3, method=args.METHOD)
                     with open(k, "w") as f:
                         json.dump(fit_results, f, cls=NumpyEncoder)
