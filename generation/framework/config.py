@@ -42,7 +42,7 @@ JETS = {
 }
 
 BINS = {
-    "all": OrderedDict({
+    "zjet": OrderedDict({
         'YB_00_05_YS_00_05' : dict(
             ident="Ys0.000000Yb0.000000",
             label="$0.0<y^*\\leq 0.5$,\n$0.0<y_b\\leq 0.5$",
@@ -165,12 +165,12 @@ BINS = {
         ),
     }),
 }
-BINS["dijets"] = {k: dict(v, ident=k) for k,v in BINS["all"].items()}
+BINS["dijets"] = {k: dict(v, ident=k) for k,v in BINS["zjet"].items()}
 
-BINS["YB0"] = {k: v for k,v in BINS["all"].items() if "YB_00_05" in k}
-BINS["YS0"] = {k: v for k,v in BINS["all"].items() if "YS_00_05" in k}
+BINS["YB0"] = {k: v for k,v in BINS["zjet"].items() if "YB_00_05" in k}
+BINS["YS0"] = {k: v for k,v in BINS["zjet"].items() if "YS_00_05" in k}
 
 BINS["YB0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YB_00_05" in k}
 BINS["YS0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YS_00_05" in k}
 
-BINS["test"] = {k: v for k,v in BINS["all"].items() if "YB_05_10_YS_10_15" in k}
+BINS["test"] = {k: v for k,v in BINS["zjet"].items() if "YB_05_10_YS_10_15" in k}

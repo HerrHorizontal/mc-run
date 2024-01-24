@@ -67,7 +67,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
     )
 
     splittings_conf_all = luigi.Parameter(
-        default="all",
+        # default="zjet",
         description="BINS identifier (predefined binning configuration in generation/framework/config.py) for all splittings. \
              Will set parameter 'splittings'. Overwritten by --splittings-all."
     )
@@ -78,7 +78,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
     )
 
     splittings_conf_summary = luigi.DictParameter(
-        # default=dict(YS0="YS0", YB0="YB0", YSYBAll="all"),
+        # default=dict(YS0="YS0", YB0="YB0", YSYBAll="zjet"),
         description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py) for summary splittings. \
              Will set parameter 'splittings'. Overwritten by --splittings-summary."
     )
