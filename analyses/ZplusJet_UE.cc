@@ -18,6 +18,9 @@ public:
     const FinalState fs(Cuts::abseta < etamax && Cuts::pT > 100 * MeV);
     declare(fs, "fs");
 
+    const ChargedFinalState cfs(Cuts::abseta < etamax && Cuts::pT > 100 * MeV);
+    declare(cfs, "cfs");
+
     FastJets jetfsak4(fs, FastJets::ANTIKT, 0.4, JetAlg::Muons::ALL,
                       JetAlg::Invisibles::NONE);
     declare(jetfsak4, "jets");
@@ -155,7 +158,7 @@ public:
       vetoEvent;
 
     Particles particles =
-        applyProjection<FinalState>(event, "fs")
+        applyProjection<ChargedFinalState>(event, "cfs")
             .particlesByPt(Cuts::pT > 0.1 * GeV && Cuts::abseta < etamax);
 
     int nTowards = 0;
@@ -259,7 +262,7 @@ public:
   const double _maxabsjetrap = 2.4; // maximum absolute jet y
   const double _jetpt = 10 * GeV;   // minimum jet pT
   const double _minjet1pt =
-      1 * GeV; // minimum pT of hardest jet. SHOULDN'T THE VALUE BE 25 GEV
+      20 * GeV; // minimum pT of hardest jet. SHOULDN'T THE VALUE BE 25 GEV
                 // BECAUSE OF MOMENTUM CONSERVATION?
 
   const double _maxleptoneta = 2.4; // maximum absolute lepton eta
