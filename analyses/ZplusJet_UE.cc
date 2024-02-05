@@ -39,6 +39,13 @@ public:
     binedges_ZPt = {5.,  10., 15., 20., 25., 30., 35., 40., 45., 50.,
                     55., 60., 65., 70., 75., 80., 85., 90., 95., 100.};
 
+    book(_p["NCharged_Towards_Incl"], "NCharged_Towards_Incl", binedges_ZPt);
+    book(_p["NCharged_Transverse_Incl"], "NCharged_Transverse_Incl", binedges_ZPt);
+    book(_p["NCharged_Away_Incl"], "NCharged_Away_Incl", binedges_ZPt);
+    book(_p["pTsum_Towards_Incl"], "pTsum_Towards_Incl", binedges_ZPt);
+    book(_p["pTsum_Transverse_Incl"], "pTsum_Transverse_Incl", binedges_ZPt);
+    book(_p["pTsum_Away_Incl"], "pTsum_Away_Incl", binedges_ZPt);
+
     for (auto _ystar : binedges_Ystar) {
       for (auto _yboost : binedges_Yboost) {
         if (_ystar + _yboost > 3.0)
@@ -185,6 +192,13 @@ public:
       }
 
     }
+
+    _p["NCharged_Towards_Incl"]->fill(pT_Z, 1. /area * nTowards);
+    _p["NCharged_Transverse_Incl"]->fill(pT_Z, 1. /area * nTransverse);
+    _p["NCharged_Away_Incl"]->fill(pT_Z, 1. /area * nAway);
+    _p["pTsum_Towards_Incl"]->fill(pT_Z, 1. /area * ptSumTowards);
+    _p["pTsum_Transverse_Incl"]->fill(pT_Z, 1. /area * ptSumTransverse);
+    _p["pTsum_Away_Incl"]->fill(pT_Z, 1. /area * ptSumAway);
 
     //Redudant line for area. Can I keep it here and remove it from the finalize member function?
     // const double area = ((2. * etamax) * (2. * M_PI)) / 3.;
