@@ -169,7 +169,7 @@ splittings = None
 if args.SPLITTINGS:
     splittings = args.SPLITTINGS
 
-jets = None
+jets = {"": dict(ident="", label="", linestyle="solid")}
 if args.JETS:
     jets = args.JETS
 
