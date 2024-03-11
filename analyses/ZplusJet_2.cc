@@ -51,7 +51,7 @@ namespace Rivet {
       //// Book histograms with variable bin size
       vector<double> binedges_Ystar = {0.0, 0.5, 1.0, 1.5, 2.0, 2.5};
       vector<double> binedges_Yboost = {0.0, 0.5, 1.0, 1.5, 2.0, 2.5};
-      vector<double> binedges_ZPtC = {25., 30., 35., 40., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 220., 250., 400., 1000.};
+      vector<double> binedges_ZPtC = {25., 30., 35., 40., 45., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 220., 250., 400., 1000.};
       vector<double> binedges_ZPtE = {25., 30., 35., 40., 45., 50., 60., 70., 80., 90., 100., 110., 130., 150., 170., 190., 250., 1000.};
       vector<double> binedges_ZPtX = {25., 30., 40., 50., 70., 90., 110., 150., 250.};
       vector<double> binedges_PhiStarEtaC = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5, 2., 3., 4., 5., 7., 10., 15., 20., 30., 50.};
