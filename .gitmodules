@@ -1,12 +1,3 @@
-[submodule "Law-Setup/law"]
-	path = law
-	url = https://github.com/riga/law.git
-[submodule "Law-Setup/luigi"]
-	path = luigi
-	url = https://github.com/spotify/luigi.git
-[submodule "Law-Setup/six"]
-	path = six
-	url = https://github.com/benjaminp/six.git
 [submodule "law"]
 	path = law
 	url = https://github.com/riga/law.git
