@@ -4,6 +4,11 @@ import os
 from subprocess import PIPE
 from law.util import interruptable_popen
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 # source_env = dict()
 # for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH"):
@@ -88,6 +93,8 @@ def run_command(executable, env, *args, **kwargs):
     Returns:
         tuple[int | Any, Any | str, Any | str]: execution code, output string and error string
     """
+    command_str = " ".join(executable)
+    logger.info('Running command: "{}"'.format(command_str))
     code, out, error = interruptable_popen(
         executable,
         *args,
