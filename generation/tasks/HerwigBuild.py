@@ -5,7 +5,7 @@ from luigi.util import inherits
 import os, shutil
 
 from subprocess import PIPE
-from generation.framework.utils import run_command, identify_setupfile,herwig_env
+from generation.framework.utils import run_command, identify_setupfile, set_environment_variables
 from generation.framework.tasks import Task, GenerationScenarioConfig
 
 
@@ -71,6 +71,7 @@ class HerwigBuild(Task):
         print("Starting build step to generate Herwig-cache and run file")
         print("=========================================================")
 
+        herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")))
         # run Herwig build step 
         _herwig_exec = ["Herwig", "build"]
         _herwig_args = [

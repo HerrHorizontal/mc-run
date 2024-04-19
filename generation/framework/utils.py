@@ -53,8 +53,6 @@ def set_environment_variables(source_script_path):
     return my_env
 
 
-herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")))
-
 rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
 
 

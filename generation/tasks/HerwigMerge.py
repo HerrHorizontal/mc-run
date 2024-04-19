@@ -4,7 +4,7 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from generation.framework.utils import run_command, herwig_env
+from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import Task, GenerationScenarioConfig
 
@@ -68,6 +68,7 @@ class HerwigMerge(Task):
             with target.localize('r') as _file:
                 os.system('tar -xzf {}'.format(_file.path))
 
+        herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")))
         # run Herwig build step 
         _herwig_exec = ["Herwig", "mergegrids"]
         _herwig_args = [
