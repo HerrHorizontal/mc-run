@@ -5,6 +5,9 @@ import HerwigIntegrate
 import HerwigMerge
 import HerwigRun
 
+import SherpaIntegrate
+import SherpaRun
+
 import RunRivet
 import RivetMerge
 
