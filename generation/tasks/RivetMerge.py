@@ -23,7 +23,10 @@ class RivetMerge(Task):
     chunk_size = luigi.IntParameter(
         description="Number of individual YODA files to merge in a single `rivet-merge` call."
     )
-
+    mc_generator = luigi.Parameter(
+        default="Herwig",
+        description="Name of the MC generator used for event generation."
+    )
     exclude_params_req = {
         "chunk_size",
         "source_script"
@@ -37,9 +40,9 @@ class RivetMerge(Task):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, self.mc_generator) + path
         return os.path.join(*parts)
-    
+
 
 
     def output(self):

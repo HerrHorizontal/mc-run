@@ -116,7 +116,7 @@ class RunRivet(Task, HTCondorWorkflow):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, self.mc_generator) + path
         return os.path.join(*parts)
 
 
