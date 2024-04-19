@@ -14,6 +14,7 @@ from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigRun import HerwigRun
+from SherpaRun import SherpaRun
 
 
 @inherits(GenerationScenarioConfig)
@@ -36,6 +37,10 @@ class RunRivet(Task, HTCondorWorkflow):
         default=["MC_XS","MC_WEIGHTS"],
         description="List of IDs of Rivet analyses to run."
     )
+    mc_generator = luigi.Parameter(
+        default="Herwig",
+        description="Name of the MC generator used for event generation."
+    )
 
     exclude_params_req = {
         "rivet_analyses",
@@ -52,36 +57,61 @@ class RunRivet(Task, HTCondorWorkflow):
         # require the parent workflow and inform it about the branches to produce by passing
         # the "branches" parameter and simultaneously preventing {start,end}_branch being used
         branches = sum(self.branch_map.values(), [])
-        reqs["HerwigRun"] = HerwigRun.req(
-            self, 
-            branches=branches,
-            _exclude=[
-                "start_branch", "end_branch",
-                "bootstrap_file", 
-                "htcondor_walltime", "htcondor_request_memory", 
-                "htcondor_requirements", "htcondor_request_disk"
-                ]
-            )
+        if self.mc_generator == "Herwig":
+            reqs["MCRun"] = HerwigRun.req(
+                self,
+                branches=branches,
+                _exclude=[
+                    "start_branch", "end_branch",
+                    "bootstrap_file",
+                    "htcondor_walltime", "htcondor_request_memory",
+                    "htcondor_requirements", "htcondor_request_disk"
+                    ]
+                )
+        elif self.mc_generator == "Sherpa":
+            reqs["MCRun"] = SherpaRun.req(
+                self,
+                branches=branches,
+                _exclude=[
+                    "start_branch", "end_branch",
+                    "bootstrap_file",
+                    "htcondor_walltime", "htcondor_request_memory",
+                    "htcondor_requirements", "htcondor_request_disk"
+                    ]
+                )
+        else:
+            raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
         return reqs
 
 
     def create_branch_map(self):
-        # each analysis job analyzes a chunk of HepMC files  
-        branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
+        # each analysis job analyzes a chunk of HepMC files
+        if self.mc_generator == "Herwig":
+            branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
+        elif self.mc_generator == "Sherpa":
+            branch_chunks = SherpaRun.req(self).get_all_branch_chunks(self.files_per_job)
+        else:
+            raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
         # one by one job to inputfile matching
         return {
             jobnum: branch_chunk 
-            for jobnum, branch_chunk in enumerate(branch_chunks) 
+            for jobnum, branch_chunk in enumerate(branch_chunks)
         }
 
 
     def requires(self):
         # each branch task requires existent HEPMC files to analyze
         req = dict()
-        req["HerwigRun"] = [
-                HerwigRun.req(self, branch=b)
-                for b in self.branch_data
-            ]
+        if self.mc_generator == "Herwig":
+            req["MCRun"] = [
+                    HerwigRun.req(self, branch=b)
+                    for b in self.branch_data
+                ]
+        elif self.mc_generator == "Sherpa":
+            req["MCRun"] = [
+                    SherpaRun.req(self, branch=b)
+                    for b in self.branch_data
+                ]
         return req
 
 
@@ -122,7 +152,7 @@ class RunRivet(Task, HTCondorWorkflow):
         
         # identify and get the HEPMC files for analyzing
         print("Inputs: {}".format(self.input()))
-        for target in self.input()['HerwigRun']:
+        for target in self.input()['MCRun']:
             with target.localize('r') as input_file:
                 os.system('tar -xvjf {}'.format(input_file.path))
 
