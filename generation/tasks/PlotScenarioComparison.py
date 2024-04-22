@@ -34,6 +34,10 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
+    mc_generator = luigi.Parameter(
+        default="Herwig",
+        description="Name of the MC generator used for event generation."
+    )
 
     campaigns = luigi.ListParameter(
         default=["LHC-LO-ZplusJet", "LHC-NLO-ZplusJet"],
@@ -143,12 +147,13 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def output(self):
         return self.local_target(
-            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}/".format(
+            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}-{mc_generator}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
-                campaigns="-".join(self.campaigns)
+                campaigns="-".join(self.campaigns),
+                mc_generator=self.mc_generator,
             )
         )
 

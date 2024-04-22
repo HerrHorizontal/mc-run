@@ -29,6 +29,10 @@ class DeriveNPCorr(Task):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
+    mc_generator = luigi.Parameter(
+        default="Herwig",
+        description="Name of the MC generator used for event generation."
+    )
     match = luigi.Parameter(
         # significant=False,
         default=None,
@@ -64,11 +68,12 @@ class DeriveNPCorr(Task):
 
     def output(self):
         output = self.remote_target(
-            "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio.yoda".format(
+            "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio-{mc_generator}.yoda".format(
                 match = self.match,
                 unmatch = self.unmatch,
                 full = self.mc_setting_full,
-                partial = self.mc_setting_partial
+                partial = self.mc_setting_partial,
+                mc_generator = self.mc_generator,
             )
         )
         return output

@@ -32,6 +32,10 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
+    mc_generator = luigi.Parameter(
+        default="Herwig",
+        description="Name of the MC generator used for event generation."
+    )
     match = luigi.Parameter(
         # significant=False,
         default=None,
@@ -149,19 +153,21 @@ class PlotNPCorr(Task, law.LocalWorkflow):
     def output(self):
         out = dict()
         out["single"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/single/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}-{mc_generator}/single/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
-                unmatch=self.branch_data["unmatch"]
+                unmatch=self.branch_data["unmatch"],
+                mc_generator=self.mc_generator,
             )
         )
         out["summary"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/summary/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}-{mc_generator}/summary/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
-                unmatch=self.branch_data["unmatch"]
+                unmatch=self.branch_data["unmatch"],
+                mc_generator=self.mc_generator,
             )
         )
         return out
