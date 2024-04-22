@@ -30,7 +30,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
     )
     mc_setting_partial = luigi.Parameter(
         default="NPoff",
-        description="Scenario identifier for the partial MC production, typically `NPoff`, `MPIoff` or `Hadoff`. \
+        description="Scenario identifier for the partial MC production, typically `PSoff`, `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )

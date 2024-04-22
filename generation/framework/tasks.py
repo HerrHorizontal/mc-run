@@ -29,7 +29,7 @@ class CommonConfig(luigi.Config):
 class GenerationScenarioConfig(luigi.Config):
 
     mc_setting = luigi.Parameter(
-        description="Scenario of the MC production. Typically one of the following: `withNP`, `NPoff`, `MPIoff` or `Hadoff`. \
+        description="Scenario of the MC production. Typically one of the following: `withNP`, `PSoff`, `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to differentiate between output-paths for different generation scenarios."
     )
 
