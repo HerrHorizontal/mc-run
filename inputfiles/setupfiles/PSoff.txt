@@ -4,7 +4,7 @@
 
 ## Switches for turning generation steps off and on
 cd /Herwig/EventHandlers
-set EventHandler:CascadeHandler:MPIHandler NULL
 set EventHandler:DecayHandler NULL
 set EventHandler:HadronizationHandler NULL
-set EventHandler:CascadeHandler NULL
+set EventHandler:CascadeHandler:DoISR OFF
+set EventHandler:CascadeHandler:DoFSR OFF
