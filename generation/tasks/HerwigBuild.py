@@ -5,11 +5,11 @@ from luigi.util import inherits
 import os, shutil
 
 from subprocess import PIPE
-from generation.framework.utils import run_command, herwig_env
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.utils import run_command, identify_setupfile,herwig_env
+from generation.framework.tasks import Task, GenerationScenarioConfig
 
 
-@inherits(CommonConfig)
+@inherits(GenerationScenarioConfig)
 class HerwigBuild(Task):
     """
     Gather and compile all necessary libraries and prepare the integration \
@@ -29,6 +29,16 @@ class HerwigBuild(Task):
         description="Directory where the Herwig config file resides."
     )
 
+    setupfile = luigi.Parameter()
+
+
+    def remote_path(self,*path):
+        if self.mc_setting == "PSoff":
+            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            return os.path.join(*parts)
+        else:
+            parts = (self.__class__.__name__, self.input_file_name,) + path
+            return os.path.join(*parts)
 
     def output(self):
         return self.remote_target("Herwig-build.tar.gz")
@@ -67,6 +77,9 @@ class HerwigBuild(Task):
             "--maxjobs={MAXJOBS}".format(MAXJOBS=_max_integration_jobs),
             "{INPUT_FILE}".format(INPUT_FILE=_my_input_file)
         ]
+        if self.mc_setting == "PSoff":
+            _setupfile_path = identify_setupfile(self.setupfile, self.mc_setting, os.getcwd())
+            _herwig_args = ["--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path)] + _herwig_args
 
         print('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))
 
