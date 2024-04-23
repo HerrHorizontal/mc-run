@@ -1,0 +1,33 @@
+##################################################
+## ShowerHandler(s)
+##################################################
+
+## Switches for turning generation steps off and on
+cd /Herwig/EventHandlers
+set EventHandler:DecayHandler NULL
+set EventHandler:HadronizationHandler NULL
+set EventHandler:CascadeHandler:DoISR No
+set EventHandler:CascadeHandler:DoFSR No
+erase EventHandler:PostSubProcessHandlers[0]
+
+cd /Herwig/Analysis
+
+set Basics:CheckQuark No
+
+cd /Herwig/Particles
+
+do d:AdjustNominalMass
+do dbar:AdjustNominalMass
+do u:AdjustNominalMass
+do ubar:AdjustNominalMass
+do s:AdjustNominalMass
+do sbar:AdjustNominalMass
+do c:AdjustNominalMass
+do cbar:AdjustNominalMass
+do b:AdjustNominalMass
+do bbar:AdjustNominalMass
+
+do mu+:AdjustNominalMass
+do mu-:AdjustNominalMass
+do tau+:AdjustNominalMass
+do tau-:AdjustNominalMass

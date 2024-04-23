@@ -1,21 +1,24 @@
 
+import luigi
 from luigi.util import inherits
 import os
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, herwig_env
 
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.tasks import Task, GenerationScenarioConfig
 
 from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
 
 
-@inherits(CommonConfig)
+@inherits(GenerationScenarioConfig)
 class HerwigMerge(Task):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
+
+    setupfile = luigi.Parameter()
 
     exclude_params_req = {
         "source_script"
@@ -29,6 +32,14 @@ class HerwigMerge(Task):
             'HerwigBuild': HerwigBuild.req(t)
         }
 
+
+    def remote_path(self,*path):
+        if self.mc_setting == "PSoff":
+            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            return os.path.join(*parts)
+        else:
+            parts = (self.__class__.__name__, self.input_file_name,) + path
+            return os.path.join(*parts)
 
     def output(self):
         return self.remote_target("Herwig-cache.tar.gz")

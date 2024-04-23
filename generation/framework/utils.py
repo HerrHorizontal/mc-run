@@ -53,6 +53,28 @@ herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSI
 rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
 
 
+def identify_setupfile(filepath, mc_setting, work_dir):
+    import shutil
+    print("Setupfile: {}".format(filepath))
+    if all(filepath != defaultval for defaultval in [None, "None"]):
+        setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"inputfiles","setupfiles",str(filepath))
+    else:
+        print("No setupfile given. Trying to identify setupfile via mc_setting ...")
+        setupfile_path = os.path.join(os.path.expandvars("$ANALYSIS_PATH"),"inputfiles","setupfiles","{}.txt".format(str(mc_setting)))
+    if os.path.exists(setupfile_path):
+        print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
+        # for python3 the next two lines can be merged
+        shutil.copy(setupfile_path, work_dir)
+        setupfile_path = os.path.basename(setupfile_path)
+        # end of merge
+        if os.path.exists(setupfile_path):
+            return setupfile_path
+        else:
+            raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+    else:
+        raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+
+
 def run_command(executable, env, *args, **kwargs):
     """Helper function for execution of a command in a subprocess.
 

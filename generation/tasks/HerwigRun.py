@@ -8,7 +8,7 @@ import shutil
 import random
 
 from subprocess import PIPE
-from generation.framework.utils import run_command
+from generation.framework.utils import run_command, identify_setupfile
 
 from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
@@ -40,7 +40,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         description="Number of events generated in each job."
     )
     setupfile = luigi.Parameter(
-        default=None,
+        default="None",
         description="Overwrite setupfile to adjust Herwig parameters in the event generation. \
                 Default setupfile will be chosen according to mc_setting. \
                 Those parameters should not involve the hard process generation. \
@@ -48,7 +48,7 @@ class HerwigRun(Task, HTCondorWorkflow):
     )
 
     exclude_params_req = {
-        "setupfile",
+        # "setupfile",
         "number_of_jobs",
         "events_per_job",
         "start_seed", 
@@ -139,26 +139,9 @@ class HerwigRun(Task, HTCondorWorkflow):
 
         # identify the setupfile if specified and copy it to working directory
         work_dir = os.getcwd()
-        print("Setupfile: {}".format(self.setupfile))
-        _setupfile_suffix = ""
-        if all(self.setupfile != defaultval for defaultval in [None, "None"]):
-            setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"inputfiles","setupfiles",str(self.setupfile))
-        else:
-            print("No setupfile given. Trying to identify setupfile via mc_setting ...")
-            setupfile_path = os.path.join(os.path.expandvars("$ANALYSIS_PATH"),"inputfiles","setupfiles","{}.txt".format(str(self.mc_setting)))
-        if os.path.exists(setupfile_path):
-            print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
-            # for python3 the next two lines can be merged
-            shutil.copy(setupfile_path, work_dir)
-            setupfile_path = os.path.basename(setupfile_path)
-            # end of merge
-            if os.path.exists(setupfile_path):
-                _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=setupfile_path))
-                _setupfile_suffix = "-" + setupfile_path
-            else:
-                raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
-        else:
-            raise IOError("Specified setupfile {} doesn't exist! Abort!".format(setupfile_path))
+        _setupfile_path = identify_setupfile(self.setupfile, self.mc_setting, work_dir)
+        _setupfile_suffix = "-" + _setupfile_path
+        _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path))
 
         print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 

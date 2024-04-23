@@ -7,12 +7,12 @@ from subprocess import PIPE
 from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import Task, HTCondorWorkflow, CommonConfig
+from generation.framework import Task, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigBuild import HerwigBuild
 
 
-@inherits(CommonConfig)
+@inherits(GenerationScenarioConfig)
 class HerwigIntegrate(Task, HTCondorWorkflow):
     """
     Create jobwise integration grids from 'Herwig build' preparations gathered in the Herwig-cache directory
@@ -24,6 +24,8 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
         description="Number of individual prepared integration jobs in the HerwigBuild step. \
                 Should not be greater than the number of subprocesses."
     )
+
+    setupfile = luigi.Parameter()
 
     exclude_params_req = {
         "bootstrap_file",
@@ -50,6 +52,14 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             'HerwigBuild': HerwigBuild.req(self)
         }
 
+
+    def remote_path(self,*path):
+        if self.mc_setting == "PSoff":
+            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            return os.path.join(*parts)
+        else:
+            parts = (self.__class__.__name__, self.input_file_name,) + path
+            return os.path.join(*parts)
 
     def output(self):
         return self.remote_target("Herwig-int{}.tar.gz".format(self.branch))
