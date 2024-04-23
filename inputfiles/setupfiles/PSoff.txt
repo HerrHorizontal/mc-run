@@ -10,6 +10,8 @@ set EventHandler:CascadeHandler:DoISR No
 set EventHandler:CascadeHandler:DoFSR No
 erase EventHandler:PostSubProcessHandlers[0]
 
+cd /Herwig/Analysis
+
 set Basics:CheckQuark No
 
 cd /Herwig/Particles
