@@ -5,7 +5,7 @@ from luigi.util import inherits
 import os, shutil
 
 from subprocess import PIPE
-from generation.framework.utils import run_command, identify_setupfile, set_environment_variables
+from generation.framework.utils import run_command, identify_setupfile, identify_inputfile, set_environment_variables
 from generation.framework.tasks import Task, GenerationScenarioConfig
 
 
@@ -18,6 +18,8 @@ class HerwigBuild(Task):
     and the '[input_file_name].run' file
     """
 
+    mc_generator = "herwig"
+
     # configuration variables
     integration_maxjobs = luigi.Parameter(
         description="Number of individual integration jobs to prepare. \
@@ -25,8 +27,8 @@ class HerwigBuild(Task):
     )
     config_path = luigi.Parameter(
         significant=True,
-        default=os.path.join("$ANALYSIS_PATH","inputfiles"),
-        description="Directory where the Herwig config file resides."
+        default="default",
+        description="Directory where the Herwig config file resides. Default transaltes to `inputfiles/herwig/`."
     )
 
     setupfile = luigi.Parameter()
@@ -49,18 +51,7 @@ class HerwigBuild(Task):
         _max_integration_jobs = str(self.integration_maxjobs)
         _config_path = str(self.config_path)
 
-        if(_config_path == "" or _config_path == "default"):
-            _my_input_file = os.path.join(
-                "$ANALYSIS_PATH",
-                "inputfiles",
-                "{}.in".format(input_file_name)
-            )
-        else:
-            _my_input_file = os.path.join(
-                _config_path,
-                "{}.in".format(input_file_name)
-            )
-        _my_input_file = os.path.abspath(os.path.expandvars(_my_input_file))
+        _my_input_file = identify_inputfile(input_file_name, _config_path, self.mc_generator)
 
         # ensure that the output directory exists
         output = self.output()
@@ -79,7 +70,7 @@ class HerwigBuild(Task):
             "{INPUT_FILE}".format(INPUT_FILE=_my_input_file)
         ]
         if self.mc_setting == "PSoff":
-            _setupfile_path = identify_setupfile(self.setupfile, self.mc_setting, os.getcwd())
+            _setupfile_path = identify_setupfile(self.setupfile, self.mc_generator, self.mc_setting, os.getcwd())
             _herwig_args = ["--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path)] + _herwig_args
 
         print('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))

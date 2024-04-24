@@ -6,13 +6,16 @@ import os
 import multiprocessing  # for cpu_count
 
 from subprocess import PIPE
-from generation.framework.utils import run_command, set_environment_variables
+from generation.framework.utils import run_command, identify_inputfile, set_environment_variables
 
 from generation.framework import Task, CommonConfig
 
 
 class SherpaSetup(law.Task):
     """Setup CMSSW environment for Sherpa"""
+
+    mc_generator = "sherpa"
+
     def output(self):
         return law.LocalDirectoryTarget(
             os.path.join(
@@ -46,21 +49,24 @@ class SherpaSetup(law.Task):
 
 @inherits(CommonConfig)
 class SherpaConfig(law.ExternalTask):
+
+    mc_generator = "sherpa"
+
+    config_path = luigi.Parameter(
+        significant=True,
+        default="default",
+        description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[input_file_name]`."
+    )
+
     def output(self):
         return law.law.LocalFileTarget(
-            os.path.join(
-                "$ANALYSIS_PATH",
-                "inputfiles",
-                "sherpa",
-                self.input_file_name,
-                "Run.dat"
-            )
+            identify_inputfile(self.input_file_name, self.config_path, self.mc_generator)
         )
 
 
 class SherpaIntegrate(Task):
     """
-    Create Sherpa Matrix Elements for the chosen process.
+    Create Sherpa Matrix Elements and Grids for the chosen process.
     """
     ncores = luigi.IntParameter(
         default=int(multiprocessing.cpu_count()/4),

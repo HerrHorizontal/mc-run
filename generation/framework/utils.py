@@ -56,14 +56,60 @@ def set_environment_variables(source_script_path):
 rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
 
 
-def identify_setupfile(filepath, mc_setting, work_dir):
+def identify_inputfile(filename, config_path, generator):
+    if generator == "herwig":
+        if(str(config_path) == "" or str(config_path).lower() == "default"):
+            _my_input_file = os.path.join(
+                "$ANALYSIS_PATH",
+                "inputfiles",
+                generator,
+                "{}.in".format(filename)
+            )
+        else:
+            _my_input_file = os.path.join(
+                config_path,
+                "{}.in".format(input_file_name)
+            )
+    elif generator == "sherpa":
+        if(config_path == "" or config_path == "default"):
+            _my_input_file = os.path.join(
+                "$ANALYSIS_PATH",
+                "inputfiles",
+                generator,
+                filename,
+                "Run.dat"
+            )
+        else:
+            _my_input_file = os.path.join(
+                config_path,
+                "Run.dat"
+            )
+    else:
+        raise NotImplementedError("Generator {} unknown!".format(generator))
+    return _my_input_file
+
+
+def identify_setupfile(filepath, generator, mc_setting, work_dir):
     import shutil
     print("Setupfile: {}".format(filepath))
+    generator = str(generator)
     if all(filepath != defaultval for defaultval in [None, "None"]):
-        setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"inputfiles","setupfiles",str(filepath))
+        setupfile_path = os.path.join(
+            os.getenv("ANALYSIS_PATH"),
+            "inputfiles",
+            "setupfiles",
+            generator,
+            str(filepath)
+        )
     else:
         print("No setupfile given. Trying to identify setupfile via mc_setting ...")
-        setupfile_path = os.path.join(os.path.expandvars("$ANALYSIS_PATH"),"inputfiles","setupfiles","{}.txt".format(str(mc_setting)))
+        setupfile_path = os.path.join(
+            os.path.expandvars("$ANALYSIS_PATH"),
+            "inputfiles",
+            "setupfiles",
+            generator,
+            "{}.txt".format(str(mc_setting))
+        )
     if os.path.exists(setupfile_path):
         print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
         # for python3 the next two lines can be merged

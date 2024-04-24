@@ -38,7 +38,7 @@ class RunRivet(Task, HTCondorWorkflow):
         description="List of IDs of Rivet analyses to run."
     )
     mc_generator = luigi.Parameter(
-        default="Herwig",
+        default="herwig",
         description="Name of the MC generator used for event generation."
     )
 
@@ -57,7 +57,7 @@ class RunRivet(Task, HTCondorWorkflow):
         # require the parent workflow and inform it about the branches to produce by passing
         # the "branches" parameter and simultaneously preventing {start,end}_branch being used
         branches = sum(self.branch_map.values(), [])
-        if self.mc_generator == "Herwig":
+        if str(self.mc_generator).lower() == "herwig":
             reqs["MCRun"] = HerwigRun.req(
                 self,
                 branches=branches,
@@ -68,7 +68,7 @@ class RunRivet(Task, HTCondorWorkflow):
                     "htcondor_requirements", "htcondor_request_disk"
                     ]
                 )
-        elif self.mc_generator == "Sherpa":
+        elif str(self.mc_generator).lower() == "sherpa":
             reqs["MCRun"] = SherpaRun.req(
                 self,
                 branches=branches,

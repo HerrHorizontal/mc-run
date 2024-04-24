@@ -27,6 +27,8 @@ class HerwigRun(Task, HTCondorWorkflow):
     output_collection_cls = law.NestedSiblingFileCollection
 
     # configuration variables
+    mc_generator = "herwig"
+
     start_seed = luigi.IntParameter(
         default=42,
         description="Start seed for random generation of individual job seeds. Currently not used!"
@@ -139,7 +141,7 @@ class HerwigRun(Task, HTCondorWorkflow):
 
         # identify the setupfile if specified and copy it to working directory
         work_dir = os.getcwd()
-        _setupfile_path = identify_setupfile(self.setupfile, self.mc_setting, work_dir)
+        _setupfile_path = identify_setupfile(self.setupfile, self.mc_generator, self.mc_setting, work_dir)
         _setupfile_suffix = "-" + _setupfile_path
         _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path))
 
