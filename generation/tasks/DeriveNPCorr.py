@@ -30,7 +30,7 @@ class DeriveNPCorr(Task):
                 where parts of the generation chain are turned off."
     )
     mc_generator = luigi.Parameter(
-        default="Herwig",
+        default="herwig",
         description="Name of the MC generator used for event generation."
     )
     match = luigi.Parameter(
@@ -66,14 +66,18 @@ class DeriveNPCorr(Task):
         return req
 
 
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name,) + path
+        return os.path.join(*parts)
+
+
     def output(self):
         output = self.remote_target(
-            "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio-{mc_generator}.yoda".format(
+            "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio.yoda".format(
                 match = self.match,
                 unmatch = self.unmatch,
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
-                mc_generator = self.mc_generator,
             )
         )
         return output

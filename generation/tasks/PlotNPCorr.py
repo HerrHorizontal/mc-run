@@ -150,24 +150,27 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         return req
 
 
+    def local_path(self, *path):
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name,) + path
+        return os.path.join(*parts)
+
+
     def output(self):
         out = dict()
         out["single"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}-{mc_generator}/single/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/single/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
-                mc_generator=self.mc_generator,
             )
         )
         out["summary"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}-{mc_generator}/summary/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/summary/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
-                mc_generator=self.mc_generator,
             )
         )
         return out

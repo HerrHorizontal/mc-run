@@ -86,9 +86,9 @@ class RunRivet(Task, HTCondorWorkflow):
 
     def create_branch_map(self):
         # each analysis job analyzes a chunk of HepMC files
-        if self.mc_generator == "Herwig":
+        if str(self.mc_generator).lower() == "herwig":
             branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
-        elif self.mc_generator == "Sherpa":
+        elif str(self.mc_generator).lower() == "sherpa":
             branch_chunks = SherpaRun.req(self).get_all_branch_chunks(self.files_per_job)
         else:
             raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
@@ -102,12 +102,12 @@ class RunRivet(Task, HTCondorWorkflow):
     def requires(self):
         # each branch task requires existent HEPMC files to analyze
         req = dict()
-        if self.mc_generator == "Herwig":
+        if str(self.mc_generator).lower() == "herwig":
             req["MCRun"] = [
                     HerwigRun.req(self, branch=b)
                     for b in self.branch_data
                 ]
-        elif self.mc_generator == "Sherpa":
+        elif str(self.mc_generator).lower() == "sherpa":
             req["MCRun"] = [
                     SherpaRun.req(self, branch=b)
                     for b in self.branch_data
@@ -116,7 +116,7 @@ class RunRivet(Task, HTCondorWorkflow):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, self.mc_generator) + path
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name, self.mc_setting,) + path
         return os.path.join(*parts)
 
 

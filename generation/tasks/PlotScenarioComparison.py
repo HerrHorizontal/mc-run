@@ -34,8 +34,8 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
-    mc_generator = luigi.Parameter(
-        default="Herwig",
+    mc_generators = luigi.ListParameter(
+        default=["herwig",],
         description="Name of the MC generator used for event generation."
     )
 
