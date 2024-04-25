@@ -5,6 +5,7 @@ import HerwigIntegrate
 import HerwigMerge
 import HerwigRun
 
+import SherpaBuild
 import SherpaIntegrate
 import SherpaRun
 

@@ -1,20 +1,15 @@
-
-
 import law
 import luigi
 from luigi.util import inherits
 import os
-import shutil
 import random
 
-from subprocess import PIPE
 from generation.framework.utils import run_command
 
-from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
 
-from SherpaIntegrate import SherpaSetup, SherpaConfig, SherpaIntegrate
-
+from SherpaIntegrate import SherpaIntegrate
+from SherpaBuild import SherpaConfig
 
 @inherits(GenerationScenarioConfig)
 class SherpaRun(Task, HTCondorWorkflow):
@@ -55,7 +50,6 @@ class SherpaRun(Task, HTCondorWorkflow):
     def workflow_requires(self):
         # Each job requires the sherpa setup to be present
         return {
-            "SherpaSetup": SherpaSetup.req(self),
             "SherpaConfig": SherpaConfig.req(self),
             "SherpaIntegrate": SherpaIntegrate.req(self)
         }
