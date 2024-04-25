@@ -78,7 +78,7 @@ The according code for these tasks and workflows is defined in `generation/tasks
 ![Graphical representation of further processing workflow management extending the generation and analysis](plots/design/Law-Setup_Analysis.png "YODA and matplotlib setup for automated post-processing and plotting of genereted analysis objects with Law")
 
 Further processing of the produced YODA files is supported by the task:
-- *DeriveNPCorr*: It calculates the ratio of two separate MC productions, i.e. for the derivation of non-perturbative correction factors, using the functionality provided by the [`YODA` API](https://yoda.hepforge.org/). You can specify match and unmatch regular expressions to filter the analysis objects to process. It will create a new `.yoda` file containing the creted ratio analysis objects.
+- *DeriveNPCorr*: It calculates the ratio of two separate MC productions, i.e. for the derivation of non-perturbative correction factors, using the functionality provided by the [`YODA` API](https://yoda.hepforge.org/). You can specify lists of match and unmatch regular expressions to filter the analysis objects to process. It will create a new `.yoda` file containing the created ratio analysis objects.
 
 ##### Plotting
 Tasks for plotting with the functionality provided by the `matplotlib` python library and input file handling with the [`YODA`](https://yoda.hepforge.org/) toolset:
@@ -116,8 +116,8 @@ Additional requirements for selecting worker nodes:
 - `chunk_size`: Number of simultaneously merged YODA files to avoid running into the argument limit of the subprocess or the CLI.
 
 *Processing and Plotting parameters*. Set these to steer the further processing of the `.yoda` files generated in the Rivet analyses.
-- `match`: Regular expression string which must match the analysis objects' names to process.
-- `unmatch`: Regular expression string which must not match the analysis objects' names to process.
+- `match`: List of regular expression strings which must match the analysis objects' names to process.
+- `unmatch`: List of regular expression strings which must not match the analysis objects' names to process.
 - `mc_setting_full`: `mc_setting` used for the derivation of the `.yoda` file containing the full simulation's outcomes
 - `mc_setting_partial`: `mc_setting` used for the derivation of the `.yoda` file containing the partial simulation's outcomes
 - `filter_label_pad_tuples`: Tuple of tuples containg either four or five entries:

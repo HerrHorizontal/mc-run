@@ -36,15 +36,15 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         default="herwig",
         description="Name of the MC generator used for event generation."
     )
-    match = luigi.Parameter(
+    match = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Require presence of analysis objects which names match this regex in the YODA files."
+        description="Require presence of analysis objects which names match these regexes in the YODA files."
     )
-    unmatch = luigi.Parameter(
+    unmatch = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Require exclusion of analysis objects which names match this regex in the YODA files."
+        description="Require exclusion of analysis objects which names match these regexes in the YODA files."
     )
     filter_label_pad_tuples = luigi.TupleParameter(
         default=((".*","","Observable","NP corr.","arb. units"),),
@@ -111,8 +111,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             self,
             mc_setting_full = self.mc_setting_full,
             mc_setting_partial = self.mc_setting_partial,
-            match = self.match,
-            unmatch = self.unmatch
+            match = list(self.match),
+            unmatch = list(self.unmatch),
         )
         return req
 
@@ -144,8 +144,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             self,
             mc_setting_full = self.mc_setting_full,
             mc_setting_partial = self.mc_setting_partial,
-            match = self.match,
-            unmatch = self.unmatch
+            match = list(self.match),
+            unmatch = list(self.unmatch),
         )
         return req
 

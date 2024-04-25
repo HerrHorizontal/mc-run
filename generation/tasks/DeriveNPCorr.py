@@ -33,15 +33,15 @@ class DeriveNPCorr(Task):
         default="herwig",
         description="Name of the MC generator used for event generation."
     )
-    match = luigi.Parameter(
+    match = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Include analysis objects which name matches this regex."
+        description="Include analysis objects which name matches these regexes."
     )
-    unmatch = luigi.Parameter(
+    unmatch = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Exclude analysis objects which name matches this regex."
+        description="Exclude analysis objects which name matches these regexes."
     )
 
     exclude_params_req = {
@@ -74,8 +74,8 @@ class DeriveNPCorr(Task):
     def output(self):
         output = self.remote_target(
             "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio.yoda".format(
-                match = self.match,
-                unmatch = self.unmatch,
+                match = "-".join(list(self.match)),
+                unmatch = "-".join(list(self.unmatch)),
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
             )
@@ -116,8 +116,10 @@ class DeriveNPCorr(Task):
             "--partial", "{}".format(input_yoda_file_partial),
             "--output-file", "{}".format(output_yoda)
         ]
-        executable += ["--match", self.match] if self.match else []
-        executable += ["--unmatch", self.unmatch] if self.unmatch else []
+        if self.match:
+            executable += ["--match"] + [matchstr for matchstr in list(self.match)]
+        if self.unmatch:
+            executable += ["--unmatch"] + [matchstr for matchstr in list(self.unmatch)]
 
         print("Executable: {}".format(" ".join(executable)))
 
