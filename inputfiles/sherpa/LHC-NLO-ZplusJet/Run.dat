@@ -24,6 +24,7 @@
   NLO_QCD_Mode Fixed_Order;
   ME_Generator Amegic;
   RS_ME_Generator Comix;
+  Loop_Generator LOOPGEN;
   End process;
 }(processes)
 
