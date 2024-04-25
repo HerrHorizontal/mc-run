@@ -255,6 +255,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             output.remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir_single))
 
+        #TODO: Put the summary plotting into its own class that requires the PlotNPCorr task
         print("=======================================================")
         print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")

@@ -74,7 +74,6 @@ parser.add_argument(
     metavar="PATT",
     default=None,
     type=str,
-    nargs="*",
     help="only write out histograms whose path matches this regex"
 )
 parser.add_argument(
@@ -83,7 +82,6 @@ parser.add_argument(
     metavar="PATT",
     default=None,
     type=str,
-    nargs="*",
     help="exclude histograms whose path matches this regex"
 )
 parser.add_argument(
