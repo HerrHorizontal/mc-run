@@ -33,7 +33,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 where parts of the generation chain are turned off."
     )
     mc_generator = luigi.Parameter(
-        default="Herwig",
+        default="herwig",
         description="Name of the MC generator used for event generation."
     )
     match = luigi.Parameter(
