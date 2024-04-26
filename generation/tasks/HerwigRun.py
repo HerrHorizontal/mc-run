@@ -116,7 +116,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -145,11 +145,11 @@ class HerwigRun(Task, HTCondorWorkflow):
         _setupfile_suffix = "-" + _setupfile_path
         _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path))
 
-        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             run_command(_herwig_exec + _herwig_args, env=my_env, cwd=work_dir)
-            print("Seed: {}".format(seed))
+            logger.info("Seed: {}".format(seed))
         except RuntimeError as e:
             output.remove()
             raise e

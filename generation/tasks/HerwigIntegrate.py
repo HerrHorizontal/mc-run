@@ -11,6 +11,11 @@ from generation.framework import Task, HTCondorWorkflow, GenerationScenarioConfi
 
 from HerwigBuild import HerwigBuild
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
 class HerwigIntegrate(Task, HTCondorWorkflow):
@@ -93,7 +98,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
 
-        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)

@@ -8,6 +8,12 @@ from subprocess import PIPE
 from generation.framework.utils import run_command, identify_setupfile, identify_inputfile, set_environment_variables
 from generation.framework.tasks import Task, CommonConfig, GenerationScenarioConfig
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
+
 
 @inherits(CommonConfig)
 class HerwigConfig(law.ExternalTask):
@@ -90,7 +96,7 @@ class HerwigBuild(Task):
             _setupfile_path = identify_setupfile(self.setupfile, self.mc_generator, self.mc_setting, os.getcwd())
             _herwig_args = ["--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path)] + _herwig_args
 
-        print('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format( " ".join(_herwig_exec + _herwig_args)))
 
         try:
             run_command(_herwig_exec+_herwig_args, env=herwig_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
@@ -103,10 +109,10 @@ class HerwigBuild(Task):
         run_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/{}.run".format(input_file_name)))
 
         if(os.path.exists(cache_dir) and os.path.isfile(run_file)):
-            print("Checking {} ...".format(cache_dir))
+            logger.debug("Checking {} ...".format(cache_dir))
             if not os.listdir(cache_dir):
                 raise LookupError("Herwig cache directory {} is empty!".format(cache_dir))
-            print("Tarring {0} and {1} into {2} ...".format(cache_dir,run_file,output_file))
+            logger.debug("Tarring {0} and {1} into {2} ...".format(cache_dir,run_file,output_file))
             os.system('tar -czf {OUTPUT_FILE} {HERWIGCACHE} {INPUT_FILE_NAME}.run'.format(
                 OUTPUT_FILE=output_file,
                 HERWIGCACHE = os.path.relpath(cache_dir),

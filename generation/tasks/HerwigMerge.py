@@ -11,6 +11,11 @@ from generation.framework.tasks import Task, GenerationScenarioConfig
 from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
 class HerwigMerge(Task):
@@ -64,7 +69,7 @@ class HerwigMerge(Task):
 
         for branch, target in self.input()['HerwigIntegrate']["collection"].targets.items():
             if branch <=10:
-                print('Getting Herwig integration file: {}'.format(target))
+                logger.info('Getting Herwig integration file: {}'.format(target))
             with target.localize('r') as _file:
                 os.system('tar -xzf {}'.format(_file.path))
 
@@ -75,7 +80,7 @@ class HerwigMerge(Task):
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=input_file)
         ]
 
-        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             run_command(_herwig_exec + _herwig_args, env=herwig_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))

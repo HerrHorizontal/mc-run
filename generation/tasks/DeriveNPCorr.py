@@ -10,6 +10,11 @@ from generation.framework.tasks import Task, CommonConfig
 
 from RivetMerge import RivetMerge
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(CommonConfig)
 class DeriveNPCorr(Task):
@@ -88,7 +93,7 @@ class DeriveNPCorr(Task):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -96,12 +101,12 @@ class DeriveNPCorr(Task):
         print("=======================================================")
 
         # localize the separate YODA files on grid storage
-        print("Inputs:")
+        logger.info("Inputs:")
         with self.input()["full"].localize('r') as _file:
-            print("\tfull: {} cached at {}".format(self.input()["full"], _file.path))
+            logger.info("\tfull: {} cached at {}".format(self.input()["full"], _file.path))
             input_yoda_file_full = _file.path
         with self.input()["partial"].localize('r') as _file:
-            print("\tpartial: {} cached at {}".format(self.input()["partial"], _file.path))
+            logger.info("\tpartial: {} cached at {}".format(self.input()["partial"], _file.path))
             input_yoda_file_partial = _file.path
 
         # assign paths for output YODA file and plots
@@ -121,7 +126,7 @@ class DeriveNPCorr(Task):
         if self.unmatch:
             executable += ["--unmatch"] + [matchstr for matchstr in list(self.unmatch)]
 
-        print("Executable: {}".format(" ".join(executable)))
+        logger.info("Executable: {}".format(" ".join(executable)))
 
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))

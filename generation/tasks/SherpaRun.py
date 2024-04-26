@@ -11,6 +11,12 @@ from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenari
 from SherpaIntegrate import SherpaIntegrate
 from SherpaBuild import SherpaConfig
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
+
 @inherits(GenerationScenarioConfig)
 class SherpaRun(Task, HTCondorWorkflow):
     """
@@ -123,7 +129,7 @@ class SherpaRun(Task, HTCondorWorkflow):
 
         try:
             run_command(_sherpa_exec + _sherpa_args + _gen_opts, env=my_env, cwd=work_dir)
-            print("Seed: {}".format(seed))
+            logger.info("Seed: {}".format(seed))
         except RuntimeError as e:
             output.remove()
             raise e

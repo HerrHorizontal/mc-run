@@ -16,6 +16,11 @@ from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenari
 from HerwigRun import HerwigRun
 from SherpaRun import SherpaRun
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
 class RunRivet(Task, HTCondorWorkflow):
@@ -140,7 +145,7 @@ class RunRivet(Task, HTCondorWorkflow):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -151,7 +156,7 @@ class RunRivet(Task, HTCondorWorkflow):
         my_env = os.environ
         
         # identify and get the HEPMC files for analyzing
-        print("Inputs: {}".format(self.input()))
+        logger.info("Inputs: {}".format(self.input()))
         for target in self.input()['MCRun']:
             with target.localize('r') as input_file:
                 os.system('tar -xvjf {}'.format(input_file.path))
@@ -167,7 +172,7 @@ class RunRivet(Task, HTCondorWorkflow):
             "--histo-file={OUTPUT_NAME}".format(OUTPUT_NAME=output_file)
         ] + glob.glob('*.hepmc')
 
-        print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
+        logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
 
         try:
             run_command(_rivet_exec + _rivet_args, env=my_env)

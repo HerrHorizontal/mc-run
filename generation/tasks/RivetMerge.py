@@ -12,6 +12,11 @@ from generation.framework.tasks import Task, GenerationScenarioConfig
 
 from RunRivet import RunRivet
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
 class RivetMerge(Task):
@@ -81,11 +86,11 @@ class RivetMerge(Task):
         ]
 
         if len(inputfile_list) > 10:
-            print("Input files: {},...,{}".format(inputfile_list[0],inputfile_list[-1]))
-            print('Executable: {} {}'.format(" ".join(_rivet_exec + _rivet_args), " ".join([_rivet_in[0],"[...]",_rivet_in[-1]])))
+            logger.info("Input files: {},...,{}".format(inputfile_list[0],inputfile_list[-1]))
+            logger.info('Executable: {} {}'.format(" ".join(_rivet_exec + _rivet_args), " ".join([_rivet_in[0],"[...]",_rivet_in[-1]])))
         else:
-            print("Input files: {}".format(inputfile_list))
-            print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args + _rivet_in)))
+            logger.info("Input files: {}".format(inputfile_list))
+            logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args + _rivet_in)))
         
         run_command(_rivet_exec+_rivet_args+_rivet_in, env=rivet_env)
         if not os.path.exists(output_file):
@@ -124,7 +129,7 @@ class RivetMerge(Task):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")

@@ -13,6 +13,11 @@ from generation.framework.tasks import Task, CommonConfig
 from RivetMerge import RivetMerge
 from DeriveNPCorr import DeriveNPCorr
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(CommonConfig)
 class PlotNPCorr(Task, law.LocalWorkflow):
@@ -124,7 +129,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 match, unmatch, xlabel, ylabel = flp
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel)
             except ValueError as e:
-                print("Acounted {}, trying with origin-y-label".format(e))
+                logger.info("Acounted {}, trying with origin-y-label".format(e))
                 match, unmatch, xlabel, ylabel, oylabel = flp
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel, oylabel=oylabel)
         return bm
@@ -195,15 +200,15 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         print("=======================================================")
 
         # localize the separate YODA files on grid storage
-        print("Inputs: {}".format(self.input()))
+        logger.info("Inputs: {}".format(self.input()))
         with self.input()["full"].localize('r') as _file:
-            print("\tfull: {}".format(_file.path))
+            logger.info^("\tfull: {}".format(_file.path))
             input_yoda_file_full = _file.path
         with self.input()["partial"].localize('r') as _file:
-            print("\tpartial: {}".format(_file.path))
+            logger.info("\tpartial: {}".format(_file.path))
             input_yoda_file_partial = _file.path
         with self.input()["ratio"].localize('r') as _file:
-            print("\tratio: {}".format(_file.path))
+            logger.info("\tratio: {}".format(_file.path))
             input_yoda_file_ratio = _file.path
 
         # assign paths for output YODA file and plots
@@ -242,12 +247,12 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         executable += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
         executable += ["--origin", "--origin-ylabel", "{}".format(self.branch_data["oylabel"])] if self.branch_data.get("oylabel", None) else []
 
-        print("Executable: {}".format(" ".join(executable)))
+        logger.info("Executable: {}".format(" ".join(executable)))
 
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
-            print("Individual bins' plots creation failed!")
+            logger.error("Individual bins' plots creation failed!")
             output.remove()
             raise e
         
@@ -290,12 +295,12 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         executable_summary += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
         executable_summary += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
 
-        print("Executable: {}".format(" ".join(executable_summary)))
+        logger.info("Executable: {}".format(" ".join(executable_summary)))
 
         try:
             run_command(executable_summary, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
-            print("Summary plots creation failed!")
+            logger.error("Summary plots creation failed!")
             output.remove()
             raise e
         

@@ -10,6 +10,12 @@ from luigi.util import inherits
 import law.contrib.htcondor
 from law.util import merge_dicts
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
+
 law.contrib.load("wlcg")
 
 
@@ -188,7 +194,7 @@ class HTCondorWorkflow(law.contrib.htcondor.HTCondorWorkflow):
                 # if os.path.isfile('generation.tar.gz'):
                 #     from shutil import move
                     # move('generation.tar.gz', 'old_generation.tar.gz')
-                    # print("Tarball already exists! Preparing a new one!")
+                    # logger.info("Tarball already exists! Preparing a new one!")
                 os.system(
                     "tar --exclude=*.git* "
                     + "-czf generation.tar.gz "
