@@ -155,7 +155,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 logger.error("Output target {} doesn't exist!".format(output.parent))
                 output.makedirs()
 
-    def localize_input_file(input):
+    def localize_input(input):
         """localize the separate YODA files on grid storage"""
         logger.info("Input: {}".format(input))
         with input.localize('r') as _file:
@@ -175,9 +175,9 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         print("=======================================================")
 
         inputs = dict()
-        inputs["full"] = self.localize_input_file(self.input()["full"])
-        inputs["partial"] = self.localize_input_file(self.input()["partial"])
-        inputs["ratio"] = self.localize_input_file(self.input()["ratio"])
+        inputs["full"] = self.localize_input(self.input()["full"])
+        inputs["partial"] = self.localize_input(self.input()["partial"])
+        inputs["ratio"] = self.localize_input(self.input()["ratio"])
 
         # assign paths for output YODA file and plots
         plot_dir_single = self.output()["single"].parent.path
@@ -274,8 +274,8 @@ class PlotNPCorrSummary(PlotNPCorr):
         print("=======================================================")
 
         inputs = dict()
-        inputs["ratio"] = self.localize_input_file(self.input()["ratio"])
-        inputs["Fits"] = self.localize_input_file(self.input("Fits"))
+        inputs["ratio"] = self.localize_input(self.input()["ratio"])
+        inputs["Fits"] = self.localize_input(self.input("Fits"))
 
         # assign paths for output YODA file and plots
         plot_dir_summary = self.output()["summary"].parent.path
