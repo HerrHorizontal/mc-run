@@ -279,7 +279,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             "--splittings", "{}".format(json.dumps(splittings_summary)),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
-            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
+            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial)),
+            "--generator", "{}".format(str(self.mc_generator).lower()),
         ]
         executable_summary += ["--fit", "{}".format(json.dumps(
             dict({os.path.join(plot_dir_single, k): v for k,v in self.fits.items()})

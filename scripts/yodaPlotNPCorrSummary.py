@@ -18,6 +18,11 @@ from util import NumpyEncoder, json_numpy_obj_hook
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
 XTICKS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
 
+GENERATOR_LABEL_DICT = {
+    "herwig": r"MG $\oplus$ Herwig7",
+    "sherpa": "Sherpa",
+}
+
 
 def valid_yoda_file(param):
     """Helper function which checks for validity (YODA extension and existence) of the provided input files
@@ -137,6 +142,12 @@ parser.add_argument(
     choices=("Nelder-Mead","trust-exact","BFGS"),
     default="Nelder-Mead",
     help="optimizer method for performing the smoothing fit"
+)
+parser.add_argument(
+    "--generator",
+    choices=("herwig","sherpa"),
+    default=None,
+    help="Generator name to be used as plot title"
 )
 
 args = parser.parse_args()
@@ -287,7 +298,11 @@ for sname, splits in splittings.items():
             ha='left', va='top',
             transform=axmain.transAxes
         )
-        axmain.set_title(label=r"MG $\oplus$ Herwig7", loc='left')
+
+        title = ""
+        if args.generator:
+            title = GENERATOR_LABEL_DICT[args.generator]
+        axmain.set_title(label=title, loc='left')
 
         name = "{}_{}_{}_summary".format(args.MATCH, jet["ident"], sname)
         print("name: {}".format(name))
