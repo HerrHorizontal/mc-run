@@ -28,7 +28,7 @@ class SherpaConfig(law.ExternalTask):
     )
 
     def output(self):
-        return law.law.LocalFileTarget(
+        return law.LocalFileTarget(
             identify_inputfile(self.input_file_name, self.config_path, self.mc_generator)
         )
 

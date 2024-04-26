@@ -1,12 +1,32 @@
 
-
+import law
 import luigi
 from luigi.util import inherits
 import os, shutil
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, identify_setupfile, identify_inputfile, set_environment_variables
-from generation.framework.tasks import Task, GenerationScenarioConfig
+from generation.framework.tasks import Task, CommonConfig, GenerationScenarioConfig
+
+
+@inherits(CommonConfig)
+class HerwigConfig(law.ExternalTask):
+    """
+    Check for config file
+    """
+
+    mc_generator = "herwig"
+
+    config_path = luigi.Parameter(
+        significant=True,
+        default="default",
+        description="Directory where the Herwig config file resides. Default transaltes to `inputfiles/herwig/`."
+    )
+
+    def output(self):
+        return law.LocalFileTarget(
+            identify_inputfile(self.input_file_name, self.config_path, self.mc_generator)
+        )
 
 
 @inherits(GenerationScenarioConfig)
@@ -25,14 +45,14 @@ class HerwigBuild(Task):
         description="Number of individual integration jobs to prepare. \
                 Should not be greater than the number of subprocesses."
     )
-    config_path = luigi.Parameter(
-        significant=True,
-        default="default",
-        description="Directory where the Herwig config file resides. Default transaltes to `inputfiles/herwig/`."
-    )
 
     setupfile = luigi.Parameter()
 
+
+    def requires(self):
+        return {
+            'HerwigConfig': HerwigConfig.req(self),
+        }
 
     def remote_path(self,*path):
         if self.mc_setting == "PSoff":
@@ -49,9 +69,6 @@ class HerwigBuild(Task):
         # data
         input_file_name = str(self.input_file_name)
         _max_integration_jobs = str(self.integration_maxjobs)
-        _config_path = str(self.config_path)
-
-        _my_input_file = identify_inputfile(input_file_name, _config_path, self.mc_generator)
 
         # ensure that the output directory exists
         output = self.output()
@@ -67,7 +84,7 @@ class HerwigBuild(Task):
         _herwig_exec = ["Herwig", "build"]
         _herwig_args = [
             "--maxjobs={MAXJOBS}".format(MAXJOBS=_max_integration_jobs),
-            "{INPUT_FILE}".format(INPUT_FILE=_my_input_file)
+            "{INPUT_FILE}".format(INPUT_FILE=self.input()['HerwigConfig'].path)
         ]
         if self.mc_setting == "PSoff":
             _setupfile_path = identify_setupfile(self.setupfile, self.mc_generator, self.mc_setting, os.getcwd())
