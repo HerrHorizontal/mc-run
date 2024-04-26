@@ -156,7 +156,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 output.makedirs()
 
     def localize_input(input):
-        """localize the separate YODA files on grid storage"""
+        """localize the separate inputs on grid or local storage"""
         logger.info("Input: {}".format(input))
         with input.localize('r') as _file:
             logger.info^("\tfull: {}".format(_file.path))
