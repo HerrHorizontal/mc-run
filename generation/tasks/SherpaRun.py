@@ -108,12 +108,12 @@ class SherpaRun(Task, HTCondorWorkflow):
         work_dir = self.input()['SherpaConfig'].parent.path
 
         # run Sherpa event generation
+        out_name = "{}-{}-{}".format(self.input_file_name, self.mc_setting, seed)
         _sherpa_exec = ["Sherpa"]
         _sherpa_args = [
             "-R {SEED}".format(SEED=seed),
             "-e {NEVENTS}".format(NEVENTS=_num_events),
-            "-p {}".format(self.input()['SherpaConfig'].parent.path),
-            "EVENT_OUTPUT=HepMC_GenEvent[events]",
+            "EVENT_OUTPUT=HepMC_Short[{}]".format(out_name),
         ]
 
         if self.mc_setting == "withNP":
@@ -135,8 +135,7 @@ class SherpaRun(Task, HTCondorWorkflow):
             raise e
 
         os.chdir(work_dir)
-        os.rename("events.hepmc2g", "{}-{}-{}.hepmc".format(self.input_file_name, self.mc_setting, seed))
-        output_file_hepmc = os.path.abspath(os.path.join(work_dir, "{}-{}-{}.hepmc".format(self.input_file_name, self.mc_setting, seed)))
+        output_file_hepmc = os.path.abspath(os.path.join(work_dir, "{}.hepmc".format(out_name)))
         output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
             INPUT_FILE_NAME=_my_config
         )
