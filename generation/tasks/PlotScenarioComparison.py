@@ -42,7 +42,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
     )
     mc_generators = luigi.ListParameter(
         default=["herwig",],
-        description="Name of the MC generator used for event generation."
+        description="Name of the MC generators used for event generation."
     )
 
     campaigns = luigi.ListParameter(
@@ -106,12 +106,13 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 splits_all.update(v)
         else:
             splits_all = None
+        if self.fits:
+            fits = self.fits
+        else:
+            fits = self._default_fits()
         for scen in self.campaigns:
-            if self.fits:
-                fits = self.fits
-            else:
-                fits = self._default_fits()
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits,
+            for gen in self.mc_generators:
+                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, input_file_name=scen, fits=fits,
                                        splittings_all=splits_all,
                                        splittings_summary=self.splittings,
                                        splittings_conf_summary=self.splittings_conf)
@@ -139,12 +140,13 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 splits_all.update(v)
         else:
             splits_all = None
+        if self.fits:
+            fits = self.fits
+        else:
+            fits = self._default_fits()
         for scen in self.campaigns:
-            if self.fits:
-                fits = self.fits
-            else:
-                fits = self._default_fits()
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits,
+            for gen in self.mc_generators:
+                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, input_file_name=scen, fits=fits,
                                        splittings_all=splits_all,
                                        splittings_summary=self.splittings,
                                        splittings_conf_summary=self.splittings_conf)
@@ -153,13 +155,13 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
 
     def output(self):
         return self.local_target(
-            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}-{mc_generator}/".format(
+            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}-{mc_generators}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
                 campaigns="-".join(self.campaigns),
-                mc_generator=self.mc_generator,
+                mc_generators="-".join(self.mc_generators),
             )
         )
 
@@ -178,7 +180,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         
         # actual payload:
         print("=======================================================")
-        print("Starting comparison NP-factor plotting for campaigns {}".format(self.campaigns))
+        print("Starting comparison NP-factor plotting for campaigns {} and generators {}".format(self.campaigns, self.mc_generators))
         print("=======================================================")
 
         plot_dir = output.parent.path
@@ -198,11 +200,12 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 raise TypeError("Splittings undefined (None), configuration for --splittings or --splittings-conf needed!")
         # print(self.input())
         for campaign in self.campaigns:
-            fits_dict[campaign] = {os.path.join(self.input()[campaign]["single"].path, k): v for k,v in fits.items()}
+            for generator in self.mc_generators:
+                fits_dict[generator+campaign] = {os.path.join(self.input()[generator+campaign]["single"].path, k): v for k,v in fits.items()}
         from pprint import pformat
         logger.debug("Fits dictionary:\n{}".format(pformat(fits_dict)))
 
-        # execute the script reading the fitted NP correctiuons and plotting the comparison
+        # execute the script reading the fitted NP corrections and plotting the comparison
         executable = ["python", os.path.expandvars("$ANALYSIS_PATH/scripts/plotCampaignComparison.py")]
         for campaign, fits in fits_dict.items():
             executable += ["--campaign", "{}".format(campaign), "--fit", "{}".format(json.dumps(fits))]
