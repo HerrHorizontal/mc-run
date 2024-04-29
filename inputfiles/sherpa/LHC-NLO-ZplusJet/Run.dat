@@ -8,7 +8,7 @@
   LOOPGEN:=BlackHat;
   EVENT_GENERATION_MODE Weighted;
 
-  # Phyisics parameters
+  # Physics parameters
   PDF_LIBRARY LHAPDFSherpa;
   PDF_SET CT14nlo;
 
@@ -20,7 +20,6 @@
 (processes){
   Process 93 93 -> 13 -13 93;
   Order (*,2);
-  CKKW sqr(QCUT/E_CMS);
   NLO_QCD_Mode Fixed_Order;
   ME_Generator Amegic;
   RS_ME_Generator Comix;

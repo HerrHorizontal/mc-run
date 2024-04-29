@@ -6,7 +6,7 @@
   ME_SIGNAL_GENERATOR Comix;
   EVENT_GENERATION_MODE Weighted;
 
-  # Phyisics parameters
+  # Physics parameters
   PDF_LIBRARY LHAPDFSherpa;
   PDF_SET CT14lo;
 
@@ -18,7 +18,6 @@
 (processes){
   Process 93 93 -> 13 -13 93;
   Order (*,2);
-  CKKW sqr(QCUT/E_CMS);
   End process;
 }(processes)
 
