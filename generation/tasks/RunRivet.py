@@ -170,7 +170,7 @@ class RunRivet(Task, HTCondorWorkflow):
             "--analysis={RIVET_ANALYSIS}".format(RIVET_ANALYSIS=_rivet_analysis) for _rivet_analysis in _rivet_analyses
         ] + [
             "--histo-file={OUTPUT_NAME}".format(OUTPUT_NAME=output_file)
-        ] + glob.glob('*.hepmc')
+        ] + input_files
 
         logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
 
