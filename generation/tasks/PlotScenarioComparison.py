@@ -113,9 +113,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         for scen in self.campaigns:
             for gen in self.mc_generators:
                 req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, input_file_name=scen, fits=fits,
-                                       splittings_all=splits_all,
-                                       splittings_summary=self.splittings,
-                                       splittings_conf_summary=self.splittings_conf)
+                                       splittings_all=splits_all)
         return req
     
 
@@ -147,9 +145,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         for scen in self.campaigns:
             for gen in self.mc_generators:
                 req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, input_file_name=scen, fits=fits,
-                                       splittings_all=splits_all,
-                                       splittings_summary=self.splittings,
-                                       splittings_conf_summary=self.splittings_conf)
+                                       splittings_all=splits_all)
         return req
     
 
