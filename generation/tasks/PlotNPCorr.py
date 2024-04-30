@@ -136,7 +136,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
     def output(self):
         out = dict()
         out["single"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/single/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
@@ -146,6 +146,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         return out
 
 
+    @staticmethod
     def check_outdir(outputdict):
         """ensure that the output directory exists"""
         for output in outputdict.values():
@@ -155,16 +156,17 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 logger.error("Output target {} doesn't exist!".format(output.parent))
                 output.makedirs()
 
+    @staticmethod
     def localize_input(input):
         """localize the separate inputs on grid or local storage"""
         logger.info("Input: {}".format(input))
         with input.localize('r') as _file:
-            logger.info^("\tfull: {}".format(_file.path))
+            logger.info("\tfull: {}".format(_file.path))
             return _file.path
 
 
     def run(self):
-        self.check_outdir(self.output())
+        PlotNPCorr.check_outdir(self.output())
 
         if len(self.yrange) != 2:
             raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
@@ -236,6 +238,8 @@ class PlotNPCorrSummary(PlotNPCorr):
     Plotting class for NP-correction factor summary plots using the YODA API
     """
 
+    splittings_conf_all = None
+
     splittings_conf_summary = luigi.DictParameter(
         # default=dict(YS0="YS0", YB0="YB0", YSYBAll="zjet"),
         description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py) for summary splittings. \
@@ -252,12 +256,15 @@ class PlotNPCorrSummary(PlotNPCorr):
         reqs = super(PlotNPCorrSummary,self).workflow_requires()
         reqs["Fits"] = PlotNPCorr.req(self)
         return reqs
+    
+    def requires(self):
+        return self.workflow_requires()
 
 
     def output(self):
         out = dict()
         out["summary"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/summary/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
@@ -268,14 +275,15 @@ class PlotNPCorrSummary(PlotNPCorr):
 
 
     def run(self):
-        self.check_outdir(self.output())
+        PlotNPCorrSummary.check_outdir(self.output())
         print("=======================================================")
         print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")
 
         inputs = dict()
+        print("\n\n{}\n\n".format(self.input()))
         inputs["ratio"] = self.localize_input(self.input()["ratio"])
-        inputs["Fits"] = self.localize_input(self.input("Fits"))
+        inputs["Fits"] = self.localize_input(self.input()["Fits"]["single"])
 
         # assign paths for output YODA file and plots
         plot_dir_summary = self.output()["summary"].parent.path
