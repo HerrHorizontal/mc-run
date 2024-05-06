@@ -129,7 +129,7 @@ class PlotNPCorr(Task, law.LocalWorkflow):
 
 
     def local_path(self, *path):
-        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name,) + path
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign,) + path
         return os.path.join(*parts)
 
 

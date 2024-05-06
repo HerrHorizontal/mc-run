@@ -60,10 +60,10 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
     def remote_path(self,*path):
         if self.mc_setting == "PSoff":
-            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
             return os.path.join(*parts)
         else:
-            parts = (self.__class__.__name__, self.input_file_name,) + path
+            parts = (self.__class__.__name__, self.campaign,) + path
             return os.path.join(*parts)
 
     def output(self):
@@ -73,7 +73,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
     def run(self):
         # branch data
         _jobid = str(self.branch)
-        _my_config = str(self.input_file_name)
+        _my_config = str(self.campaign)
 
         # ensure that the output directory exists
         output = self.output()

@@ -24,12 +24,12 @@ class SherpaConfig(law.ExternalTask):
     config_path = luigi.Parameter(
         significant=True,
         default="default",
-        description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[input_file_name]`."
+        description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[campaign]`."
     )
 
     def output(self):
         return law.LocalFileTarget(
-            identify_inputfile(self.input_file_name, self.config_path, self.mc_generator)
+            identify_inputfile(self.campaign, self.config_path, self.mc_generator)
         )
 
 
@@ -50,7 +50,7 @@ class SherpaBuild(Task):
                     "$ANALYSIS_PATH",
                     "inputfiles",
                     "sherpa",
-                    self.input_file_name,
+                    self.campaign,
                     "Process"
                 )
             ),

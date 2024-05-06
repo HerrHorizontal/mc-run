@@ -22,8 +22,6 @@ logger = get_logger(__name__)
 class PlotScenarioComparison(Task, law.LocalWorkflow):
     """Plot a comparison of fitted NP factors created with different scenarios"""
 
-    input_file_name = "Comparison"
-
     rivet_analyses = luigi.ListParameter(
         default=["ZplusJet_3"],
         description="List of IDs of Rivet analyses to run"
@@ -112,7 +110,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
             fits = self._default_fits()
         for scen in self.campaigns:
             for gen in self.mc_generators:
-                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, input_file_name=scen, fits=fits,
+                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
                                        splittings_all=splits_all)
         return req
     
@@ -144,10 +142,15 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
             fits = self._default_fits()
         for scen in self.campaigns:
             for gen in self.mc_generators:
-                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, input_file_name=scen, fits=fits,
+                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
                                        splittings_all=splits_all)
         return req
-    
+
+
+    def local_path(self, *path):
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,) + path
+        return os.path.join(*parts)
+
 
     def output(self):
         return self.local_target(

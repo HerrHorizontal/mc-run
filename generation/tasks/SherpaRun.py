@@ -76,21 +76,21 @@ class SherpaRun(Task, HTCondorWorkflow):
         return {jobnum: seed for jobnum, seed in enumerate(seed_list)}
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__, self.input_file_name, self.mc_setting) + path
+        parts = (self.__class__.__name__, self.campaign, self.mc_setting) + path
         return os.path.join(*parts)
 
     def output(self):
         dir_number = int(self.branch)/1000
         return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
             DIR_NUMBER=str(dir_number),
-            INPUT_FILE_NAME=str(self.input_file_name),
+            INPUT_FILE_NAME=str(self.campaign),
             JOB_NUMBER=str(self.branch)
             ))
 
     def run(self):
         # branch data
         _job_num = str(self.branch)
-        _my_config = str(self.input_file_name)
+        _my_config = str(self.campaign)
         _num_events = str(self.events_per_job)
         seed = int(self.branch_data)
 
@@ -108,7 +108,7 @@ class SherpaRun(Task, HTCondorWorkflow):
         work_dir = self.input()['SherpaConfig'].parent.path
 
         # run Sherpa event generation
-        out_name = "{}-{}-{}".format(self.input_file_name, self.mc_setting, seed)
+        out_name = "{}-{}-{}".format(self.campaign, self.mc_setting, seed)
         _sherpa_exec = ["Sherpa"]
         _sherpa_args = [
             "-R {SEED}".format(SEED=seed),

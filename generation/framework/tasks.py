@@ -25,8 +25,8 @@ class CommonConfig(luigi.Config):
         description="Protocol and path suffix pointing to the remote parent directory for generation outputs, \
                 e.g. `srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only/store/user/<USER_NAME>`."
     )
-    input_file_name = luigi.Parameter(
-        description="Name of the Herwig input file used for event generation without file extension `.in`. \
+    campaign = luigi.Parameter(
+        description="Name of the Herwig input file or Sherpa run directory used for event generation without file extension `.in`. \
                 Per default saved in the `inputfiles` directory."
     )
 
@@ -54,14 +54,14 @@ class Task(law.Task):
         return cls._wlcg_file_systems[wlcg_path]
 
     def local_path(self, *path):
-        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,  self.input_file_name,) + path
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,  self.campaign,) + path
         return os.path.join(*parts)
 
     def local_target(self, *path):
         return law.LocalFileTarget(self.local_path(*path))
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__, self.input_file_name,) + path
+        parts = (self.__class__.__name__, self.campaign,) + path
         return os.path.join(*parts)
 
     def remote_target(self, *path):

@@ -31,7 +31,7 @@ class HerwigConfig(law.ExternalTask):
 
     def output(self):
         return law.LocalFileTarget(
-            identify_inputfile(self.input_file_name, self.config_path, self.mc_generator)
+            identify_inputfile(self.campaign, self.config_path, self.mc_generator)
         )
 
 
@@ -39,9 +39,9 @@ class HerwigConfig(law.ExternalTask):
 class HerwigBuild(Task):
     """
     Gather and compile all necessary libraries and prepare the integration \
-    lists for the chosen Matchbox defined in the '[input_file_name].in' file \
+    lists for the chosen Matchbox defined in the '[campaign].in' file \
     by running 'Herwig build', which will create the Herwig-cache directory \
-    and the '[input_file_name].run' file
+    and the '[campaign].run' file
     """
 
     mc_generator = "herwig"
@@ -62,10 +62,10 @@ class HerwigBuild(Task):
 
     def remote_path(self,*path):
         if self.mc_setting == "PSoff":
-            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
             return os.path.join(*parts)
         else:
-            parts = (self.__class__.__name__, self.input_file_name,) + path
+            parts = (self.__class__.__name__, self.campaign,) + path
             return os.path.join(*parts)
 
     def output(self):
@@ -73,7 +73,7 @@ class HerwigBuild(Task):
 
     def run(self):
         # data
-        input_file_name = str(self.input_file_name)
+        campaign = str(self.campaign)
         _max_integration_jobs = str(self.integration_maxjobs)
 
         # ensure that the output directory exists
@@ -106,7 +106,7 @@ class HerwigBuild(Task):
 
         cache_dir = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-cache"))
         output_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Herwig-build.tar.gz"))
-        run_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/{}.run".format(input_file_name)))
+        run_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/{}.run".format(campaign)))
 
         if(os.path.exists(cache_dir) and os.path.isfile(run_file)):
             logger.debug("Checking {} ...".format(cache_dir))
@@ -116,7 +116,7 @@ class HerwigBuild(Task):
             os.system('tar -czf {OUTPUT_FILE} {HERWIGCACHE} {INPUT_FILE_NAME}.run'.format(
                 OUTPUT_FILE=output_file,
                 HERWIGCACHE = os.path.relpath(cache_dir),
-                INPUT_FILE_NAME=input_file_name
+                INPUT_FILE_NAME=campaign
             ))
         else:
             raise IOError("Something went wrong, Herwig-cache or run-file doesn't exist! Abort!")

@@ -45,14 +45,14 @@ class RivetMerge(Task):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name, self.mc_setting,) + path
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign, self.mc_setting,) + path
         return os.path.join(*parts)
 
 
     def output(self):
         return self.remote_target(
             "{INPUT_FILE_NAME}.yoda".format(
-                INPUT_FILE_NAME=str(self.input_file_name)
+                INPUT_FILE_NAME=str(self.campaign)
             )
         )
 
@@ -64,7 +64,7 @@ class RivetMerge(Task):
         print("-------------------------------------------------------")
 
         # data
-        _my_input_file_name = str(self.input_file_name)
+        _my_input_file_name = str(self.campaign)
 
         # merge the YODA files 
         if inputfile_chunk==None:

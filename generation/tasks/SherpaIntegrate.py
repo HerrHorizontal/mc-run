@@ -35,7 +35,7 @@ class SherpaIntegrate(Task):
                     "$ANALYSIS_PATH",
                     "inputfiles",
                     "sherpa",
-                    self.input_file_name,
+                    self.campaign,
                     "Results.db"
                 )
             ),

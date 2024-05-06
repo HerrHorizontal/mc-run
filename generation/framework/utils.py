@@ -68,7 +68,7 @@ def identify_inputfile(filename, config_path, generator):
         else:
             _my_input_file = os.path.join(
                 config_path,
-                "{}.in".format(input_file_name)
+                "{}.in".format(filename)
             )
     elif generator == "sherpa":
         if(config_path == "" or config_path == "default"):

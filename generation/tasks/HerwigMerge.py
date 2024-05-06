@@ -40,10 +40,10 @@ class HerwigMerge(Task):
 
     def remote_path(self,*path):
         if self.mc_setting == "PSoff":
-            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
             return os.path.join(*parts)
         else:
-            parts = (self.__class__.__name__, self.input_file_name,) + path
+            parts = (self.__class__.__name__, self.campaign,) + path
             return os.path.join(*parts)
 
     def output(self):
@@ -52,7 +52,7 @@ class HerwigMerge(Task):
 
     def run(self):
         # data
-        input_file = str(self.input_file_name)
+        input_file = str(self.campaign)
 
         # ensure that the output directory exists
         output = self.output()

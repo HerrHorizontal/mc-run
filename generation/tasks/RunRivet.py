@@ -121,7 +121,7 @@ class RunRivet(Task, HTCondorWorkflow):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name, self.mc_setting,) + path
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign, self.mc_setting,) + path
         return os.path.join(*parts)
 
 
@@ -130,14 +130,13 @@ class RunRivet(Task, HTCondorWorkflow):
         dir_number = int(self.branch)/1000
         return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
             DIR_NUMBER=str(dir_number),
-            INPUT_FILE_NAME=str(self.input_file_name),
+            INPUT_FILE_NAME=str(self.campaign),
             JOB_NUMBER=str(self.branch)
             ))
 
 
     def run(self):
         # branch data
-        _my_config = str(self.input_file_name)
         _rivet_analyses = list(self.rivet_analyses)
 
         # ensure that the output directory exists

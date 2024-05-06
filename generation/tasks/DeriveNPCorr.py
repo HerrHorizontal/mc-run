@@ -72,7 +72,7 @@ class DeriveNPCorr(Task):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.input_file_name,) + path
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign,) + path
         return os.path.join(*parts)
 
 
