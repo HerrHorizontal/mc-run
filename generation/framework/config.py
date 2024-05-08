@@ -35,17 +35,29 @@ CAMPAIGN_MODS = {
         lightencolor=0.3,
         linestyle="dashdot"
     ),
-    "Dijets_LO": dict(
+    "herwigDijets_LO": dict(
         order="LO",
         label=r"MG@LO $\oplus$ Herwig7",
         lightencolor=1.0,
         linestyle="dotted"
     ),
-    "Dijets_NLO": dict(
+    "herwigDijets_NLO": dict(
         order="NLO",
         label=r"MG@NLO $\oplus$ Herwig7",
         lightencolor=0.7,
         linestyle="solid"
+    ),
+    "sherpaDijets_LO": dict(
+        order="LO",
+        label=r"Sherpa LO",
+        lightencolor=0.5,
+        linestyle="dashed"
+    ),
+    "sherpaDijets_NLO": dict(
+        order="NLO",
+        label=r"Sherpa NLO",
+        lightencolor=0.3,
+        linestyle="dashdot"
     ),
 }
 

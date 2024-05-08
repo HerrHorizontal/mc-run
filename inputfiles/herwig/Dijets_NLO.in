@@ -1,0 +1,183 @@
+# -*- ThePEG-repository -*-
+
+##################################################
+## Herwig/Matchbox example input file
+##################################################
+
+##################################################
+## Collider type
+##################################################
+read snippets/Matchbox.in
+read snippets/PPCollider.in
+
+##################################################
+## Beam energy sqrt(s)
+##################################################
+
+cd /Herwig/EventHandlers
+set EventHandler:LuminosityFunction:Energy 13000*GeV
+
+##################################################
+## Process selection
+##################################################
+
+## Note that event generation may fail if no matching matrix element has
+## been found.  Coupling orders are with respect to the Born process,
+## i.e. NLO QCD does not require an additional power of alphas.
+
+## Model assumptions
+read Matchbox/StandardModelLike.in
+read Matchbox/DiagonalCKM.in
+
+## Set the order of the couplings
+cd /Herwig/MatrixElements/Matchbox
+set Factory:OrderInAlphaS 2
+set Factory:OrderInAlphaEW 0
+
+cd /Herwig/MatrixElements/Matchbox
+create Herwig::MergingReweight MPreWeight HwDipoleShower.so
+insert Factory:Preweighters 0  MPreWeight
+set MPreWeight:MaxPTPower 6
+
+## Select the process
+## You may use identifiers such as p, pbar, j, l, mu+, h0 etc.
+
+do Factory:Process p p -> j j
+#cd /Herwig/EventHandlers
+#set EventHandler:CascadeHandler:MPIHandler NULL
+#set EventHandler:HadronizationHandler NULL
+
+#set /Herwig/Analysis/Basics:CheckQuark No
+
+##################################################
+## Matrix element library selection
+##################################################
+
+## Select a generic tree/loop combination or a
+## specialized NLO package
+
+read Matchbox/MadGraph-NJet.in
+
+# read Matchbox/MadGraph-GoSam.in
+# read Matchbox/MadGraph-MadGraph.in
+# read Matchbox/MadGraph-OpenLoops.in
+# read Matchbox/HJets.in
+# read Matchbox/VBFNLO.in
+## Uncomment this to use ggh effective couplings
+## currently only supported by MadGraph-GoSam
+# read Matchbox/HiggsEffective.in
+
+##################################################
+## Cut selection
+## See the documentation for more options
+##################################################
+cd /Herwig/Cuts/
+set /Herwig/Cuts/FirstJet:PtMin 75.*GeV
+set /Herwig/Cuts/SecondJet:PtMin 25.*GeV
+#set ChargedLeptonPairMassCut:MinMass 60*GeV
+#set ChargedLeptonPairMassCut:MaxMass 120*GeV
+
+## cuts on additional jets
+
+read Matchbox/DefaultPPJets.in
+
+insert JetCuts:JetRegions 0 FirstJet
+insert JetCuts:JetRegions 1 SecondJet
+# insert JetCuts:JetRegions 2 ThirdJet
+# insert JetCuts:JetRegions 3 FourthJet
+
+
+##################################################
+## Scale choice
+## See the documentation for more options
+##################################################
+
+cd /Herwig/MatrixElements/Matchbox
+set Factory:ScaleChoice /Herwig/MatrixElements/Matchbox/Scales/MaxJetPtScale
+
+##################################################
+## Matching and shower selection
+## Please also see flavour scheme settings
+## towards the end of the input file.
+##################################################
+
+
+## use for strict LO/NLO comparisons
+#read Matchbox/MCatLO-DefaultShower.in
+
+
+read Matchbox/MCatNLO-DefaultShower.in
+# read Matchbox/Powheg-DefaultShower.in
+## use for improved LO showering
+# read Matchbox/LO-DefaultShower.in
+# read Matchbox/MCatNLO-DipoleShower.in
+# read Matchbox/Powheg-DipoleShower.in
+## use for strict LO/NLO comparisons
+# read Matchbox/MCatLO-DipoleShower.in
+## use for improved LO showering
+# read Matchbox/LO-DipoleShower.in
+# read Matchbox/NLO-NoShower.in
+# read Matchbox/LO-NoShower.in
+
+
+##################################################
+## PDF choice
+##################################################
+
+read Matchbox/FiveFlavourScheme.in
+## required for dipole shower and fixed order in five flavour scheme
+# read Matchbox/FiveFlavourNoBMassScheme.in
+#read Matchbox/MMHT2014.in
+#read Matchbox/CT14.in
+#CMS tune CH3 settings
+
+cd /Herwig/Partons
+create ThePEG::LHAPDF PDFSet_nnlo ThePEGLHAPDF.so
+set PDFSet_nnlo:PDFName NNPDF31_nnlo_as_0118.LHgrid
+set PDFSet_nnlo:RemnantHandler HadronRemnants
+set /Herwig/Particles/p+:PDF PDFSet_nnlo
+set /Herwig/Particles/pbar-:PDF PDFSet_nnlo
+set /Herwig/Partons/PPExtractor:FirstPDF  PDFSet_nnlo
+set /Herwig/Partons/PPExtractor:SecondPDF PDFSet_nnlo
+set /Herwig/Shower/ShowerHandler:PDFA PDFSet_nnlo
+set /Herwig/Shower/ShowerHandler:PDFB PDFSet_nnlo 
+          
+create ThePEG::LHAPDF PDFSet_lo ThePEGLHAPDF.so
+set PDFSet_lo:PDFName NNPDF31_lo_as_0130.LHgrid
+set PDFSet_lo:RemnantHandler HadronRemnants
+set /Herwig/Shower/ShowerHandler:PDFARemnant PDFSet_lo
+set /Herwig/Shower/ShowerHandler:PDFBRemnant PDFSet_lo
+set /Herwig/Partons/MPIExtractor:FirstPDF PDFSet_lo
+set /Herwig/Partons/MPIExtractor:SecondPDF PDFSet_lo
+
+cd /
+cd /Herwig/Shower
+set AlphaQCD:AlphaIn 0.118
+cd /
+set /Herwig/Hadronization/ColourReconnector:ReconnectionProbability 0.4712
+set /Herwig/UnderlyingEvent/MPIHandler:pTmin0 3.04
+set /Herwig/UnderlyingEvent/MPIHandler:InvRadius 1.284
+set /Herwig/UnderlyingEvent/MPIHandler:Power 0.1362
+#Addition settings of CH3 tune due to Herwig 7.2 version
+read snippets/Tune-Q2.in
+set /Herwig/Hadronization/ColourReconnector:Algorithm Plain
+set /Herwig/UnderlyingEvent/MPIHandler:EnergyExtrapolation Power
+set /Herwig/MatrixElements/MEMinBias:OnlyValence 0
+set /Herwig/Partons/RemnantDecayer:PtDistribution 0
+set /Herwig/Partons/RemnantDecayer:ladderMult 0.63
+set /Herwig/Partons/RemnantDecayer:ladderbFactor 0.0
+set /Herwig/UnderlyingEvent/MPIHandler:DiffractiveRatio 0.21
+##################################################
+## Analyses
+##################################################
+insert /Herwig/Generators/EventGenerator:AnalysisHandlers 0 /Herwig/Analysis/HepMC
+set /Herwig/Analysis/HepMC:PrintEvent 1000000
+set /Herwig/Analysis/HepMC:Format GenEvent
+set /Herwig/Analysis/HepMC:Units GeV_mm
+
+##################################################
+
+do /Herwig/MatrixElements/Matchbox/Factory:ProductionMode
+
+cd /Herwig/Generators
+saverun Dijets_cms_NLO EventGenerator
