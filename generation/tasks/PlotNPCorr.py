@@ -222,11 +222,11 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
             logger.error("Individual bins' plots creation failed!")
-            self.output().remove()
+            self.output()["single"].remove()
             raise e
         
         if not os.listdir(plot_dir_single):
-            self.output().remove()
+            self.output()["single"].remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir_single))
 
         print("=======================================================")
@@ -324,11 +324,11 @@ class PlotNPCorrSummary(PlotNPCorr):
             run_command(executable_summary, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
             logger.error("Summary plots creation failed!")
-            self.output().remove()
+            self.output()["summary"].remove()
             raise e
         
         if not os.listdir(plot_dir_summary):
-            self.output().remove()
+            self.output()["summary"].remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir_summary))
 
         print("-------------------------------------------------------")
