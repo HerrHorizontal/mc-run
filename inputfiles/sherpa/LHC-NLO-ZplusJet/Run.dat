@@ -1,12 +1,11 @@
 (run){
   # tags for process setup
-  QCUT:=20.;
+  ERROR 0.99;
 
   # me generator settings
   ME_SIGNAL_GENERATOR Comix Amegic LOOPGEN;
   EVENT_GENERATION_MODE Weighted;
   LOOPGEN:=BlackHat;
-  EVENT_GENERATION_MODE Weighted;
 
   # Physics parameters
   PDF_LIBRARY LHAPDFSherpa;
@@ -20,7 +19,7 @@
 (processes){
   Process 93 93 -> 13 -13 93;
   Order (*,2);
-  NLO_QCD_Mode Fixed_Order;
+  NLO_QCD_Mode MC@NLO;
   ME_Generator Amegic;
   RS_ME_Generator Comix;
   Loop_Generator LOOPGEN;

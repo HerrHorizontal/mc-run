@@ -73,7 +73,7 @@ class SherpaBuild(Task):
             "Sherpa",
             "-f",
             self.input()['SherpaConfig'].path,
-            "INIT_ONLY=1",
+            "INIT_ONLY=2",
         ]
         logger.info('Running command: "{}"'.format(" ".join(sherpa_init)))
         code, out, error = interruptable_popen(
