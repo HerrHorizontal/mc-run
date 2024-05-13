@@ -1,7 +1,5 @@
 (run){
   # tags for process setup
-  ERROR 0.99;
-
   # me generator settings
   ME_SIGNAL_GENERATOR Comix Amegic LOOPGEN;
   EVENT_GENERATION_MODE Weighted;
