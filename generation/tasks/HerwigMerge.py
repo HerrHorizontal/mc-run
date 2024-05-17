@@ -6,7 +6,7 @@ import os
 from subprocess import PIPE
 from generation.framework.utils import run_command, set_environment_variables
 
-from generation.framework.tasks import Task, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
 from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class HerwigMerge(Task):
+class HerwigMerge(GenRivetTask):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """

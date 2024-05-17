@@ -6,7 +6,7 @@ import os, shutil
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, identify_setupfile, identify_inputfile, set_environment_variables
-from generation.framework.tasks import Task, CommonConfig, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
 from law.logger import get_logger
 
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 
-@inherits(CommonConfig)
+@inherits(GenerationScenarioConfig)
 class HerwigConfig(law.ExternalTask):
     """
     Check for config file
@@ -35,8 +35,7 @@ class HerwigConfig(law.ExternalTask):
         )
 
 
-@inherits(GenerationScenarioConfig)
-class HerwigBuild(Task):
+class HerwigBuild(GenRivetTask):
     """
     Gather and compile all necessary libraries and prepare the integration \
     lists for the chosen Matchbox defined in the '[campaign].in' file \

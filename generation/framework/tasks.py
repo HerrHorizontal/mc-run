@@ -25,14 +25,15 @@ class CommonConfig(luigi.Config):
         description="Protocol and path suffix pointing to the remote parent directory for generation outputs, \
                 e.g. `srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only/store/user/<USER_NAME>`."
     )
-    campaign = luigi.Parameter(
-        description="Name of the Herwig input file or Sherpa run directory used for event generation without file extension `.in`. \
-                Per default saved in the `inputfiles` directory."
-    )
 
 
 @inherits(CommonConfig)
 class GenerationScenarioConfig(luigi.Config):
+
+    campaign = luigi.Parameter(
+        description="Name of the Herwig input file or Sherpa run directory used for event generation without file extension `.in`. \
+                Per default saved in the `inputfiles` directory."
+    )
 
     mc_setting = luigi.Parameter(
         description="Scenario of the MC production. Typically one of the following: `withNP`, `PSoff`, `NPoff`, `MPIoff` or `Hadoff`. \
@@ -42,7 +43,7 @@ class GenerationScenarioConfig(luigi.Config):
 
 
 @inherits(CommonConfig)
-class Task(law.Task):
+class BaseTask(law.Task):
 
     _wlcg_file_systems = {}
 
@@ -53,22 +54,51 @@ class Task(law.Task):
 
         return cls._wlcg_file_systems[wlcg_path]
 
-    def local_path(self, *path):
-        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,  self.campaign,) + path
-        return os.path.join(*parts)
+    def local_path():
+        try:
+            raise NotImplementedError("Local path method not implemented for this base class object! Use derived class instead!")
+        except NotImplementedError as e:
+            print(repr(e))
 
     def local_target(self, *path):
         return law.LocalFileTarget(self.local_path(*path))
-
-    def remote_path(self, *path):
-        parts = (self.__class__.__name__, self.campaign,) + path
-        return os.path.join(*parts)
+    
+    def remote_path():
+        try:
+            raise NotImplementedError("Remote path method not implemented for this base class object! Use derived class instead!")
+        except NotImplementedError as e:
+            print(repr(e))
 
     def remote_target(self, *path):
         return law.wlcg.WLCGFileTarget(
             self.remote_path(*path),
             self.get_wlcg_file_system(self.wlcg_path),
         )
+
+
+
+@inherits(GenerationScenarioConfig)
+class GenRivetTask(BaseTask):
+
+    def local_path(self, *path):
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,  self.campaign,) + path
+        return os.path.join(*parts)
+
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__, self.campaign,) + path
+        return os.path.join(*parts)
+
+
+class PostprocessingTask(BaseTask):
+
+    def local_path(self, *path):
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,) + path
+        return os.path.join(*parts)
+
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,) + path
+        return os.path.join(*parts)
+
 
 
 class HTCondorJobManager(law.contrib.htcondor.HTCondorJobManager):

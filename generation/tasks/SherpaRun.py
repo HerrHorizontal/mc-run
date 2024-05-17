@@ -6,7 +6,7 @@ import random
 
 from generation.framework.utils import run_command
 
-from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
 from SherpaIntegrate import SherpaIntegrate
 from SherpaBuild import SherpaConfig
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class SherpaRun(Task, HTCondorWorkflow):
+class SherpaRun(GenRivetTask, HTCondorWorkflow):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
     events

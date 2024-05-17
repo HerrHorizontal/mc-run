@@ -8,12 +8,12 @@ import multiprocessing  # for cpu_count
 from subprocess import PIPE
 from generation.framework.utils import run_command, identify_inputfile, set_environment_variables
 
-from generation.framework import Task, CommonConfig
+from generation.framework import GenRivetTask
 
 from SherpaBuild import SherpaConfig, SherpaBuild
 
 
-class SherpaIntegrate(Task):
+class SherpaIntegrate(GenRivetTask):
     """
     Create Sherpa Matrix Elements and Grids for the chosen process.
     """

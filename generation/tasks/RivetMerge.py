@@ -8,7 +8,7 @@ import os
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
 
-from generation.framework.tasks import Task, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
 from RunRivet import RunRivet
 
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class RivetMerge(Task):
+class RivetMerge(GenRivetTask):
     """
     Merge separate YODA files from Rivet analysis runs to a single YODA file 
     """

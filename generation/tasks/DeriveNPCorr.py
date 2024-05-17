@@ -6,7 +6,7 @@ import os
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
 
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
 from RivetMerge import RivetMerge
 
@@ -16,11 +16,14 @@ from law.logger import get_logger
 logger = get_logger(__name__)
 
 
-@inherits(CommonConfig)
-class DeriveNPCorr(Task):
+@inherits(GenerationScenarioConfig)
+class DeriveNPCorr(PostprocessingTask):
     """
     Plotting class for NP-correction factor plots using the YODA API
     """
+
+    # attribute not needed
+    mc_setting = None
 
     # configuration variables
     mc_setting_full = luigi.Parameter(

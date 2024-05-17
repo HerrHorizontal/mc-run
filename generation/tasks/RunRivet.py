@@ -11,7 +11,7 @@ from subprocess import PIPE
 from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigRun import HerwigRun
 from SherpaRun import SherpaRun
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class RunRivet(Task, HTCondorWorkflow):
+class RunRivet(GenRivetTask, HTCondorWorkflow):
     """
     Analyze generated HEPMC files with Rivet and create YODA files
     """

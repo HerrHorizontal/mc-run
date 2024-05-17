@@ -11,13 +11,13 @@ from subprocess import PIPE
 from generation.framework.utils import run_command, identify_setupfile
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigMerge import HerwigMerge
 
 
 @inherits(GenerationScenarioConfig)
-class HerwigRun(Task, HTCondorWorkflow):
+class HerwigRun(GenRivetTask, HTCondorWorkflow):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
     events

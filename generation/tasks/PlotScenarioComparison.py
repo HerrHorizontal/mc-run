@@ -8,7 +8,7 @@ from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
 from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS, CAMPAIGN_MODS
 
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.tasks import PostprocessingTask, CommonConfig
 
 from PlotNPCorr import PlotNPCorr
 
@@ -18,8 +18,7 @@ from law.logger import get_logger
 logger = get_logger(__name__)
 
 
-@inherits(CommonConfig)
-class PlotScenarioComparison(Task, law.LocalWorkflow):
+class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
     """Plot a comparison of fitted NP factors created with different scenarios"""
 
     rivet_analyses = luigi.ListParameter(
@@ -145,11 +144,6 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
                                        splittings_all=splits_all)
         return req
-
-
-    def local_path(self, *path):
-        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,) + path
-        return os.path.join(*parts)
 
 
     def output(self):
