@@ -20,16 +20,19 @@ In the following the setup of needed software is explained.
 ### Herwig7
 The necessary [Herwig7](https://herwig.hepforge.org/) software is loaded from CVMFS (`/cvmfs/etp.kit.edu/herwig`) in the `setup/setup_herwig.sh` script 
 for local execution and `generation/setup_lawherwig.sh` for remote jobs.
+For now, it works for `slc7` environments.
 If you want to load the Herwig7 software from other sources, you need to change the according lines in **both** scripts.
 
 ### Sherpa
 [Sherpa](https://sherpa-team.gitlab.io/) is loaded from CVMFS but is sourced as a part of [CMSSW](https://github.com/cms-sw/cmssw).
 The corresponding scripts setting up Sherpa are found in `/work/mhorzela/mc-run/setup/setup_sherpa.sh` and `/work/mhorzela/mc-run/generation/setup_lawsherpa.sh` for local execution and remote jobs, respectively.
 The dependencies for Sherpa include `mpirun` that allows to run integration in parallel.
+For now, the setup works for `slc7` environments.
 If you want to load Sherpa from another source you need to adjust these two bash scripts.
 
 ### Rivet
 In a similar way, the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/) is loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/releases/LCG_96b/MCGenerators/rivet/`) in the `setup/setup_rivet.sh` script for local execution and `generation/setup_lawrivet.sh` for remote jobs.
+For now, it works for `slc7` environments.
 These also need to be adjusted, if you want to use Rivet from a different source.
 
 ### Law, Luigi, Six and Enum34
