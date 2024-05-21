@@ -196,7 +196,7 @@ A cartesian product is computed from the following two. So, in order to not be e
 
 
 ### Executing LAW
-To run your configured generation workflow. Set the law environment by `source setup.sh`.
+To run your configured generation workflow (you will find your configuration per default in the `luigi.cfg` file). Set the law environment by `source setup.sh`.
 To index the available LAW tasks and workflows, first execute `law index`, which will also enable autocompletion for the tasks' parameters. 
 To start the generation you can now simply run
 ```
