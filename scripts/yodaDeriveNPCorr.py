@@ -55,14 +55,18 @@ parser.add_argument(
     dest="MATCH",
     metavar="PATT",
     default=None,
-    help="only write out histograms whose path matches this regex"
+    type=str,
+    nargs="*",
+    help="only write out histograms whose path matches these regexes"
 )
 parser.add_argument(
     "-M", "--unmatch",
     dest="UNMATCH",
     metavar="PATT",
     default=None,
-    help="exclude histograms whose path matches this regex"
+    type=str,
+    nargs="*",
+    help="exclude histograms whose path matches these regexes"
 )
 parser.add_argument(
     "--output-file", "-o",

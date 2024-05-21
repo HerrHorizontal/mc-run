@@ -4,6 +4,11 @@ import os
 from subprocess import PIPE
 from law.util import interruptable_popen
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 # source_env = dict()
 # for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH"):
@@ -48,21 +53,65 @@ def set_environment_variables(source_script_path):
     return my_env
 
 
-herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")))
-
 rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
 
 
-def identify_setupfile(filepath, mc_setting, work_dir):
-    import shutil
-    print("Setupfile: {}".format(filepath))
-    if all(filepath != defaultval for defaultval in [None, "None"]):
-        setupfile_path = os.path.join(os.getenv("ANALYSIS_PATH"),"inputfiles","setupfiles",str(filepath))
+def identify_inputfile(filename, config_path, generator):
+    if generator == "herwig":
+        if(str(config_path) == "" or str(config_path).lower() == "default"):
+            _my_input_file = os.path.join(
+                "$ANALYSIS_PATH",
+                "inputfiles",
+                generator,
+                "{}.in".format(filename)
+            )
+        else:
+            _my_input_file = os.path.join(
+                config_path,
+                "{}.in".format(filename)
+            )
+    elif generator == "sherpa":
+        if(config_path == "" or config_path == "default"):
+            _my_input_file = os.path.join(
+                "$ANALYSIS_PATH",
+                "inputfiles",
+                generator,
+                filename,
+                "Run.dat"
+            )
+        else:
+            _my_input_file = os.path.join(
+                config_path,
+                "Run.dat"
+            )
     else:
-        print("No setupfile given. Trying to identify setupfile via mc_setting ...")
-        setupfile_path = os.path.join(os.path.expandvars("$ANALYSIS_PATH"),"inputfiles","setupfiles","{}.txt".format(str(mc_setting)))
+        raise NotImplementedError("Generator {} unknown!".format(generator))
+    return _my_input_file
+
+
+def identify_setupfile(filepath, generator, mc_setting, work_dir):
+    import shutil
+    logger.info("Setupfile: {}".format(filepath))
+    generator = str(generator)
+    if all(filepath != defaultval for defaultval in [None, "None"]):
+        setupfile_path = os.path.join(
+            os.getenv("ANALYSIS_PATH"),
+            "inputfiles",
+            "setupfiles",
+            generator,
+            str(filepath)
+        )
+    else:
+        logger.info("No setupfile given. Trying to identify setupfile via mc_setting ...")
+        setupfile_path = os.path.join(
+            os.path.expandvars("$ANALYSIS_PATH"),
+            "inputfiles",
+            "setupfiles",
+            generator,
+            "{}.txt".format(str(mc_setting))
+        )
     if os.path.exists(setupfile_path):
-        print("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
+        logger.info("Copy setupfile for executable {} to working directory {}".format(setupfile_path, work_dir))
         # for python3 the next two lines can be merged
         shutil.copy(setupfile_path, work_dir)
         setupfile_path = os.path.basename(setupfile_path)
@@ -88,6 +137,8 @@ def run_command(executable, env, *args, **kwargs):
     Returns:
         tuple[int | Any, Any | str, Any | str]: execution code, output string and error string
     """
+    command_str = " ".join(executable)
+    logger.info('Running command: "{}"'.format(command_str))
     code, out, error = interruptable_popen(
         executable,
         *args,
@@ -98,16 +149,15 @@ def run_command(executable, env, *args, **kwargs):
     )
     # if successful return merged YODA file and plots
     if(code != 0):
-        print('Env:\n')
         import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(env)
+        pretty_env = pprint.pformat(env,indent=4)
+        logger.debug('Env:\n{}'.format(pretty_env))
         raise RuntimeError(
             'Command {command} returned non-zero exit status {code}!\n'.format(command=executable, code=code)
             + '\tOutput:\n{}\n'.format(out) 
             + '\tError:\n{}\n'.format(error)
         )
     else:
-        print('Output:\n{}'.format(out))
-        print('Error:\n{}'.format(error))
+        logger.info('Output:\n{}'.format(out))
+        logger.error('Error:\n{}'.format(error))
     return code, out, error

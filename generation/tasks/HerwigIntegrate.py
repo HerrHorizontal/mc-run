@@ -7,13 +7,18 @@ from subprocess import PIPE
 from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigBuild import HerwigBuild
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
-class HerwigIntegrate(Task, HTCondorWorkflow):
+class HerwigIntegrate(GenRivetTask, HTCondorWorkflow):
     """
     Create jobwise integration grids from 'Herwig build' preparations gathered in the Herwig-cache directory
     using 'Herwig integrate' (and add them to a corresponding Herwig-cache directory)
@@ -55,10 +60,10 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
 
     def remote_path(self,*path):
         if self.mc_setting == "PSoff":
-            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
             return os.path.join(*parts)
         else:
-            parts = (self.__class__.__name__, self.input_file_name,) + path
+            parts = (self.__class__.__name__, self.campaign,) + path
             return os.path.join(*parts)
 
     def output(self):
@@ -68,7 +73,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
     def run(self):
         # branch data
         _jobid = str(self.branch)
-        _my_config = str(self.input_file_name)
+        _my_config = str(self.campaign)
 
         # ensure that the output directory exists
         output = self.output()
@@ -93,7 +98,7 @@ class HerwigIntegrate(Task, HTCondorWorkflow):
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
         ]
 
-        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)

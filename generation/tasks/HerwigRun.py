@@ -11,13 +11,13 @@ from subprocess import PIPE
 from generation.framework.utils import run_command, identify_setupfile
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigMerge import HerwigMerge
 
 
 @inherits(GenerationScenarioConfig)
-class HerwigRun(Task, HTCondorWorkflow):
+class HerwigRun(GenRivetTask, HTCondorWorkflow):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
     events
@@ -27,6 +27,8 @@ class HerwigRun(Task, HTCondorWorkflow):
     output_collection_cls = law.NestedSiblingFileCollection
 
     # configuration variables
+    mc_generator = "herwig"
+
     start_seed = luigi.IntParameter(
         default=42,
         description="Start seed for random generation of individual job seeds. Currently not used!"
@@ -88,7 +90,7 @@ class HerwigRun(Task, HTCondorWorkflow):
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
         return os.path.join(*parts)
 
 
@@ -97,7 +99,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         dir_number = int(self.branch)/1000
         return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
             DIR_NUMBER=str(dir_number),
-            INPUT_FILE_NAME=str(self.input_file_name),
+            INPUT_FILE_NAME=str(self.campaign),
             JOB_NUMBER=str(self.branch)
             ))
 
@@ -105,7 +107,7 @@ class HerwigRun(Task, HTCondorWorkflow):
     def run(self):
         # branch data
         _job_num = str(self.branch)
-        _my_config = str(self.input_file_name)
+        _my_config = str(self.campaign)
         _num_events = str(self.events_per_job)
         seed = int(self.branch_data)
 
@@ -114,7 +116,7 @@ class HerwigRun(Task, HTCondorWorkflow):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -139,15 +141,15 @@ class HerwigRun(Task, HTCondorWorkflow):
 
         # identify the setupfile if specified and copy it to working directory
         work_dir = os.getcwd()
-        _setupfile_path = identify_setupfile(self.setupfile, self.mc_setting, work_dir)
+        _setupfile_path = identify_setupfile(self.setupfile, self.mc_generator, self.mc_setting, work_dir)
         _setupfile_suffix = "-" + _setupfile_path
         _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path))
 
-        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             run_command(_herwig_exec + _herwig_args, env=my_env, cwd=work_dir)
-            print("Seed: {}".format(seed))
+            logger.info("Seed: {}".format(seed))
         except RuntimeError as e:
             output.remove()
             raise e

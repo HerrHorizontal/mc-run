@@ -11,13 +11,19 @@ from subprocess import PIPE
 from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework.tasks import Task, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
 from HerwigRun import HerwigRun
+from SherpaRun import SherpaRun
+
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class RunRivet(Task, HTCondorWorkflow):
+class RunRivet(GenRivetTask, HTCondorWorkflow):
     """
     Analyze generated HEPMC files with Rivet and create YODA files
     """
@@ -36,6 +42,10 @@ class RunRivet(Task, HTCondorWorkflow):
         default=["MC_XS","MC_WEIGHTS"],
         description="List of IDs of Rivet analyses to run."
     )
+    mc_generator = luigi.Parameter(
+        default="herwig",
+        description="Name of the MC generator used for event generation."
+    )
 
     exclude_params_req = {
         "rivet_analyses",
@@ -52,41 +62,66 @@ class RunRivet(Task, HTCondorWorkflow):
         # require the parent workflow and inform it about the branches to produce by passing
         # the "branches" parameter and simultaneously preventing {start,end}_branch being used
         branches = sum(self.branch_map.values(), [])
-        reqs["HerwigRun"] = HerwigRun.req(
-            self, 
-            branches=branches,
-            _exclude=[
-                "start_branch", "end_branch",
-                "bootstrap_file", 
-                "htcondor_walltime", "htcondor_request_memory", 
-                "htcondor_requirements", "htcondor_request_disk"
-                ]
-            )
+        if str(self.mc_generator).lower() == "herwig":
+            reqs["MCRun"] = HerwigRun.req(
+                self,
+                branches=branches,
+                _exclude=[
+                    "start_branch", "end_branch",
+                    "bootstrap_file",
+                    "htcondor_walltime", "htcondor_request_memory",
+                    "htcondor_requirements", "htcondor_request_disk"
+                    ]
+                )
+        elif str(self.mc_generator).lower() == "sherpa":
+            reqs["MCRun"] = SherpaRun.req(
+                self,
+                branches=branches,
+                _exclude=[
+                    "start_branch", "end_branch",
+                    "bootstrap_file",
+                    "htcondor_walltime", "htcondor_request_memory",
+                    "htcondor_requirements", "htcondor_request_disk"
+                    ]
+                )
+        else:
+            raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
         return reqs
 
 
     def create_branch_map(self):
-        # each analysis job analyzes a chunk of HepMC files  
-        branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
+        # each analysis job analyzes a chunk of HepMC files
+        if str(self.mc_generator).lower() == "herwig":
+            branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
+        elif str(self.mc_generator).lower() == "sherpa":
+            branch_chunks = SherpaRun.req(self).get_all_branch_chunks(self.files_per_job)
+        else:
+            raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
         # one by one job to inputfile matching
         return {
             jobnum: branch_chunk 
-            for jobnum, branch_chunk in enumerate(branch_chunks) 
+            for jobnum, branch_chunk in enumerate(branch_chunks)
         }
 
 
     def requires(self):
         # each branch task requires existent HEPMC files to analyze
         req = dict()
-        req["HerwigRun"] = [
-                HerwigRun.req(self, branch=b)
-                for b in self.branch_data
-            ]
+        if str(self.mc_generator).lower() == "herwig":
+            req["MCRun"] = [
+                    HerwigRun.req(self, branch=b)
+                    for b in self.branch_data
+                ]
+        elif str(self.mc_generator).lower() == "sherpa":
+            req["MCRun"] = [
+                    SherpaRun.req(self, branch=b)
+                    for b in self.branch_data
+                ]
         return req
 
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign, self.mc_setting,) + path
         return os.path.join(*parts)
 
 
@@ -95,14 +130,13 @@ class RunRivet(Task, HTCondorWorkflow):
         dir_number = int(self.branch)/1000
         return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
             DIR_NUMBER=str(dir_number),
-            INPUT_FILE_NAME=str(self.input_file_name),
+            INPUT_FILE_NAME=str(self.campaign),
             JOB_NUMBER=str(self.branch)
             ))
 
 
     def run(self):
         # branch data
-        _my_config = str(self.input_file_name)
         _rivet_analyses = list(self.rivet_analyses)
 
         # ensure that the output directory exists
@@ -110,7 +144,7 @@ class RunRivet(Task, HTCondorWorkflow):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -121,8 +155,8 @@ class RunRivet(Task, HTCondorWorkflow):
         my_env = os.environ
         
         # identify and get the HEPMC files for analyzing
-        print("Inputs: {}".format(self.input()))
-        for target in self.input()['HerwigRun']:
+        logger.info("Inputs: {}".format(self.input()))
+        for target in self.input()['MCRun']:
             with target.localize('r') as input_file:
                 os.system('tar -xvjf {}'.format(input_file.path))
 
@@ -135,9 +169,9 @@ class RunRivet(Task, HTCondorWorkflow):
             "--analysis={RIVET_ANALYSIS}".format(RIVET_ANALYSIS=_rivet_analysis) for _rivet_analysis in _rivet_analyses
         ] + [
             "--histo-file={OUTPUT_NAME}".format(OUTPUT_NAME=output_file)
-        ] + glob.glob('*.hepmc')
+        ] + input_files
 
-        print('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
+        logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
 
         try:
             run_command(_rivet_exec + _rivet_args, env=my_env)

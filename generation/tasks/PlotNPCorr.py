@@ -8,17 +8,25 @@ from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
 from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
 from RivetMerge import RivetMerge
 from DeriveNPCorr import DeriveNPCorr
 
+from law.logger import get_logger
 
-@inherits(CommonConfig)
-class PlotNPCorr(Task, law.LocalWorkflow):
+
+logger = get_logger(__name__)
+
+
+@inherits(GenerationScenarioConfig)
+class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
     """
     Plotting class for NP-correction factor plots using the YODA API
     """
+
+    # attribute not needed
+    mc_setting = None
 
     # configuration variables
     mc_setting_full = luigi.Parameter(
@@ -32,15 +40,19 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
-    match = luigi.Parameter(
-        # significant=False,
-        default=None,
-        description="Require presence of analysis objects which names match this regex in the YODA files."
+    mc_generator = luigi.Parameter(
+        default="herwig",
+        description="Name of the MC generator used for event generation."
     )
-    unmatch = luigi.Parameter(
+    match = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Require exclusion of analysis objects which names match this regex in the YODA files."
+        description="Require presence of analysis objects which names match these regexes in the YODA files."
+    )
+    unmatch = luigi.ListParameter(
+        # significant=False,
+        default=None,
+        description="Require exclusion of analysis objects which names match these regexes in the YODA files."
     )
     filter_label_pad_tuples = luigi.TupleParameter(
         default=((".*","","Observable","NP corr.","arb. units"),),
@@ -77,17 +89,6 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None."
     )
 
-    splittings_conf_summary = luigi.DictParameter(
-        # default=dict(YS0="YS0", YB0="YB0", YSYBAll="zjet"),
-        description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py) for summary splittings. \
-             Will set parameter 'splittings'. Overwritten by --splittings-summary."
-    )
-
-    splittings_summary = luigi.DictParameter(
-        default=None,
-        description="Dictionary of identifier and splittings plot settings for all bins. Set via --splittings-conf-summary from config, if None."
-    )
-
     exclude_params_req = {
         "source_script",
     }
@@ -107,8 +108,8 @@ class PlotNPCorr(Task, law.LocalWorkflow):
             self,
             mc_setting_full = self.mc_setting_full,
             mc_setting_partial = self.mc_setting_partial,
-            match = self.match,
-            unmatch = self.unmatch
+            match = list(self.match),
+            unmatch = list(self.unmatch),
         )
         return req
 
@@ -120,62 +121,55 @@ class PlotNPCorr(Task, law.LocalWorkflow):
                 match, unmatch, xlabel, ylabel = flp
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel)
             except ValueError as e:
-                print("Acounted {}, trying with origin-y-label".format(e))
+                logger.info("Acounted {}, trying with origin-y-label".format(e))
                 match, unmatch, xlabel, ylabel, oylabel = flp
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel, oylabel=oylabel)
         return bm
 
     
     def requires(self):
-        req = dict()
-        req["full"] = RivetMerge.req(
-            self, 
-            mc_setting = self.mc_setting_full
-        )
-        req["partial"] = RivetMerge.req(
-            self,
-            mc_setting = self.mc_setting_partial
-        )
-        req["ratio"] = DeriveNPCorr.req(
-            self,
-            mc_setting_full = self.mc_setting_full,
-            mc_setting_partial = self.mc_setting_partial,
-            match = self.match,
-            unmatch = self.unmatch
-        )
-        return req
+        return self.workflow_requires()
+
+
+    def local_path(self, *path):
+        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign,) + path
+        return os.path.join(*parts)
 
 
     def output(self):
         out = dict()
         out["single"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/single/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
-                unmatch=self.branch_data["unmatch"]
-            )
-        )
-        out["summary"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/summary/".format(
-                full = self.mc_setting_full,
-                partial = self.mc_setting_partial,
-                match=self.branch_data["match"],
-                unmatch=self.branch_data["unmatch"]
+                unmatch=self.branch_data["unmatch"],
             )
         )
         return out
 
 
-    def run(self):
-        # ensure that the output directory exists
-        outputs = self.output()
-        for output in outputs.values():
+    @staticmethod
+    def check_outdir(outputdict):
+        """ensure that the output directory exists"""
+        for output in outputdict.values():
             try:
                 output.parent.touch()
             except IOError:
-                print("Output target {} doesn't exist!".format(output.parent))
+                logger.error("Output target {} doesn't exist!".format(output.parent))
                 output.makedirs()
+
+    @staticmethod
+    def localize_input(input):
+        """localize the separate inputs on grid or local storage"""
+        logger.info("Input: {}".format(input))
+        with input.localize('r') as _file:
+            logger.info("\tfull: {}".format(_file.path))
+            return _file.path
+
+
+    def run(self):
+        PlotNPCorr.check_outdir(self.output())
 
         if len(self.yrange) != 2:
             raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
@@ -185,21 +179,13 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         print("Starting NP-factor plotting with YODA")
         print("=======================================================")
 
-        # localize the separate YODA files on grid storage
-        print("Inputs: {}".format(self.input()))
-        with self.input()["full"].localize('r') as _file:
-            print("\tfull: {}".format(_file.path))
-            input_yoda_file_full = _file.path
-        with self.input()["partial"].localize('r') as _file:
-            print("\tpartial: {}".format(_file.path))
-            input_yoda_file_partial = _file.path
-        with self.input()["ratio"].localize('r') as _file:
-            print("\tratio: {}".format(_file.path))
-            input_yoda_file_ratio = _file.path
+        inputs = dict()
+        inputs["full"] = self.localize_input(self.input()["full"])
+        inputs["partial"] = self.localize_input(self.input()["partial"])
+        inputs["ratio"] = self.localize_input(self.input()["ratio"])
 
         # assign paths for output YODA file and plots
-        plot_dir_single = outputs["single"].parent.path
-        plot_dir_summary = outputs["summary"].parent.path
+        plot_dir_single = self.output()["single"].parent.path
 
         # check whether explicit defnition for splittings exists
         if self.splittings_all:
@@ -213,9 +199,9 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         # execute the script deriving the NP correction plots and files
         executable = [
             "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorr.py"),
-            "--full", "{}".format(input_yoda_file_full),
-            "--partial", "{}".format(input_yoda_file_partial),
-            "--ratio", "{}".format(input_yoda_file_ratio),
+            "--full", "{}".format(inputs["full"]),
+            "--partial", "{}".format(inputs["partial"]),
+            "--ratio", "{}".format(inputs["ratio"]),
             "--plot-dir", "{}".format(plot_dir_single),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
             "--splittings", "{}".format(json.dumps(splittings_all)),
@@ -233,22 +219,77 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         executable += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
         executable += ["--origin", "--origin-ylabel", "{}".format(self.branch_data["oylabel"])] if self.branch_data.get("oylabel", None) else []
 
-        print("Executable: {}".format(" ".join(executable)))
+        logger.info("Executable: {}".format(" ".join(executable)))
 
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
-            print("Individual bins' plots creation failed!")
-            output.remove()
+            logger.error("Individual bins' plots creation failed!")
+            self.output()["single"].remove()
             raise e
         
         if not os.listdir(plot_dir_single):
-            output.remove()
+            self.output()["single"].remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir_single))
 
         print("=======================================================")
+
+
+
+class PlotNPCorrSummary(PlotNPCorr):
+    """
+    Plotting class for NP-correction factor summary plots using the YODA API
+    """
+
+    splittings_conf_all = None
+
+    splittings_conf_summary = luigi.DictParameter(
+        # default=dict(YS0="YS0", YB0="YB0", YSYBAll="zjet"),
+        description="Dictionary of identifier and BINS identifier (predefined binning configuration in generation/framework/config.py) for summary splittings. \
+             Will set parameter 'splittings'. Overwritten by --splittings-summary."
+    )
+
+    splittings_summary = luigi.DictParameter(
+        default=None,
+        description="Dictionary of identifier and splittings plot settings for all bins. Set via --splittings-conf-summary from config, if None."
+    )
+
+
+    def workflow_requires(self):
+        reqs = super(PlotNPCorrSummary,self).workflow_requires()
+        reqs["Fits"] = PlotNPCorr.req(self)
+        return reqs
+    
+    def requires(self):
+        return self.workflow_requires()
+
+
+    def output(self):
+        out = dict()
+        out["summary"] = self.local_target(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
+                full = self.mc_setting_full,
+                partial = self.mc_setting_partial,
+                match=self.branch_data["match"],
+                unmatch=self.branch_data["unmatch"],
+            )
+        )
+        return out
+
+
+    def run(self):
+        PlotNPCorrSummary.check_outdir(self.output())
+        print("=======================================================")
         print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")
+
+        inputs = dict()
+        print("\n\n{}\n\n".format(self.input()))
+        inputs["ratio"] = self.localize_input(self.input()["ratio"])
+        inputs["Fits"] = self.localize_input(self.input()["Fits"]["single"])
+
+        # assign paths for output YODA file and plots
+        plot_dir_summary = self.output()["summary"].parent.path
 
         # check whether explicit defnition for splittings exists
         if self.splittings_summary:
@@ -263,33 +304,34 @@ class PlotNPCorr(Task, law.LocalWorkflow):
         # plot also summary plots
         executable_summary = [
             "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorrSummary.py"),
-            "--ratio", "{}".format(input_yoda_file_ratio),
+            "--ratio", "{}".format(inputs["ratio"]),
             "--plot-dir", "{}".format(plot_dir_summary),
             "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
             "--splittings", "{}".format(json.dumps(splittings_summary)),
             "--jets", "{}".format(json.dumps(JETS)),
             "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
-            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
+            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial)),
+            "--generator", "{}".format(str(self.mc_generator).lower()),
         ]
         executable_summary += ["--fit", "{}".format(json.dumps(
-            dict({os.path.join(plot_dir_single, k): v for k,v in self.fits.items()})
+            dict({os.path.join(inputs["Fits"], k): v for k,v in self.fits.items()})
         ))] if self.fits else []
         executable_summary += ["--match", "{}".format(self.branch_data["match"])] if self.branch_data["match"] else []
         executable_summary += ["--unmatch", "{}".format(self.branch_data["unmatch"])] if self.branch_data["unmatch"] else []
         executable_summary += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
         executable_summary += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
 
-        print("Executable: {}".format(" ".join(executable_summary)))
+        logger.info("Executable: {}".format(" ".join(executable_summary)))
 
         try:
             run_command(executable_summary, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
-            print("Summary plots creation failed!")
-            output.remove()
+            logger.error("Summary plots creation failed!")
+            self.output()["summary"].remove()
             raise e
         
         if not os.listdir(plot_dir_summary):
-            output.remove()
+            self.output()["summary"].remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir_summary))
 
         print("-------------------------------------------------------")

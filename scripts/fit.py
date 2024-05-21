@@ -131,6 +131,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
             np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
         )
 
+
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
     if method in ['Nelder-Mead','trust-exact','BFGS']:
@@ -179,7 +180,11 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
     if method == 'BFGS':
         covm = result.hess_inv
     else:
-        covm = np.linalg.inv(hess(result.x))
+        try:
+            covm = np.linalg.inv(hess(result.x))
+        except:
+            print("Singular matrix {}, try pseudo inverse".format(hess(result.x)))
+            covm = np.linalg.pinv(hess(result.x))
 
     def get_model_str(N_PARS, pars):
         if N_PARS==3:

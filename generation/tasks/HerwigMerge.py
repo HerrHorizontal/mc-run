@@ -4,16 +4,21 @@ from luigi.util import inherits
 import os
 
 from subprocess import PIPE
-from generation.framework.utils import run_command, herwig_env
+from generation.framework.utils import run_command, set_environment_variables
 
-from generation.framework.tasks import Task, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
 from HerwigIntegrate import HerwigIntegrate
 from HerwigBuild import HerwigBuild
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
-class HerwigMerge(Task):
+class HerwigMerge(GenRivetTask):
     """
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
@@ -35,10 +40,10 @@ class HerwigMerge(Task):
 
     def remote_path(self,*path):
         if self.mc_setting == "PSoff":
-            parts = (self.__class__.__name__,self.input_file_name, self.mc_setting, ) + path
+            parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
             return os.path.join(*parts)
         else:
-            parts = (self.__class__.__name__, self.input_file_name,) + path
+            parts = (self.__class__.__name__, self.campaign,) + path
             return os.path.join(*parts)
 
     def output(self):
@@ -47,7 +52,7 @@ class HerwigMerge(Task):
 
     def run(self):
         # data
-        input_file = str(self.input_file_name)
+        input_file = str(self.campaign)
 
         # ensure that the output directory exists
         output = self.output()
@@ -64,17 +69,18 @@ class HerwigMerge(Task):
 
         for branch, target in self.input()['HerwigIntegrate']["collection"].targets.items():
             if branch <=10:
-                print('Getting Herwig integration file: {}'.format(target))
+                logger.info('Getting Herwig integration file: {}'.format(target))
             with target.localize('r') as _file:
                 os.system('tar -xzf {}'.format(_file.path))
 
+        herwig_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_herwig.sh")))
         # run Herwig build step 
         _herwig_exec = ["Herwig", "mergegrids"]
         _herwig_args = [
             "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=input_file)
         ]
 
-        print('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             run_command(_herwig_exec + _herwig_args, env=herwig_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))

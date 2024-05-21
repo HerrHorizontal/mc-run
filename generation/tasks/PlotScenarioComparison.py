@@ -8,15 +8,18 @@ from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
 from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS, CAMPAIGN_MODS
 
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.tasks import PostprocessingTask, CommonConfig
 
 from PlotNPCorr import PlotNPCorr
 
-@inherits(CommonConfig)
-class PlotScenarioComparison(Task, law.LocalWorkflow):
-    """Plot a comparison of fitted NP factors created with different scenarios"""
+from law.logger import get_logger
 
-    input_file_name = "Comparison"
+
+logger = get_logger(__name__)
+
+
+class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
+    """Plot a comparison of fitted NP factors created with different scenarios"""
 
     rivet_analyses = luigi.ListParameter(
         default=["ZplusJet_3"],
@@ -34,22 +37,26 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
+    mc_generators = luigi.ListParameter(
+        default=["herwig",],
+        description="Name of the MC generators used for event generation."
+    )
 
     campaigns = luigi.ListParameter(
         default=["LHC-LO-ZplusJet", "LHC-NLO-ZplusJet"],
         description="Campaigns to compare identified by the name of their Herwig input file"
     )
 
-    match = luigi.Parameter(
-        # significant=False,
-        default="",
-        description="Require presence of analysis objects which names match this regex in the YODA files."
-    )
-    unmatch = luigi.Parameter(
-        # significant=False,
-        default="MC_",
-        description="Require exclusion of analysis objects which names match this regex in the YODA files."
-    )
+    # match = luigi.ListParameter(
+    #     # significant=False,
+    #     default=[""],
+    #     description="Require presence of analysis objects which names match these regexes in the YODA files."
+    # )
+    # unmatch = luigi.ListParameter(
+    #     # significant=False,
+    #     default=["MC_"],
+    #     description="Require exclusion of analysis objects which names match these regexes in the YODA files."
+    # )
     filter_label_pad_tuples = luigi.TupleParameter(
         default=(("ZPt","RAW","p_T^Z\,/\,\mathrm{GeV}","NP corr."),),
         description="Tuple of tuples containing four or five strings:\n \
@@ -96,15 +103,14 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 splits_all.update(v)
         else:
             splits_all = None
+        if self.fits:
+            fits = self.fits
+        else:
+            fits = self._default_fits()
         for scen in self.campaigns:
-            if self.fits:
-                fits = self.fits
-            else:
-                fits = self._default_fits()
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits,
-                                       splittings_all=splits_all,
-                                       splittings_summary=self.splittings,
-                                       splittings_conf_summary=self.splittings_conf)
+            for gen in self.mc_generators:
+                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
+                                       splittings_all=splits_all)
         return req
     
 
@@ -115,7 +121,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 match, unmatch, xlabel, ylabel = flp
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel)
             except ValueError as e:
-                print("Acounted {}, trying with origin-y-label".format(e))
+                logger.info("Acounted {}, trying with origin-y-label".format(e))
                 match, unmatch, xlabel, ylabel, oylabel = flp
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel, oylabel=oylabel)
         return bm
@@ -129,26 +135,26 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 splits_all.update(v)
         else:
             splits_all = None
+        if self.fits:
+            fits = self.fits
+        else:
+            fits = self._default_fits()
         for scen in self.campaigns:
-            if self.fits:
-                fits = self.fits
-            else:
-                fits = self._default_fits()
-            req[scen] = PlotNPCorr.req(self, input_file_name=scen, fits=fits,
-                                       splittings_all=splits_all,
-                                       splittings_summary=self.splittings,
-                                       splittings_conf_summary=self.splittings_conf)
+            for gen in self.mc_generators:
+                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
+                                       splittings_all=splits_all)
         return req
-    
+
 
     def output(self):
         return self.local_target(
-            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}/".format(
+            "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}-{mc_generators}/".format(
                 full = self.mc_setting_full,
                 partial = self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
-                campaigns="-".join(self.campaigns)
+                campaigns="-".join(self.campaigns),
+                mc_generators="-".join(self.mc_generators),
             )
         )
 
@@ -159,7 +165,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target {} doesn't exist!".format(output.parent))
+            logger.debug("Output target {} doesn't exist!".format(output.parent))
             output.makedirs()
 
         if len(self.yrange) != 2:
@@ -167,7 +173,7 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         
         # actual payload:
         print("=======================================================")
-        print("Starting comparison NP-factor plotting for campaigns {}".format(self.campaigns))
+        print("Starting comparison NP-factor plotting for campaigns {} and generators {}".format(self.campaigns, self.mc_generators))
         print("=======================================================")
 
         plot_dir = output.parent.path
@@ -187,12 +193,12 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
                 raise TypeError("Splittings undefined (None), configuration for --splittings or --splittings-conf needed!")
         # print(self.input())
         for campaign in self.campaigns:
-            fits_dict[campaign] = {os.path.join(self.input()[campaign]["single"].path, k): v for k,v in fits.items()}
-        # print("fits_dict: ")
-        # from pprint import pprint
-        # pprint(fits_dict)
+            for generator in self.mc_generators:
+                fits_dict[generator+campaign] = {os.path.join(self.input()[generator+campaign]["single"].path, k): v for k,v in fits.items()}
+        from pprint import pformat
+        logger.debug("Fits dictionary:\n{}".format(pformat(fits_dict)))
 
-        # execute the script reading the fitted NP correctiuons and plotting the comparison
+        # execute the script reading the fitted NP corrections and plotting the comparison
         executable = ["python", os.path.expandvars("$ANALYSIS_PATH/scripts/plotCampaignComparison.py")]
         for campaign, fits in fits_dict.items():
             executable += ["--campaign", "{}".format(campaign), "--fit", "{}".format(json.dumps(fits))]
@@ -208,12 +214,12 @@ class PlotScenarioComparison(Task, law.LocalWorkflow):
         executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
         executable += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
 
-        print("Executable: {}".format(" ".join(executable)))
+        logger.info("Executable: {}".format(" ".join(executable)))
 
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
-            print("Summary plots creation failed!")
+            logger.error("Summary plots creation failed!")
             output.remove()
             raise e
         

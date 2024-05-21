@@ -6,16 +6,24 @@ import os
 from subprocess import PIPE
 from generation.framework.utils import run_command, rivet_env
 
-from generation.framework.tasks import Task, CommonConfig
+from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
 from RivetMerge import RivetMerge
 
+from law.logger import get_logger
 
-@inherits(CommonConfig)
-class DeriveNPCorr(Task):
+
+logger = get_logger(__name__)
+
+
+@inherits(GenerationScenarioConfig)
+class DeriveNPCorr(PostprocessingTask):
     """
     Plotting class for NP-correction factor plots using the YODA API
     """
+
+    # attribute not needed
+    mc_setting = None
 
     # configuration variables
     mc_setting_full = luigi.Parameter(
@@ -29,15 +37,19 @@ class DeriveNPCorr(Task):
                 Used to identify the output-paths for the partial generation scenario, \
                 where parts of the generation chain are turned off."
     )
-    match = luigi.Parameter(
-        # significant=False,
-        default=None,
-        description="Include analysis objects which name matches this regex."
+    mc_generator = luigi.Parameter(
+        default="herwig",
+        description="Name of the MC generator used for event generation."
     )
-    unmatch = luigi.Parameter(
+    match = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Exclude analysis objects which name matches this regex."
+        description="Include analysis objects which name matches these regexes."
+    )
+    unmatch = luigi.ListParameter(
+        # significant=False,
+        default=None,
+        description="Exclude analysis objects which name matches these regexes."
     )
 
     exclude_params_req = {
@@ -62,13 +74,18 @@ class DeriveNPCorr(Task):
         return req
 
 
+    def remote_path(self, *path):
+        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign,) + path
+        return os.path.join(*parts)
+
+
     def output(self):
         output = self.remote_target(
             "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio.yoda".format(
-                match = self.match,
-                unmatch = self.unmatch,
+                match = "-".join(list(self.match)),
+                unmatch = "-".join(list(self.unmatch)),
                 full = self.mc_setting_full,
-                partial = self.mc_setting_partial
+                partial = self.mc_setting_partial,
             )
         )
         return output
@@ -79,7 +96,7 @@ class DeriveNPCorr(Task):
         try:
             output.parent.touch()
         except IOError:
-            print("Output target doesn't exist!")
+            logger.error("Output target doesn't exist!")
 
         # actual payload:
         print("=======================================================")
@@ -87,12 +104,12 @@ class DeriveNPCorr(Task):
         print("=======================================================")
 
         # localize the separate YODA files on grid storage
-        print("Inputs:")
+        logger.info("Inputs:")
         with self.input()["full"].localize('r') as _file:
-            print("\tfull: {} cached at {}".format(self.input()["full"], _file.path))
+            logger.info("\tfull: {} cached at {}".format(self.input()["full"], _file.path))
             input_yoda_file_full = _file.path
         with self.input()["partial"].localize('r') as _file:
-            print("\tpartial: {} cached at {}".format(self.input()["partial"], _file.path))
+            logger.info("\tpartial: {} cached at {}".format(self.input()["partial"], _file.path))
             input_yoda_file_partial = _file.path
 
         # assign paths for output YODA file and plots
@@ -107,10 +124,12 @@ class DeriveNPCorr(Task):
             "--partial", "{}".format(input_yoda_file_partial),
             "--output-file", "{}".format(output_yoda)
         ]
-        executable += ["--match", self.match] if self.match else []
-        executable += ["--unmatch", self.unmatch] if self.unmatch else []
+        if self.match:
+            executable += ["--match"] + [matchstr for matchstr in list(self.match)]
+        if self.unmatch:
+            executable += ["--unmatch"] + [matchstr for matchstr in list(self.unmatch)]
 
-        print("Executable: {}".format(" ".join(executable)))
+        logger.info("Executable: {}".format(" ".join(executable)))
 
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))

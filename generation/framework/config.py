@@ -11,29 +11,53 @@ MCCHAIN_SCENARIO_LABELS = {
 }
 
 CAMPAIGN_MODS = {
-    "LHC-LO-ZplusJet": dict(
+    "herwigLHC-LO-ZplusJet": dict(
         order="LO",
         label=r"MG@LO $\oplus$ Herwig7",
         lightencolor=1.0,
         linestyle="dotted"
     ),
-    "LHC-NLO-ZplusJet": dict(
+    "herwigLHC-NLO-ZplusJet": dict(
         order="NLO",
         label=r"MG@NLO $\oplus$ Herwig7",
         lightencolor=0.7,
         linestyle="solid"
     ),
-    "Dijets_LO": dict(
+    "sherpaLHC-LO-ZplusJet": dict(
+        order="LO",
+        label=r"Sherpa LO",
+        lightencolor=0.5,
+        linestyle="dashed"
+    ),
+    "sherpaLHC-NLO-ZplusJet": dict(
+        order="NLO",
+        label=r"Sherpa NLO",
+        lightencolor=0.3,
+        linestyle="dashdot"
+    ),
+    "herwigDijets_LO": dict(
         order="LO",
         label=r"MG@LO $\oplus$ Herwig7",
         lightencolor=1.0,
         linestyle="dotted"
     ),
-    "Dijets_NLO": dict(
+    "herwigDijets_NLO": dict(
         order="NLO",
         label=r"MG@NLO $\oplus$ Herwig7",
         lightencolor=0.7,
         linestyle="solid"
+    ),
+    "sherpaDijets_LO": dict(
+        order="LO",
+        label=r"Sherpa LO",
+        lightencolor=0.5,
+        linestyle="dashed"
+    ),
+    "sherpaDijets_NLO": dict(
+        order="NLO",
+        label=r"Sherpa NLO",
+        lightencolor=0.3,
+        linestyle="dashdot"
     ),
 }
 
