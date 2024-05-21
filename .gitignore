@@ -1,6 +1,7 @@
 # user generated logs and temporary outputs
 data/
 rivet-plots/
+*.yoda
 
 # law/luigi logs
 tmp/
@@ -22,6 +23,7 @@ software/
 **/sherpa/*/makelibs
 **/sherpa/*/SConstruct
 **/sherpa/*/*.db*
+**/sherpa/*/*.dat
 **Sherpa_Reference.tex
 
 # Herwig installations
