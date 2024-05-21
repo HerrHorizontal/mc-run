@@ -96,7 +96,7 @@ Running Herwig7 automatically and distributed on a batch system involves four st
 ![Graphical representation of Sherpa workflow management](plots/design/Law-Setup_Sherpa.png "Sherpa setup for automated generation with Law")
 
 Alternatively, Sherpa can be automatically run on the batch system.
-Since Sherpa cannot run the generation fo integration grids distributedly no merge step is needed.
+Since Sherpa cannot run the generation for integration grids distributedly no merge step is needed.
 Therefore, there exist only three steps:
 - *SherpaBuild*: Here similar to Herwig7 the MEs and software dependencies are loaded and *built*.
 - *SherpaIntegrate*: The potentially computationally expensive creation of *integration* grids are run locally. Parallelism is achieved by running the integration with `mpirun`.
