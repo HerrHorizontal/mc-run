@@ -10,7 +10,7 @@ from generation.framework.utils import run_command, identify_inputfile, set_envi
 
 from generation.framework import GenRivetTask
 
-from SherpaBuild import SherpaConfig, SherpaBuild
+from .SherpaBuild import SherpaConfig, SherpaBuild
 
 
 class SherpaIntegrate(GenRivetTask):

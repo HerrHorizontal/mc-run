@@ -13,7 +13,7 @@ from generation.framework.utils import run_command, identify_setupfile
 from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
-from HerwigMerge import HerwigMerge
+from .HerwigMerge import HerwigMerge
 
 
 @inherits(GenerationScenarioConfig)
@@ -157,7 +157,7 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow):
         output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
                 INPUT_FILE_NAME=_my_config
             )
-        if int(seed) is not 0:
+        if int(seed) != 0:
             output_file_hepmc = "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.hepmc".format(
                 INPUT_FILE_NAME=_my_config,
                 SEED=seed,

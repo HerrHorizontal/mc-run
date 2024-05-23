@@ -10,7 +10,7 @@ from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS, CAM
 
 from generation.framework.tasks import PostprocessingTask, CommonConfig
 
-from PlotNPCorr import PlotNPCorr
+from .PlotNPCorr import PlotNPCorr
 
 from law.logger import get_logger
 

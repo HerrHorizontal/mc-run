@@ -9,7 +9,7 @@ from generation.framework.utils import run_command
 from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
-from HerwigBuild import HerwigBuild
+from .HerwigBuild import HerwigBuild
 
 from law.logger import get_logger
 

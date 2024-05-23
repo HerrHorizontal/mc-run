@@ -8,8 +8,8 @@ from generation.framework.utils import run_command
 
 from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
-from SherpaIntegrate import SherpaIntegrate
-from SherpaBuild import SherpaConfig
+from .SherpaIntegrate import SherpaIntegrate
+from .SherpaBuild import SherpaConfig
 
 from law.logger import get_logger
 

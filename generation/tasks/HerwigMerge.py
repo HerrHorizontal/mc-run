@@ -8,8 +8,8 @@ from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
-from HerwigIntegrate import HerwigIntegrate
-from HerwigBuild import HerwigBuild
+from .HerwigIntegrate import HerwigIntegrate
+from .HerwigBuild import HerwigBuild
 
 from law.logger import get_logger
 

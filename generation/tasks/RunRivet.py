@@ -13,8 +13,8 @@ from generation.framework.utils import run_command
 from law.contrib.htcondor.job import HTCondorJobManager
 from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
 
-from HerwigRun import HerwigRun
-from SherpaRun import SherpaRun
+from .HerwigRun import HerwigRun
+from .SherpaRun import SherpaRun
 
 from law.logger import get_logger
 

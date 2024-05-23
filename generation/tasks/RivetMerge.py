@@ -10,7 +10,7 @@ from generation.framework.utils import run_command, rivet_env
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
-from RunRivet import RunRivet
+from .RunRivet import RunRivet
 
 from law.logger import get_logger
 

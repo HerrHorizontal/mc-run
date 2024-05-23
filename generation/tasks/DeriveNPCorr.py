@@ -8,7 +8,7 @@ from generation.framework.utils import run_command, rivet_env
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from RivetMerge import RivetMerge
+from .RivetMerge import RivetMerge
 
 from law.logger import get_logger
 

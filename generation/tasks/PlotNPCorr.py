@@ -10,8 +10,8 @@ from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from RivetMerge import RivetMerge
-from DeriveNPCorr import DeriveNPCorr
+from .RivetMerge import RivetMerge
+from .DeriveNPCorr import DeriveNPCorr
 
 from law.logger import get_logger
 
