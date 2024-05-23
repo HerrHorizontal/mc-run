@@ -3,25 +3,19 @@
 # This script setups all dependencies necessary for running law #
 #################################################################
 
+# determine the directy of this file
+if [ -n "$ZSH_VERSION" ]; then
+    this_file="${(%):-%x}"
+else
+    this_file="${BASH_SOURCE[0]}"
+fi
+this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
+
 source_lcg_stack() {
     # Check OS and source according LCG Stack
     local lcg_base="/cvmfs/sft.cern.ch/lcg/views/LCG_105"
     local lcg_path
-    local distro
-    local os_version
-    if ! command -v lsb_release &> /dev/null
-    then
-        source /etc/os-release
-        distro=$NAME
-        os_version=$VERSION_ID
-    else
-        distro=$(lsb_release -i | cut -f2)
-        os_version=$(lsb_release -r | cut -f2)
-    fi
-    distro=${distro//[[:space:]]/}
-    distro="${distro//Linux/}"
-    distro="${distro//linux/}"
-    echo "Running on $distro Version $os_version..."
+    source "$this_dir/setup/os-version.sh"
     if [[ "$distro" == "CentOS" ]]; then
         if [[ ${os_version:0:1} == "7" ]]; then
             lcg_path="$lcg_base/x86_64-centos7-gcc11-opt/setup.sh"
@@ -49,14 +43,6 @@ source_lcg_stack() {
 action() {
     # source lcg stack
     source_lcg_stack
-    # determine the directy of this file
-    if [ -n "$ZSH_VERSION" ]; then
-        local this_file="${(%):-%x}"
-    else
-        local this_file="${BASH_SOURCE[0]}"
-    fi
-    local this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
-
     _addpy() {
         [ -n "$1" ] && export PYTHONPATH="$1:$PYTHONPATH"
     }
