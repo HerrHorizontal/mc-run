@@ -1,60 +1,95 @@
-#!/usr/bin/env bash
+#!/bin/bash
+#################################################################
+# This script setups all dependencies necessary for running law #
+#################################################################
 
-############################################################################################
-# This script setups all dependencies necessary for making law executable                  #
-############################################################################################
+source_lcg_stack() {
+    # Check OS and source according LCG Stack
+    local lcg_base="/cvmfs/sft.cern.ch/lcg/views/LCG_105"
+    local lcg_path
+    local distro
+    local os_version
+    if ! command -v lsb_release &> /dev/null
+    then
+        source /etc/os-release
+        distro=$NAME
+        os_version=$VERSION_ID
+    else
+        distro=$(lsb_release -i | cut -f2)
+        os_version=$(lsb_release -r | cut -f2)
+    fi
+    distro=${distro//[[:space:]]/}
+    distro="${distro//Linux/}"
+    distro="${distro//linux/}"
+    echo "Running on $distro Version $os_version..."
+    if [[ "$distro" == "CentOS" ]]; then
+        if [[ ${os_version:0:1} == "7" ]]; then
+            lcg_path="$lcg_base/x86_64-centos7-gcc11-opt/setup.sh"
+        fi
+    elif [[ "$distro" == "RedHatEnterprise" || "$distro" == "Alma" || "$distro" == "Rocky" ]]; then
+        if [[ ${os_version:0:1} == "9" ]]; then
+            lcg_path="$lcg_base/x86_64-el9-gcc11-opt/setup.sh"
+        fi
+    elif [[ "$distro" == "Ubuntu" ]]; then
+        if [[ ${os_version:0:2} == "20" ]]; then
+            lcg_path="$lcg_base/x86_64-ubuntu2004-gcc9-opt/setup.sh"
+        elif [[ ${os_version:0:2} == "22" ]]; then
+            lcg_path="$lcg_base/x86_64-ubuntu2204-gcc11-opt/setup.sh"
+        fi
+    fi
+    if [[ -z "$lcg_path" ]]; then
+        echo "LCG Stack $lcg_base not available for $distro $os_version"
+        return 1
+    fi
+    echo "Sourcing LCG Stack from $lcg_path"
+    # shellcheck disable=SC1090
+    source "$lcg_path"
+}
 
 action() {
+    # source lcg stack
+    source_lcg_stack
     # determine the directy of this file
-    if [ ! -z "$ZSH_VERSION" ]; then
+    if [ -n "$ZSH_VERSION" ]; then
         local this_file="${(%):-%x}"
     else
         local this_file="${BASH_SOURCE[0]}"
     fi
-    #source /cvmfs/cms.cern.ch/slc6_amd64_gcc480/external/python/2.7.3/etc/profile.d/init.sh
-
-    local base="$( cd "$( dirname "$this_file" )" && pwd )"
-    local parent="$( dirname "$base" )"
+    local this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 
     _addpy() {
-        [ ! -z "$1" ] && export PYTHONPATH="$1:$PYTHONPATH"
+        [ -n "$1" ] && export PYTHONPATH="$1:$PYTHONPATH"
     }
-
     _addbin() {
-        [ ! -z "$1" ] && export PATH="$1:$PATH"
+        [ -n "$1" ] && export PATH="$1:$PATH"
     }
 
-
-    export LAW_HOME="$base/.law"
-    export LAW_CONFIG_FILE="$base/law.cfg"
-    export LUIGI_CONFIG_PATH="$base/luigi.cfg"
-    export ANALYSIS_PATH="$base"
-    export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
-
-
+    export LAW_HOME="$this_dir/.law"
+    export LAW_CONFIG_FILE="$this_dir/law.cfg"
+    export LUIGI_CONFIG_PATH="$this_dir/luigi.cfg"
+    export ANALYSIS_PATH="$this_dir"
+    export ANALYSIS_DATA_PATH="$this_dir/data"
 
     # luigi
-    _addpy "$base/luigi"
-    _addbin "$base/luigi/bin"
-
-    # enum34
-    _addpy "$base/enum34-1.1.10"
+    _addpy "$this_dir/luigi"
+    _addbin "$this_dir/luigi/bin"
 
     # six
-    _addpy "$base/six"
+    _addpy "$this_dir/six"
 
     # scinum
-    _addpy "$base/scinum"
+    _addpy "$this_dir/scinum"
 
     # order
-    _addpy "$base/order"
+    _addpy "$this_dir/order"
 
     # law
-    _addpy "$base/law"
-    _addbin "$base/law/bin"
-    source "$( law completion )"
-    #source /cvmfs/grid.cern.ch/emi3ui-latest/etc/profile.d/setup-ui-example.sh
-    source /cvmfs/grid.cern.ch/centos7-ui-4.0.3-1_umd4v1/etc/profile.d/setup-c7-ui-example.sh
+    _addpy "$this_dir/law"
+    _addbin "$this_dir/law/bin"
 
+    # this analysis
+    _addpy "$ANALYSIS_PATH"
+    source "$( law completion )"
 }
+
 action "$@"
