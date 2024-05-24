@@ -1,12 +1,9 @@
 import law
 import luigi
-from luigi.util import inherits
-from law.util import interruptable_popen
 import os
 import multiprocessing  # for cpu_count
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, identify_inputfile, set_environment_variables
+from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework import GenRivetTask
 
