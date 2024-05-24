@@ -29,6 +29,10 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
     mc_setting = None
 
     # configuration variables
+    campaign = luigi.Parameter(
+        description="Name of the Herwig input file or Sherpa run directory used for event generation without file extension `.in`. \
+                Per default saved in the `inputfiles` directory."
+    )
     mc_setting_full = luigi.Parameter(
         default="withNP",
         description="Scenario identifier for the full MC production, typically `withNP`. \
