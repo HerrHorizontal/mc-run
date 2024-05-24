@@ -10,8 +10,8 @@ import glob
 from subprocess import PIPE
 from generation.framework.utils import run_command
 
-from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework.tasks import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
+from generation.framework.htcondor import HTCondorWorkflow
 
 from .HerwigRun import HerwigRun
 from .SherpaRun import SherpaRun

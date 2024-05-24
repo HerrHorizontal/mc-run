@@ -7,7 +7,8 @@ from subprocess import PIPE
 from generation.framework.utils import run_command
 
 from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import GenRivetTask, HTCondorWorkflow, GenerationScenarioConfig
+from generation.framework import GenRivetTask, GenerationScenarioConfig
+from generation.framework.htcondor import HTCondorWorkflow
 
 from .HerwigBuild import HerwigBuild
 
