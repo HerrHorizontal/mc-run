@@ -10,9 +10,10 @@ from law.logger import get_logger
 logger = get_logger(__name__)
 
 
-# source_env = dict()
-# for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH"):
-#     source_env[var]=os.environ[var]
+source_env = dict()
+for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH"):
+    source_env[var]=os.environ[var]
+
 
 def _convert_env_to_dict(env):
     my_env = {}
@@ -24,6 +25,7 @@ def _convert_env_to_dict(env):
             except ValueError:
                 pass
     return my_env
+
 
 def set_environment_variables(source_script_path):
     """Creates a subprocess readable environment dict
@@ -37,12 +39,13 @@ def set_environment_variables(source_script_path):
     Returns:
         dict: Environment variables
     """
-    code, out, error = interruptable_popen("source {}; env".format(source_script_path),
-                                            shell=True, 
-                                            stdout=PIPE, 
-                                            stderr=PIPE,
-                                            # env=source_env
-                                            )
+    code, out, error = interruptable_popen(
+        "source {}; env".format(source_script_path),
+        shell=True,
+        stdout=PIPE,
+        stderr=PIPE,
+        env=source_env
+    )
     if code != 0:
         raise RuntimeError(
             'Sourcing environment from {source_script_path} failed with error code {code}!\n'.format(source_script_path=source_script_path, code=code)
