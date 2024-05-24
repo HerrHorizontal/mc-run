@@ -20,11 +20,7 @@ law.contrib.load("wlcg")
 
 
 class CommonConfig(luigi.Config):
-
-    wlcg_path = luigi.Parameter(
-        description="Protocol and path suffix pointing to the remote parent directory for generation outputs, \
-                e.g. `srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only/store/user/<USER_NAME>`."
-    )
+    pass
 
 
 @inherits(CommonConfig)
@@ -41,19 +37,8 @@ class GenerationScenarioConfig(luigi.Config):
     )
 
 
-
 @inherits(CommonConfig)
 class BaseTask(law.Task):
-
-    _wlcg_file_systems = {}
-
-    @classmethod
-    def get_wlcg_file_system(cls, wlcg_path):
-        if wlcg_path not in cls._wlcg_file_systems:
-            cls._wlcg_file_systems[wlcg_path] = law.wlcg.WLCGFileSystem(None, base=wlcg_path)
-
-        return cls._wlcg_file_systems[wlcg_path]
-
     def local_path():
         try:
             raise NotImplementedError("Local path method not implemented for this base class object! Use derived class instead!")
@@ -62,7 +47,7 @@ class BaseTask(law.Task):
 
     def local_target(self, *path):
         return law.LocalFileTarget(self.local_path(*path))
-    
+
     def remote_path():
         try:
             raise NotImplementedError("Remote path method not implemented for this base class object! Use derived class instead!")
@@ -72,9 +57,8 @@ class BaseTask(law.Task):
     def remote_target(self, *path):
         return law.wlcg.WLCGFileTarget(
             self.remote_path(*path),
-            self.get_wlcg_file_system(self.wlcg_path),
+            fs="wlcg_fs",
         )
-
 
 
 @inherits(GenerationScenarioConfig)

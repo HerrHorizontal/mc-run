@@ -139,9 +139,9 @@ They can be overwritten by explicitely setting a value in the command-line inter
 Make sure to adjust the following parameters before starting the generation:
 
 #### Computing parameters
-In case you want to run the setup on a distributed platform, e.g. the grid, you will need to set the following parameters:
-- `wlcg_path`: Since the intermediate and final outputs of the tasks are gathered on a storage accessible in a distributed system, you need to set the prefix-path to this reachable storage. In case you are running everything locally, it can just be `file://`.
-- `htcondor_user_proxy`: To establish your identity on the grid, you might need to specify your valid VOMS grid proxy location.
+In case you want to run the setup on a distributed platform, e.g. the grid, you will need to set the grid storage in the law configuration file `law.cfg` in teh `[wlcg_fs]` section.
+- `base`: Since the intermediate and final outputs of the tasks are gathered on a storage accessible in a distributed system, you need to set the prefix-path to this reachable storage. In case you are running everything locally, it can just be `file://`.
+The user proxy HTCondor is using is read automatically from your environment variables or the default path.
 
 #### HTCondor parameters
 Depending on the configuration of your HTCondor batch system you will need to set the according parameters:
