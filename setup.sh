@@ -13,31 +13,32 @@ this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 
 source_lcg_stack() {
     # Check OS and source according LCG Stack
-    local lcg_base="/cvmfs/sft.cern.ch/lcg/views/LCG_105"
-    local lcg_path
+    local view_base=/cvmfs/sft.cern.ch/lcg/views
+    LCG=LCG_105
+    local prefix
     local grid_ui
-    source "$this_dir/setup/os-version.sh"
+    source $this_dir/setup/os-version.sh
     if [[ "$distro" == "CentOS" ]]; then
         if [[ ${os_version:0:1} == "7" ]]; then
-            lcg_path="$lcg_base/x86_64-centos7-gcc11-opt/setup.sh"
+            prefix=x86_64-centos7
             grid_ui="/cvmfs/grid.cern.ch/centos7-ui-200122/etc/profile.d/setup-c7-ui-python3-example.sh"
         fi
     elif [[ "$distro" == "RedHatEnterprise" || "$distro" == "Alma" || "$distro" == "Rocky" ]]; then
         if [[ ${os_version:0:1} == "9" ]]; then
-            lcg_path="$lcg_base/x86_64-el9-gcc11-opt/setup.sh"
+            prefix=x86_64-el9
             grid_ui="/cvmfs/grid.cern.ch/alma9-ui-test/etc/profile.d/setup-alma9-test.sh"
         fi
     elif [[ "$distro" == "Ubuntu" ]]; then
-        if [[ ${os_version:0:2} == "20" ]]; then
-            lcg_path="$lcg_base/x86_64-ubuntu2004-gcc9-opt/setup.sh"
-        elif [[ ${os_version:0:2} == "22" ]]; then
-            lcg_path="$lcg_base/x86_64-ubuntu2204-gcc11-opt/setup.sh"
+        if [[ ${os_version:0:2} == "22" ]]; then
+            prefix=x86_64-ubuntu2204
         fi
     fi
-    if [[ -z "$lcg_path" ]]; then
-        echo "LCG Stack $lcg_base not available for $distro $os_version"
+    if [[ -z "$prefix" ]]; then
+        echo "LCG Stack $LCG not available for $distro $os_version"
         return 1
     fi
+    platform=${prefix}-gcc11-opt
+    local lcg_path=$view_base/$LCG/$platform/setup.sh
     echo "Sourcing LCG Stack from $lcg_path"
     # shellcheck disable=SC1090
     source "$lcg_path"
