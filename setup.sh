@@ -15,14 +15,17 @@ source_lcg_stack() {
     # Check OS and source according LCG Stack
     local lcg_base="/cvmfs/sft.cern.ch/lcg/views/LCG_105"
     local lcg_path
+    local grid_ui
     source "$this_dir/setup/os-version.sh"
     if [[ "$distro" == "CentOS" ]]; then
         if [[ ${os_version:0:1} == "7" ]]; then
             lcg_path="$lcg_base/x86_64-centos7-gcc11-opt/setup.sh"
+            grid_ui="/cvmfs/grid.cern.ch/centos7-ui-200122/etc/profile.d/setup-c7-ui-python3-example.sh"
         fi
     elif [[ "$distro" == "RedHatEnterprise" || "$distro" == "Alma" || "$distro" == "Rocky" ]]; then
         if [[ ${os_version:0:1} == "9" ]]; then
             lcg_path="$lcg_base/x86_64-el9-gcc11-opt/setup.sh"
+            grid_ui="/cvmfs/grid.cern.ch/alma9-ui-test/etc/profile.d/setup-alma9-test.sh"
         fi
     elif [[ "$distro" == "Ubuntu" ]]; then
         if [[ ${os_version:0:2} == "20" ]]; then
@@ -38,6 +41,9 @@ source_lcg_stack() {
     echo "Sourcing LCG Stack from $lcg_path"
     # shellcheck disable=SC1090
     source "$lcg_path"
+    echo "Sourcing grid-ui from $grid_ui"
+    # shellcheck disable=SC1090
+    source "$grid_ui"
 }
 
 action() {
