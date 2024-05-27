@@ -15,11 +15,11 @@ class BundleRepo(law.git.BundleGitRepository, law.tasks.TransferLocalFile):
 
     version = None
     task_namespace = None
-    default_store = "$ANALYSIS_BASE/tmp/bundles"
+    default_store = "$ANALYSIS_PATH/tmp/bundles"
 
     def get_repo_path(self):
         # required by BundleGitRepository
-        return os.environ["ANALYSIS_BASE"]
+        return os.environ["ANALYSIS_PATH"]
 
     def single_output(self):
         repo_base = os.path.basename(self.get_repo_path())

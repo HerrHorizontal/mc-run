@@ -13,7 +13,7 @@ bootstrap_htcondor_standalone() {
     local BASE_DIR="${PWD}"
     export HOME="${PWD}"
     export LCG_DIR="/cvmfs/grid.cern.ch/centos7-ui-200122"
-    export ANALYSIS_BASE="${BASE_DIR}/repo"
+    export ANALYSIS_PATH="${BASE_DIR}/repo"
 
     # source the law wlcg tools, mainly for law_wlcg_get_file
     source "{{wlcg_tools}}" "" || return "$?"
@@ -25,8 +25,8 @@ bootstrap_htcondor_standalone() {
 
     # load the repo bundle
     (
-        mkdir -p "${ANALYSIS_BASE}"
-        cd "${ANALYSIS_BASE}" || exit "$?"
+        mkdir -p "${ANALYSIS_PATH}"
+        cd "${ANALYSIS_PATH}" || exit "$?"
         law_wlcg_get_file "{{repo_uris}}" '{{repo_pattern}}' "${PWD}/repo.tgz" || return "$?"
         tar -xzf "repo.tgz" || return "$?"
         rm "repo.tgz"
@@ -34,7 +34,7 @@ bootstrap_htcondor_standalone() {
     )
 
     # source the repo setup
-    source "${ANALYSIS_BASE}/setup.sh" "default" || return "$?"
+    source "${ANALYSIS_PATH}/setup.sh" "default" || return "$?"
 
     return "0"
 }
