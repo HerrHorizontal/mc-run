@@ -56,9 +56,6 @@ def set_environment_variables(source_script_path):
     return my_env
 
 
-rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
-
-
 def identify_inputfile(filename, config_path, generator):
     if generator == "herwig":
         if(str(config_path) == "" or str(config_path).lower() == "default"):

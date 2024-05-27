@@ -3,9 +3,7 @@ import luigi
 from luigi.util import inherits
 import os
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, rivet_env
-
+from generation.framework.utils import run_command, set_environment_variables
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
 from .RivetMerge import RivetMerge
@@ -131,6 +129,9 @@ class DeriveNPCorr(PostprocessingTask):
 
         logger.info("Executable: {}".format(" ".join(executable)))
 
+        rivet_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        )
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
             output_yoda = os.path.abspath(output_yoda)

@@ -27,8 +27,8 @@ The dependencies for Sherpa include `mpirun` that allows to run integration in p
 This allows all Herwig7 tasks to be run on CentOS 7, Ubuntu 22 and Alma9 or RedHat EL9 environments.
 
 ### Rivet
-In a similar way, the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/) is loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/releases/LCG_96b/MCGenerators/rivet/`) in the `setup/setup_rivet.sh` script for local execution and `generation/setup_lawrivet.sh` for remote jobs.
-For now, it works for `slc7` environments.
+In a similar way, the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/) is loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/views/LCG_105/`) in the `setup/setup_rivet.sh`.
+For now, it works for CentOS 7, Ubuntu 22 and Alma9 or RedHat EL9 environments.
 These also need to be adjusted, if you want to use Rivet from a different source.
 
 ### Law, Luigi, Six and Enum34

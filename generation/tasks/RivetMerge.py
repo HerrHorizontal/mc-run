@@ -1,12 +1,8 @@
-
-
-import law
 import luigi
 from luigi.util import inherits
 import os
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, rivet_env
+from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
@@ -91,11 +87,14 @@ class RivetMerge(GenRivetTask):
         else:
             logger.info("Input files: {}".format(inputfile_list))
             logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args + _rivet_in)))
-        
+
+        rivet_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        )
         run_command(_rivet_exec+_rivet_args+_rivet_in, env=rivet_env)
         if not os.path.exists(output_file):
             raise IOError("Could not find output file {}!".format(output_file))
-        
+
         print("-------------------------------------------------------")
 
         return output_file

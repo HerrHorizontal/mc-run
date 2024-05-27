@@ -1,14 +1,13 @@
 
-import luigi, law
-from luigi.util import inherits
+import law
+import luigi
 import os
 import json
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, rivet_env
+from generation.framework.utils import run_command, set_environment_variables
 from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS, CAMPAIGN_MODS
 
-from generation.framework.tasks import PostprocessingTask, CommonConfig
+from generation.framework.tasks import PostprocessingTask
 
 from .PlotNPCorr import PlotNPCorr
 
@@ -216,6 +215,9 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
 
         logger.info("Executable: {}".format(" ".join(executable)))
 
+        rivet_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        )
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
