@@ -9,6 +9,11 @@ from generation.framework import GenRivetTask
 
 from .SherpaBuild import SherpaConfig, SherpaBuild
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 class SherpaIntegrate(GenRivetTask):
     """
@@ -26,23 +31,17 @@ class SherpaIntegrate(GenRivetTask):
         }
 
     def output(self):
-        return {
-            "Results": law.LocalFileTarget(
-                os.path.join(
-                    "$ANALYSIS_PATH",
-                    "inputfiles",
-                    "sherpa",
-                    self.campaign,
-                    "Results.db"
-                )
-            ),
-        }
+        return self.remote_target("Sherpack.tar.gz")
 
     def run(self):
         # actual payload:
         print("=======================================================")
         print("Starting integration step to generate integration grids")
         print("=======================================================")
+
+        # ensure that the output directory exists
+        output = self.output()
+        output.parent.touch()
 
         # set environment variables
         sherpa_env = set_environment_variables(
@@ -58,15 +57,49 @@ class SherpaIntegrate(GenRivetTask):
             "-e 0",
         ]
 
+        work_dir = os.path.abspath(self.input()['SherpaConfig'].parent.path)
+
         try:
             run_command(
                 _sherpa_exec,
                 env=sherpa_env,
-                cwd=self.input()['SherpaConfig'].parent.path,
+                cwd=work_dir,
             )
         except RuntimeError as e:
             for output in self.output().values():
                 output.remove()
             raise e
+        
+        # pack Sherpack for output
+        output_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Sherpack.tar.gz"))
+        sherpack_includes = []
+        sherpack_includes.append(os.path.join(work_dir, "Run.dat"))
+        sherpack_includes.append(os.path.join(work_dir, "Results.db"))
+        from glob import glob
+        mig_files = glob(os.path.join(work_dir,"MIG*.db"))
+        if len(mig_files) == 1:
+            sherpack_includes.append(os.path.join(work_dir, mig_files[0]))
+        else:
+            logger.warning("No matching MIG*.db found! Everything's fine if you are not colliding hadrons... But better check!")
+        mpi_file = os.path.join(work_dir,"MPI_Cross_Sections.dat")
+        if os.path.isfile(mpi_file):
+            sherpack_includes.append(mpi_file)
+        else:
+            logger.warning("No matching {} found! Everything's fine if you are not colliding hadrons... But better check!".format(mpi_file))
+        sherpack_includes.append(os.path.join(work_dir,"Process"))
+
+        for i in range(len(sherpack_includes)):
+            sherpack_includes[i] = os.path.relpath(sherpack_includes[i])
+        
+        os.system('tar -czf {OUTPUT_FILE} {INCLUDES}'.format(
+            OUTPUT_FILE=output_file,
+            INCLUDES=" ".join(sherpack_includes)
+        ))
+        if os.path.exists(output_file):
+            output.copy_from_local(output_file)
+            os.remove(output_file)
+        else:
+            os.system("ls -l")
+            raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
         print("=======================================================")

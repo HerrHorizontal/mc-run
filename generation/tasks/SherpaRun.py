@@ -108,6 +108,10 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
         my_env = os.environ
         work_dir = self.input()['SherpaConfig'].parent.path
 
+        # get the prepared HSherpack and runfiles and unpack them
+        with self.input()['SherpaIntegrate'].localize('r') as _file:
+            os.system('tar -xzf {}'.format(_file.path))
+
         # run Sherpa event generation
         out_name = "{}-{}-{}".format(self.campaign, self.mc_setting, seed)
         _sherpa_exec = ["Sherpa"]
@@ -156,6 +160,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
             # copy the compressed outputs to save them
             output.copy_from_local(output_file)
         else:
+            os.system("ls -l")
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
         print("=======================================================")

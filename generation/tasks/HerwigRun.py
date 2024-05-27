@@ -15,6 +15,11 @@ from generation.framework.htcondor import HTCondorWorkflow
 
 from .HerwigMerge import HerwigMerge
 
+from law.logger import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @inherits(GenerationScenarioConfig)
 class HerwigRun(GenRivetTask, HTCondorWorkflow):
