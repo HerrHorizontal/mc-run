@@ -37,21 +37,25 @@ source_sherpa() {
     echo "Sourcing LCG Stack from $lcg_path"
     # shellcheck disable=SC1090
     source "$lcg_path"
+    # Export ACLOCAL_PATH, so sherpa makelibs will run (and other tools that use aclocal)
+    export ACLOCAL_PATH=$view_base/$LCG/$platform/share/aclocal/:$ACLOCAL_PATH
 
     # Add MC Generators to LD_LIBRARY_PATH
     export LD_LIBRARY_PATH=${base}/${LCG}/fastjet/3.4.1/${platform}/lib:$LD_LIBRARY_PATH
     export LD_LIBRARY_PATH=${base}/${LCG}/MCGenerators/openloops/2.1.2/${platform}/lib:$LD_LIBRARY_PATH
     export LD_LIBRARY_PATH=${base}/${LCG}/MCGenerators/openloops/2.1.2/${platform}/proclib:$LD_LIBRARY_PATH
     export LD_LIBRARY_PATH=${base}/${LCG}/MCGenerators/lhapdf/6.5.3/${platform}/lib:$LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=${base}/${LCG}/MCGenerators/sherpa/2.2.15/${platform}/lib/SHERPA-MC:$LD_LIBRARY_PATH
     # For some reason hepmc3 has separate lib and lib64 directories depending on the OS
     if [[ "$distro" == "Ubuntu" ]]; then
         export LD_LIBRARY_PATH=${base}/${LCG}/hepmc3/3.2.7/${platform}/lib:$LD_LIBRARY_PATH
     else
         export LD_LIBRARY_PATH=${base}/${LCG}/hepmc3/3.2.7/${platform}/lib64:$LD_LIBRARY_PATH
     fi
-    # Add Sherpa to Path
-    export PATH=${base}/${LCG}/MCGenerators/sherpa/2.2.15/${platform}/bin:$PATH
+    # Add Sherpa with mpirun capabilities to LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=${base}/${LCG}/MCGenerators/sherpa/2.2.15.openmpi3/${platform}/lib/SHERPA-MC:$LD_LIBRARY_PATH
+
+    # Add Sherpa with mpirun capabilities to PATH
+    export PATH=${base}/${LCG}/MCGenerators/sherpa/2.2.15.openmpi3/${platform}/bin:$PATH
     # Specify LHAPDF path and the OpenLoops prefix
     export LHAPDF_DATA_PATH=$LHAPDF_DATA_PATH:${base}/${LCG}/MCGenerators/lhapdf/6.5.3/${platform}/share/LHAPDF:/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current
     export OL_PREFIX=${base}/${LCG}/MCGenerators/openloops/2.1.2/${platform}/
