@@ -98,7 +98,7 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow):
         # 
         dir_number = int(self.branch)/1000
         return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
-            DIR_NUMBER=str(dir_number),
+            DIR_NUMBER=int(dir_number),
             INPUT_FILE_NAME=str(self.campaign),
             JOB_NUMBER=str(self.branch)
             ))
