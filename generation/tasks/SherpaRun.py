@@ -57,7 +57,6 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
     def workflow_requires(self):
         # Each job requires the sherpa setup to be present
         return {
-            "SherpaConfig": SherpaConfig.req(self),
             "SherpaIntegrate": SherpaIntegrate.req(self)
         }
 
@@ -106,8 +105,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
 
         # set environment variables
         my_env = os.environ
-        work_dir = self.input()['SherpaConfig'].parent.path
-
+        work_dir = os.getcwd()
         # get the prepared HSherpack and runfiles and unpack them
         with self.input()['SherpaIntegrate'].localize('r') as _file:
             os.system('tar -xzf {}'.format(_file.path))
@@ -118,7 +116,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
         _sherpa_args = [
             "-R {SEED}".format(SEED=seed),
             "-e {NEVENTS}".format(NEVENTS=_num_events),
-            "EVENT_OUTPUT=HepMC_Short[{}]".format(out_name),
+            # "EVENT_OUTPUT=HepMC_Short[{}]".format(out_name),
         ]
 
         if self.mc_setting == "withNP":
