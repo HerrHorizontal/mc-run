@@ -11,7 +11,10 @@ class BundleRepo(law.git.BundleGitRepository, law.tasks.TransferLocalFile):
         description="number of replicas to generate; default: 10",
     )
 
-    exclude_files = ["tmp", "*~", "*.pyc", ".vscode/", "inputfiles"]
+    exclude_files = ["tmp", "*~", "*.pyc", ".vscode/", "*.db*", "*.tex", "*.dat"]
+
+    include_files = ["inputfiles/*/*/Run.dat"]
+
 
     version = None
     task_namespace = None
