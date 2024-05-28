@@ -54,7 +54,7 @@ class SherpaIntegrate(GenRivetTask):
             "Sherpa",
             "-f",
             self.input()['SherpaConfig'].path,
-            "-e 0",
+            "-e 1",
         ]
 
         work_dir = os.path.abspath(self.input()['SherpaConfig'].parent.path)
@@ -71,12 +71,13 @@ class SherpaIntegrate(GenRivetTask):
             raise e
         
         # pack Sherpack for output
+        # identify files to pack
         output_file = os.path.abspath(os.path.expandvars("$ANALYSIS_PATH/Sherpack.tar.gz"))
+        run_file = os.path.join(work_dir, "Run.dat")
         sherpack_includes = []
-        sherpack_includes.append(os.path.join(work_dir, "Run.dat"))
         sherpack_includes.append(os.path.join(work_dir, "Results.db"))
         from glob import glob
-        mig_files = glob(os.path.join(work_dir,"MIG*.db"))
+        mig_files = glob(os.path.join(work_dir,"*MIG*.db*"))
         if len(mig_files) == 1:
             sherpack_includes.append(os.path.join(work_dir, mig_files[0]))
         else:
@@ -88,18 +89,31 @@ class SherpaIntegrate(GenRivetTask):
             logger.warning("No matching {} found! Everything's fine if you are not colliding hadrons... But better check!".format(mpi_file))
         sherpack_includes.append(os.path.join(work_dir,"Process"))
 
+        # pack and transfer
+        old_dir = os.getcwd()
+        os.chdir(work_dir)
         for i in range(len(sherpack_includes)):
             sherpack_includes[i] = os.path.relpath(sherpack_includes[i])
-        
-        os.system('tar -czf {OUTPUT_FILE} {INCLUDES}'.format(
+        os.system('tar -czf {OUTPUT_FILE} {RUN_FILE} {INCLUDES}'.format(
             OUTPUT_FILE=output_file,
+            RUN_FILE=run_file,
             INCLUDES=" ".join(sherpack_includes)
         ))
         if os.path.exists(output_file):
             output.copy_from_local(output_file)
             os.remove(output_file)
+            for file in sherpack_includes:
+                try:
+                    os.remove(file)
+                except OSError:
+                    os.rmdir(file)
+                except IsADirectoryError:
+                    os.rmdir(file)
+                except Exception as e:
+                    raise e
         else:
             os.system("ls -l")
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
+        os.chdir(old_dir)
 
         print("=======================================================")
