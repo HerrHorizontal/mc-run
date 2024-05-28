@@ -37,6 +37,8 @@ source_sherpa() {
     echo "Sourcing LCG Stack from $lcg_path"
     # shellcheck disable=SC1090
     source "$lcg_path"
+    # source openmpi for Sherpa multicore support, when compiling loop libs
+    source $base/$LCG/openmpi/4.1.6/$platform/openmpi-env.sh
     # Export ACLOCAL_PATH, so sherpa makelibs will run (and other tools that use aclocal)
     export ACLOCAL_PATH=$view_base/$LCG/$platform/share/aclocal/:$ACLOCAL_PATH
 
@@ -56,9 +58,15 @@ source_sherpa() {
 
     # Add Sherpa with mpirun capabilities to PATH
     export PATH=${base}/${LCG}/MCGenerators/sherpa/2.2.15.openmpi3/${platform}/bin:$PATH
+    export CPLUS_INCLUDE_PATH=${base}/${LCG}/MCGenerators/sherpa/2.2.15.openmpi3/${platform}/include/SHERPA-MC:$CPLUS_INCLUDE_PATH
     # Specify LHAPDF path and the OpenLoops prefix
     export LHAPDF_DATA_PATH=$LHAPDF_DATA_PATH:${base}/${LCG}/MCGenerators/lhapdf/6.5.3/${platform}/share/LHAPDF:/cvmfs/sft.cern.ch/lcg/external/lhapdfsets/current
     export OL_PREFIX=${base}/${LCG}/MCGenerators/openloops/2.1.2/${platform}/
+    
+    # Set LIBRARY_PATH, for finding librariries during buildtime and not just runime
+    # Sherpa needs openmpi (from LCG stack), and libpciaccess which is not available in the LCG stack
+    # libpciaccess-devel needs to be installed on the host system when compiling loops for Sherpa
+    export LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBRARY_PATH
 }
 
 source_sherpa "$@"
