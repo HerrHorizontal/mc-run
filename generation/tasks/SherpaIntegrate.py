@@ -1,6 +1,7 @@
 import law
 import luigi
 import os
+import shutil
 import multiprocessing  # for cpu_count
 
 from generation.framework.utils import run_command, set_environment_variables
@@ -105,10 +106,8 @@ class SherpaIntegrate(GenRivetTask):
             for file in sherpack_includes:
                 try:
                     os.remove(file)
-                except OSError:
-                    os.rmdir(file)
                 except IsADirectoryError:
-                    os.rmdir(file)
+                    shutil.rmtree(file)
                 except Exception as e:
                     raise e
         else:
