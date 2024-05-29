@@ -1,0 +1,11 @@
+#!/bin/bash
+# Taken from CMSSW
+# https://github.com/cms-sw/cmsdist/blob/IB/CMSSW_14_1_X/master/herwig7.spec#L64-L73
+# Since the installation directory of Herwig changes from build to deployment in CVMFS
+# we need to tell Herwig, where it can find its repository
+REPO_OPT=""
+if [ "$HERWIGPATH" != "" ] && [ -e "$HERWIGPATH/HerwigDefaults.rpo" ] ; then
+	  if [ $(echo " $@" | grep ' --repo' | wc -l) -eq 0 ] ; then REPO_OPT="--repo $HERWIGPATH/HerwigDefaults.rpo" ; fi
+fi
+$HERWIGPATH/../../bin/Herwig $REPO_OPT "$@"
+

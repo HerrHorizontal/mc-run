@@ -51,7 +51,6 @@ source_herwig() {
         export LD_LIBRARY_PATH=${base}/${LCG}/hepmc3/3.2.7/${platform}/lib64:$LD_LIBRARY_PATH
     fi
     # Add Herwig to Path
-    export PATH=${base}/${LCG}/MCGenerators/herwig++/7.2.3/${platform}/bin:$PATH
     export HERWIGPATH=${base}/${LCG}/MCGenerators/herwig++/7.2.3/${platform}/share/Herwig
     export PYTHONPATH=${base}/${LCG}/MCGenerators/herwig++/7.2.3/${platform}/lib/Herwig/python:$PYTHONPATH
     # Specify LHAPDF path and the OpenLoops prefix
@@ -59,7 +58,9 @@ source_herwig() {
     export OL_PREFIX=${base}/${LCG}/MCGenerators/openloops/2.1.2/${platform}/
 
     # Point Herwig to it's installation directory
-    alias Herwig='Herwig --repo $HERWIGPATH/HerwigDefaults.rpo'
+    # There is a wrapper script in bin, which is needed for running inside law as aliases do not work
+    # So add bin to PATH
+    export PATH=$this_dir/bin:$PATH
 }
 
 source_herwig "$@"
