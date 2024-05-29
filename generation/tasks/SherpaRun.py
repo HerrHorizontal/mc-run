@@ -4,7 +4,7 @@ from luigi.util import inherits
 import os
 import random
 
-from generation.framework.utils import run_command
+from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 from generation.framework.htcondor import HTCondorWorkflow
@@ -57,7 +57,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
     def workflow_requires(self):
         # Each job requires the sherpa setup to be present
         return {
-            "SherpaIntegrate": SherpaIntegrate.req(self)
+            "SherpaIntegrate": SherpaIntegrate.req(self),
         }
 
     def requires(self):
@@ -104,7 +104,9 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
         print("=======================================================")
 
         # set environment variables
-        my_env = os.environ
+        sherpa_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_sherpa.sh")
+        )
         work_dir = os.getcwd()
         # get the prepared HSherpack and runfiles and unpack them
         with self.input()['SherpaIntegrate'].localize('r') as _file:
@@ -116,7 +118,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
         _sherpa_args = [
             "-R {SEED}".format(SEED=seed),
             "-e {NEVENTS}".format(NEVENTS=_num_events),
-            # "EVENT_OUTPUT=HepMC_Short[{}]".format(out_name),
+            "EVENT_OUTPUT=HepMC_Short[{}]".format(out_name),
         ]
 
         if self.mc_setting == "withNP":
@@ -131,7 +133,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
             raise ValueError("Unknown mc_setting: {}".format(self.mc_setting))
 
         try:
-            run_command(_sherpa_exec + _sherpa_args + _gen_opts, env=my_env, cwd=work_dir)
+            run_command(_sherpa_exec + _sherpa_args + _gen_opts, env=sherpa_env, cwd=work_dir)
             logger.info("Seed: {}".format(seed))
         except RuntimeError as e:
             output.remove()
