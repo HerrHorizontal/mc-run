@@ -118,7 +118,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
         _sherpa_args = [
             "-R {SEED}".format(SEED=seed),
             "-e {NEVENTS}".format(NEVENTS=_num_events),
-            "EVENT_OUTPUT=HepMC_Short[{}]".format(out_name),
+            "EVENT_OUTPUT=HepMC3_GenEvent[{}]".format(out_name),
         ]
 
         if self.mc_setting == "withNP":
