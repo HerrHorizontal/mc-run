@@ -93,6 +93,7 @@ class SherpaIntegrate(GenRivetTask):
         # pack and transfer
         old_dir = os.getcwd()
         os.chdir(work_dir)
+        run_file = os.path.relpath(run_file)
         for i in range(len(sherpack_includes)):
             sherpack_includes[i] = os.path.relpath(sherpack_includes[i])
         os.system('tar -czf {OUTPUT_FILE} {RUN_FILE} {INCLUDES}'.format(
