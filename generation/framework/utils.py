@@ -97,8 +97,8 @@ def identify_setupfile(filepath, generator, mc_setting, work_dir):
         setupfile_path = os.path.join(
             os.getenv("ANALYSIS_PATH"),
             "inputfiles",
-            "setupfiles",
             generator,
+            "setupfiles",
             str(filepath)
         )
     else:
@@ -106,8 +106,8 @@ def identify_setupfile(filepath, generator, mc_setting, work_dir):
         setupfile_path = os.path.join(
             os.path.expandvars("$ANALYSIS_PATH"),
             "inputfiles",
-            "setupfiles",
             generator,
+            "setupfiles",
             "{}.txt".format(str(mc_setting))
         )
     if os.path.exists(setupfile_path):
