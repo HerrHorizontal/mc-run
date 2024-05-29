@@ -113,7 +113,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
             os.system('tar -xzf {}'.format(_file.path))
 
         # run Sherpa event generation
-        out_name = "{}-{}-{}".format(self.campaign, self.mc_setting, seed)
+        out_name = "{}-{}-{}.hepmc".format(self.campaign, self.mc_setting, seed)
         _sherpa_exec = ["Sherpa"]
         _sherpa_args = [
             "-R {SEED}".format(SEED=seed),
@@ -140,7 +140,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow):
             raise e
 
         os.chdir(work_dir)
-        output_file_hepmc = os.path.abspath(os.path.join(work_dir, "{}.hepmc".format(out_name)))
+        output_file_hepmc = os.path.abspath(os.path.join(work_dir, "{}".format(out_name)))
         output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
             INPUT_FILE_NAME=_my_config
         )
