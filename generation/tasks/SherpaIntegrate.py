@@ -22,6 +22,7 @@ class SherpaIntegrate(GenRivetTask):
     """
     ncores = luigi.IntParameter(
         default=int(multiprocessing.cpu_count()/4),
+        significant=False,
         description="Number of cores used for the Sherpa integration step."
     )
 
