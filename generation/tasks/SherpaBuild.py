@@ -97,5 +97,6 @@ class SherpaBuild(GenRivetTask):
             print("Building missing matrix elements")
             print("================================")
             run_command(["./makelibs"], env=sherpa_env, cwd=work_dir)
+            os.remove(os.path.join(work_dir, "makelibs"))
 
         print("=======================================================")
