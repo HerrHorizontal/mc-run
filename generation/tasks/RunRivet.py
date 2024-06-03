@@ -3,7 +3,7 @@
 import law
 import luigi
 from luigi.util import inherits
-import os
+import os, shutil
 import random
 import glob
 
@@ -15,6 +15,7 @@ from generation.framework.htcondor import HTCondorWorkflow
 
 from .HerwigRun import HerwigRun
 from .SherpaRun import SherpaRun
+from .RivetBuild import RivetBuild
 
 from law.logger import get_logger
 
@@ -23,7 +24,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class RunRivet(GenRivetTask, HTCondorWorkflow):
+class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     """
     Analyze generated HEPMC files with Rivet and create YODA files
     """
@@ -48,7 +49,6 @@ class RunRivet(GenRivetTask, HTCondorWorkflow):
     )
 
     exclude_params_req = {
-        "rivet_analyses",
         "files_per_job",
         "bootstrap_file", 
         "htcondor_walltime", "htcondor_request_memory", 
@@ -86,6 +86,8 @@ class RunRivet(GenRivetTask, HTCondorWorkflow):
                 )
         else:
             raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
+        # also make sure the Rivet analyses exist
+        reqs["analyses"] = RivetBuild.req(self)
         return reqs
 
 
@@ -117,6 +119,8 @@ class RunRivet(GenRivetTask, HTCondorWorkflow):
                     SherpaRun.req(self, branch=b)
                     for b in self.branch_data
                 ]
+        # and all the Rivet analyses to be built
+        req["analyses"] = RivetBuild.req(self, branch=-1)
         return req
 
 
@@ -153,9 +157,19 @@ class RunRivet(GenRivetTask, HTCondorWorkflow):
 
         # set environment variables
         my_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        dirname = os.path.expandvars("$ANALYSIS_PATH")
+        my_env["RIVET_ANALYSIS_PATH"] = ":".join((dirname, my_env.get("RIVET_ANALYSIS_PATH","")))
+
+        # identify and get the compiled Rivet analyses
+        print("Shared object Rivet files: {}".format(self.input()["analyses"]["collection"].targets.values()))
+        for target in self.input()["analyses"]["collection"].targets.values():
+            with target.localize('r') as so_file:
+                so_file.copy_to_local(
+                    os.path.join(dirname, str(os.path.basename(so_file.path)).split("_",1)[1])
+                )
 
         # identify and get the HEPMC files for analyzing
-        logger.info("Inputs: {}".format(self.input()))
+        logger.info("Input events: {}".format(self.input()['MCRun']))
         for target in self.input()['MCRun']:
             with target.localize('r') as input_file:
                 os.system('tar -xvjf {}'.format(input_file.path))
@@ -172,7 +186,6 @@ class RunRivet(GenRivetTask, HTCondorWorkflow):
         ] + input_files
 
         logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args)))
-
         try:
             run_command(_rivet_exec + _rivet_args, env=my_env)
         except RuntimeError as e:

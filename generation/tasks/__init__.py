@@ -7,6 +7,7 @@ from .SherpaBuild import *
 from .SherpaIntegrate import *
 from .SherpaRun import *
 
+from .RivetBuild import *
 from .RunRivet import *
 from .RivetMerge import *
 
