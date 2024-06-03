@@ -8,7 +8,7 @@ import random
 import glob
 
 from subprocess import PIPE
-from generation.framework.utils import run_command
+from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 from generation.framework.htcondor import HTCondorWorkflow
@@ -152,8 +152,8 @@ class RunRivet(GenRivetTask, HTCondorWorkflow):
         print("=======================================================")
 
         # set environment variables
-        my_env = os.environ
-        
+        my_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
+
         # identify and get the HEPMC files for analyzing
         logger.info("Inputs: {}".format(self.input()))
         for target in self.input()['MCRun']:
