@@ -12,7 +12,10 @@ logger = get_logger(__name__)
 
 source_env = dict()
 for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH", "RIVET_ANALYSIS_PATH"):
-    source_env[var] = os.environ[var]
+    try:
+        source_env[var] = os.environ[var]
+    except KeyError as e:
+        print(e)
 
 
 def _convert_env_to_dict(env):
