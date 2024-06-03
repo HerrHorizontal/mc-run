@@ -8,6 +8,7 @@ from generation.framework.utils import (
     set_environment_variables,
 )
 from generation.framework.tasks import BaseTask
+from generation.framework.htcondor import HTCondorWorkflow
 
 from law.logger import get_logger
 
@@ -15,7 +16,7 @@ from law.logger import get_logger
 logger = get_logger(__name__)
 
 
-class RivetBuild(law.LocalWorkflow, BaseTask):
+class RivetBuild(HTCondorWorkflow,law.LocalWorkflow, BaseTask):
     """
     Build/Compile  Rivet analyses
     """
