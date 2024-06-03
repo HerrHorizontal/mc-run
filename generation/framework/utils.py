@@ -15,7 +15,7 @@ for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH", "R
     try:
         source_env[var] = os.environ[var]
     except KeyError as e:
-        print(e)
+        logger.warning(e)
 
 
 def _convert_env_to_dict(env):
