@@ -155,12 +155,13 @@ def run_command(executable, env, *args, **kwargs):
         import pprint
         pretty_env = pprint.pformat(env,indent=4)
         logger.debug('Env:\n{}'.format(pretty_env))
+        logger.error('Output:\n{}'.format(out))
+        logger.error('Error:\n{}'.format(error))
         raise RuntimeError(
             'Command {command} returned non-zero exit status {code}!\n'.format(command=executable, code=code)
-            + '\tOutput:\n{}\n'.format(out) 
-            + '\tError:\n{}\n'.format(error)
         )
     else:
         logger.info('Output:\n{}'.format(out))
-        logger.error('Error:\n{}'.format(error))
+        if error:
+            logger.info('Error:\n{}'.format(error))
     return code, out, error
