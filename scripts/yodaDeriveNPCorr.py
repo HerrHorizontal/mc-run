@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import sys
-from os import mkdir
 import os.path
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
 import yoda
-# import pandas as pd
-# import seaborn as sns
 
 
 def valid_yoda_file(param):
