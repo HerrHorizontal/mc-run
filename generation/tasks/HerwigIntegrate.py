@@ -1,5 +1,6 @@
 
 import luigi
+import law
 from luigi.util import inherits
 import os
 
@@ -19,7 +20,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class HerwigIntegrate(GenRivetTask, HTCondorWorkflow):
+class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     """
     Create jobwise integration grids from 'Herwig build' preparations gathered in the Herwig-cache directory
     using 'Herwig integrate' (and add them to a corresponding Herwig-cache directory)

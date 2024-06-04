@@ -16,7 +16,7 @@ from law.logger import get_logger
 logger = get_logger(__name__)
 
 
-class RivetBuild(HTCondorWorkflow,law.LocalWorkflow, BaseTask):
+class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
     """
     Build/Compile  Rivet analyses
     """

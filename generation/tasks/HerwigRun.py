@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class HerwigRun(GenRivetTask, HTCondorWorkflow):
+class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
     events
