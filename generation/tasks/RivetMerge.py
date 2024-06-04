@@ -112,7 +112,7 @@ class RivetMerge(GenRivetTask):
         
         final_input_files = list()
         
-        for chunk, inlist in inputfile_dict.iteritems():
+        for chunk, inlist in inputfile_dict.items():
             _outfile=self.mergeSingleYodaChunk(inputfile_list=inlist, inputfile_chunk=chunk)
             final_input_files.append(_outfile)
         
