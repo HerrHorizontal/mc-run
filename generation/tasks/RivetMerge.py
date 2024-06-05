@@ -7,6 +7,7 @@ from generation.framework.utils import run_command, set_environment_variables
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
 from .RunRivet import RunRivet
+from .RivetBuild import RivetBuild
 
 from law.logger import get_logger
 
@@ -20,7 +21,15 @@ class RivetMerge(GenRivetTask):
     Merge separate YODA files from Rivet analysis runs to a single YODA file 
     """
 
+    rivet_env = set_environment_variables(
+        os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+    )
+
     # configuration variables
+    rivet_analyses = luigi.ListParameter(
+        default=["MC_XS","MC_WEIGHTS"],
+        description="List of IDs of Rivet analyses to run."
+    )
     chunk_size = luigi.IntParameter(
         description="Number of individual YODA files to merge in a single `rivet-merge` call."
     )
@@ -36,7 +45,10 @@ class RivetMerge(GenRivetTask):
 
     def requires(self):
         return {
+            # all analysis jobs to be finished
             'RunRivet': RunRivet.req(self),
+            # and all the Rivet analyses to be built
+            "analyses": RivetBuild.req(self, branch=-1)
         }
 
 
@@ -88,10 +100,7 @@ class RivetMerge(GenRivetTask):
             logger.info("Input files: {}".format(inputfile_list))
             logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args + _rivet_in)))
 
-        rivet_env = set_environment_variables(
-            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
-        )
-        run_command(_rivet_exec+_rivet_args+_rivet_in, env=rivet_env)
+        run_command(_rivet_exec+_rivet_args+_rivet_in, env=self.rivet_env)
         if not os.path.exists(output_file):
             raise IOError("Could not find output file {}!".format(output_file))
 
@@ -135,6 +144,21 @@ class RivetMerge(GenRivetTask):
         print("Starting merging of YODA files")
         print("=======================================================")
 
+        # adjust rivet environment
+        dirname = os.path.expandvars("$ANALYSIS_PATH")
+        self.rivet_env["RIVET_ANALYSIS_PATH"] = ":".join((dirname, self.rivet_env.get("RIVET_ANALYSIS_PATH","")))
+
+        # identify and get the compiled Rivet analyses
+        logger.info("Shared object Rivet files: {}".format(self.input()["analyses"]["collection"].targets.values()))
+        local_so_files = []
+        for target in self.input()["analyses"]["collection"].targets.values():
+            with target.localize('r') as so_file:
+                local_path = os.path.join(dirname, str(os.path.basename(so_file.path)).split("_",1)[1])
+                so_file.copy_to_local(
+                    local_path
+                )
+                local_so_files.append(local_path)
+
         # localize the separate YODA files on grid storage
         inputfile_list = []
         for branch, target in self.input()['RunRivet']["collection"].targets.items():
@@ -163,6 +187,9 @@ class RivetMerge(GenRivetTask):
         except Exception as e:
             self.output().remove()
             raise e
+        finally:
+            for so_file in local_so_files:
+                os.remove(so_file)
 
 
         print("=======================================================")

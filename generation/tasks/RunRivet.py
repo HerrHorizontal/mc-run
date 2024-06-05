@@ -161,7 +161,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         my_env["RIVET_ANALYSIS_PATH"] = ":".join((dirname, my_env.get("RIVET_ANALYSIS_PATH","")))
 
         # identify and get the compiled Rivet analyses
-        print("Shared object Rivet files: {}".format(self.input()["analyses"]["collection"].targets.values()))
+        logger.info("Shared object Rivet files: {}".format(self.input()["analyses"]["collection"].targets.values()))
         for target in self.input()["analyses"]["collection"].targets.values():
             with target.localize('r') as so_file:
                 so_file.copy_to_local(
