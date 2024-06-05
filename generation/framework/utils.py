@@ -15,7 +15,7 @@ for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH", "R
     try:
         source_env[var] = os.environ[var]
     except KeyError as e:
-        logger.warning(e)
+        logger.warning(f"KeyError: {e}, variable undefined on local host!")
 
 
 def _convert_env_to_dict(env):
