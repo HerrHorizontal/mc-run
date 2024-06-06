@@ -3,6 +3,9 @@ data/
 rivet-plots/
 *.yoda
 
+# hidden directories
+.*
+
 # law/luigi logs
 tmp/
 
