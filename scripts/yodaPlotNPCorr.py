@@ -190,21 +190,21 @@ aos_ratios = yoda.readYODA(yoda_file_ratio, asdict=True, patterns=args.MATCH, un
 
 if origin:
     # check analysis objects in all scenarios and ratios
-    if not aos_full.viewkeys() == aos_partial.viewkeys():
+    if not aos_full.keys() == aos_partial.keys():
         raise KeyError("Unmatched key(s) {} in provided YODA files: full: {}, partial: {}".format(
-            (aos_full.viewkeys() - aos_partial.viewkeys()),
+            (aos_full.keys() - aos_partial.keys()),
             aos_full,
             aos_partial
         ))
-    if not all(ao in aos_full for ao in aos_ratios.viewkeys()):
+    if not all(ao in aos_full for ao in aos_ratios.keys()):
         raise KeyError("Not all keys {} of ratio file {} present in full origin file {}".format(
-            aos_ratios.viewkeys(),
+            aos_ratios.keys(),
             yoda_file_ratio,
             yoda_file_full
         ))
-    elif not all(ao in aos_partial for ao in aos_ratios.viewkeys()):
+    elif not all(ao in aos_partial for ao in aos_ratios.keys()):
         raise KeyError("Not all keys {} of ratio file {} present in partial origin file {}".format(
-            aos_ratios.viewkeys(),
+            aos_ratios.keys(),
             yoda_file_ratio,
             yoda_file_partial
         ))
@@ -223,7 +223,7 @@ pp.pprint(aos_ratios)
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
+# yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())

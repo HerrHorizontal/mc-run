@@ -87,9 +87,9 @@ if not aos_full or not aos_partial:
         raise RuntimeError("No full analysis objects matching the filters!")
     else:
         raise RuntimeError("No partial analysis objects matching the filters!")
-if not aos_full.viewkeys() == aos_partial.viewkeys():
+if not aos_full.keys() == aos_partial.keys():
     raise KeyError("Unmatched key(s) {} in provided YODA files {}, {}".format(
-        (aos_full.viewkeys() - aos_partial.viewkeys()),
+        (aos_full.keys() - aos_partial.keys()),
         aos_full,
         aos_partial
     ))
