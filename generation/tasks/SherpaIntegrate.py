@@ -26,6 +26,24 @@ class SherpaIntegrate(GenRivetTask):
         description="Number of cores used for the Sherpa integration step."
     )
 
+
+    exclude_params_req = {
+        "ncores"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
+    }
+
+
     def requires(self):
         return {
             "SherpaConfig": SherpaConfig.req(self),

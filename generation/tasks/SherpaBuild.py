@@ -26,6 +26,24 @@ class SherpaConfig(law.ExternalTask):
         description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[campaign]`."
     )
 
+
+    exclude_params_req = {
+        "config_path"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
+    }
+
+
     def output(self):
         return law.LocalFileTarget(
             identify_inputfile(self.campaign, self.config_path, self.mc_generator)

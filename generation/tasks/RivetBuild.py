@@ -35,6 +35,24 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
         os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
     )
 
+
+    exclude_params_req = {
+        "compiler_flags"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
+    }
+
+
     def create_branch_map(self):
         # check whether configured analyses are built-in, only build missing
         missing_anas = []

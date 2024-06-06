@@ -7,6 +7,12 @@ import law
 from luigi.util import inherits
 from law.logger import get_logger
 
+from luigi.parameter import UnconsumedParameterWarning
+from warnings import simplefilter
+
+# Ignore warnings about unused parameters that are set in the default config but not used by all tasks
+simplefilter("ignore", UnconsumedParameterWarning)
+
 
 law.contrib.load("wlcg")
 logger = get_logger(__name__)

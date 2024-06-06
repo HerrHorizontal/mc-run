@@ -37,9 +37,23 @@ class RivetMerge(GenRivetTask):
         default="herwig",
         description="Name of the MC generator used for event generation."
     )
+
+
     exclude_params_req = {
         "chunk_size",
         "source_script"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
     }
 
 

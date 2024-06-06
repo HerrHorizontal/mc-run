@@ -86,6 +86,20 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
     )
 
 
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
+    }
+
+
     def _default_fits(self):
         return {"{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k): k
             for k in BINS["all"]

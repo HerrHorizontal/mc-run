@@ -93,8 +93,21 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None."
     )
 
+
     exclude_params_req = {
         "source_script",
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
     }
 
 
