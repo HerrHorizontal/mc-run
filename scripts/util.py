@@ -65,9 +65,9 @@ def valid_yoda_file(param):
     Returns:
         AnyStr@abspath: 
     """
-    _, ext = os.path.splitext(param)
+    base, ext = os.path.splitext(param)
     if ext.lower() not in ('.yoda'):
-        raise ArgumentTypeError('File must have a yoda extension')
+        raise argparse.ArgumentTypeError('File must have a yoda extension')
     if not os.path.exists(param):
         raise IOError('{}: No such file'.format(param))
     return os.path.abspath(param)
