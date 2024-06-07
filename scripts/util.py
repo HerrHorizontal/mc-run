@@ -49,3 +49,23 @@ def adjust_lightness(color, amount=0.5):
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     return mc.to_hex(colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2]), keep_alpha=True)
 
+
+def valid_yoda_file(param):
+    """Helper function which checks for validity (YODA extension and existence) of the provided input files
+
+    Args:
+        param (AnyStr): File to check
+
+    Raises:
+        argparse.ArgumentTypeError: Wrong file extension
+        IOError: No such file
+
+    Returns:
+        AnyStr@abspath: 
+    """
+    base, ext = os.path.splitext(param)
+    if ext.lower() not in ('.yoda'):
+        raise argparse.ArgumentTypeError('File must have a yoda extension')
+    if not os.path.exists(param):
+        raise IOError('{}: No such file'.format(param))
+    return os.path.abspath(param)
