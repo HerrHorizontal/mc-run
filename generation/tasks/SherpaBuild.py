@@ -3,7 +3,6 @@ import luigi
 from luigi.util import inherits
 from law.util import interruptable_popen
 import os
-import multiprocessing  # for cpu_count
 
 from subprocess import PIPE
 from generation.framework.utils import run_command, identify_inputfile, set_environment_variables
@@ -26,6 +25,24 @@ class SherpaConfig(law.ExternalTask):
         default="default",
         description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[campaign]`."
     )
+
+
+    exclude_params_req = {
+        "config_path"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
+    }
+
 
     def output(self):
         return law.LocalFileTarget(
@@ -73,7 +90,7 @@ class SherpaBuild(GenRivetTask):
             "Sherpa",
             "-f",
             self.input()['SherpaConfig'].path,
-            "INIT_ONLY=2",
+            "INIT_ONLY=1",
         ]
         logger.info('Running command: "{}"'.format(" ".join(sherpa_init)))
         code, out, error = interruptable_popen(
@@ -98,5 +115,6 @@ class SherpaBuild(GenRivetTask):
             print("Building missing matrix elements")
             print("================================")
             run_command(["./makelibs"], env=sherpa_env, cwd=work_dir)
+            os.remove(os.path.join(work_dir, "makelibs"))
 
         print("=======================================================")

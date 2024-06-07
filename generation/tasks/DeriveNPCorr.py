@@ -3,12 +3,10 @@ import luigi
 from luigi.util import inherits
 import os
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, rivet_env
-
+from generation.framework.utils import run_command, set_environment_variables
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from RivetMerge import RivetMerge
+from .RivetMerge import RivetMerge
 
 from law.logger import get_logger
 
@@ -58,6 +56,18 @@ class DeriveNPCorr(PostprocessingTask):
         "mc_setting_partial",
         "match",
         "unmatch"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
     }
 
 
@@ -131,6 +141,9 @@ class DeriveNPCorr(PostprocessingTask):
 
         logger.info("Executable: {}".format(" ".join(executable)))
 
+        rivet_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        )
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
             output_yoda = os.path.abspath(output_yoda)

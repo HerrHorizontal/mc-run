@@ -10,9 +10,13 @@ from law.logger import get_logger
 logger = get_logger(__name__)
 
 
-# source_env = dict()
-# for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH"):
-#     source_env[var]=os.environ[var]
+source_env = dict()
+for var in ("X509_USER_PROXY", "HOME", "ANALYSIS_PATH", "ANALYSIS_DATA_PATH", "RIVET_ANALYSIS_PATH"):
+    try:
+        source_env[var] = os.environ[var]
+    except KeyError as e:
+        logger.warning(f"KeyError: {e}, variable undefined on local host!")
+
 
 def _convert_env_to_dict(env):
     my_env = {}
@@ -24,6 +28,7 @@ def _convert_env_to_dict(env):
             except ValueError:
                 pass
     return my_env
+
 
 def set_environment_variables(source_script_path):
     """Creates a subprocess readable environment dict
@@ -37,12 +42,13 @@ def set_environment_variables(source_script_path):
     Returns:
         dict: Environment variables
     """
-    code, out, error = interruptable_popen("source {}; env".format(source_script_path),
-                                            shell=True, 
-                                            stdout=PIPE, 
-                                            stderr=PIPE,
-                                            # env=source_env
-                                            )
+    code, out, error = interruptable_popen(
+        "source {}; env".format(source_script_path),
+        shell=True,
+        stdout=PIPE,
+        stderr=PIPE,
+        env=source_env
+    )
     if code != 0:
         raise RuntimeError(
             'Sourcing environment from {source_script_path} failed with error code {code}!\n'.format(source_script_path=source_script_path, code=code)
@@ -51,9 +57,6 @@ def set_environment_variables(source_script_path):
         )
     my_env = _convert_env_to_dict(out)
     return my_env
-
-
-rivet_env = set_environment_variables(os.path.expandvars(os.path.join("$ANALYSIS_PATH","setup","setup_rivet.sh")))
 
 
 def identify_inputfile(filename, config_path, generator):
@@ -97,8 +100,8 @@ def identify_setupfile(filepath, generator, mc_setting, work_dir):
         setupfile_path = os.path.join(
             os.getenv("ANALYSIS_PATH"),
             "inputfiles",
-            "setupfiles",
             generator,
+            "setupfiles",
             str(filepath)
         )
     else:
@@ -106,8 +109,8 @@ def identify_setupfile(filepath, generator, mc_setting, work_dir):
         setupfile_path = os.path.join(
             os.path.expandvars("$ANALYSIS_PATH"),
             "inputfiles",
-            "setupfiles",
             generator,
+            "setupfiles",
             "{}.txt".format(str(mc_setting))
         )
     if os.path.exists(setupfile_path):
@@ -152,12 +155,13 @@ def run_command(executable, env, *args, **kwargs):
         import pprint
         pretty_env = pprint.pformat(env,indent=4)
         logger.debug('Env:\n{}'.format(pretty_env))
+        logger.error('Output:\n{}'.format(out))
+        logger.error('Error:\n{}'.format(error))
         raise RuntimeError(
             'Command {command} returned non-zero exit status {code}!\n'.format(command=executable, code=code)
-            + '\tOutput:\n{}\n'.format(out) 
-            + '\tError:\n{}\n'.format(error)
         )
     else:
         logger.info('Output:\n{}'.format(out))
-        logger.error('Error:\n{}'.format(error))
+        if error:
+            logger.info('Error:\n{}'.format(error))
     return code, out, error

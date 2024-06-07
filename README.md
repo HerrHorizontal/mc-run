@@ -18,21 +18,17 @@ The workflow, managing and distributing the event generation and analysis, is im
 In the following the setup of needed software is explained.
 
 ### Herwig7
-The necessary [Herwig7](https://herwig.hepforge.org/) software is loaded from CVMFS (`/cvmfs/etp.kit.edu/herwig`) in the `setup/setup_herwig.sh` script 
-for local execution and `generation/setup_lawherwig.sh` for remote jobs.
-For now, it works for `slc7` environments.
-If you want to load the Herwig7 software from other sources, you need to change the according lines in **both** scripts.
+The necessary [Herwig7](https://herwig.hepforge.org/) software is loaded from CVMFS (`cvmfs/sft.cern.ch/lcg/releases/LCG_105`) in the `setup/setup_herwig.sh` script. This allows all Herwig7 tasks to be run on CentOS 7, Ubuntu 22 and Alma or RedHat 9 environments.
 
 ### Sherpa
-[Sherpa](https://sherpa-team.gitlab.io/) is loaded from CVMFS but is sourced as a part of [CMSSW](https://github.com/cms-sw/cmssw).
-The corresponding scripts setting up Sherpa are found in `/work/mhorzela/mc-run/setup/setup_sherpa.sh` and `/work/mhorzela/mc-run/generation/setup_lawsherpa.sh` for local execution and remote jobs, respectively.
+[Sherpa](https://sherpa-team.gitlab.io/) is loaded from CVMFS (`cvmfs/sft.cern.ch/lcg/releases/LCG_105`).
+The corresponding script setting up Sherpa is found in `setup/setup_sherpa.sh`.
 The dependencies for Sherpa include `mpirun` that allows to run integration in parallel.
-For now, the setup works for `slc7` environments.
-If you want to load Sherpa from another source you need to adjust these two bash scripts.
+This allows all Herwig7 tasks to be run on CentOS 7, Ubuntu 22 and Alma9 or RedHat EL9 environments.
 
 ### Rivet
-In a similar way, the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/) is loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/releases/LCG_96b/MCGenerators/rivet/`) in the `setup/setup_rivet.sh` script for local execution and `generation/setup_lawrivet.sh` for remote jobs.
-For now, it works for `slc7` environments.
+In a similar way, the analysis software [Rivet](https://gitlab.com/hepcedar/rivet/) is loaded from CVMFS (`/cvmfs/sft.cern.ch/lcg/views/LCG_105/`) in the `setup/setup_rivet.sh`.
+For now, it works for CentOS 7, Ubuntu 22 and Alma9 or RedHat EL9 environments.
 These also need to be adjusted, if you want to use Rivet from a different source.
 
 ### Law, Luigi, Six and Enum34
@@ -139,9 +135,9 @@ They can be overwritten by explicitely setting a value in the command-line inter
 Make sure to adjust the following parameters before starting the generation:
 
 #### Computing parameters
-In case you want to run the setup on a distributed platform, e.g. the grid, you will need to set the following parameters:
-- `wlcg_path`: Since the intermediate and final outputs of the tasks are gathered on a storage accessible in a distributed system, you need to set the prefix-path to this reachable storage. In case you are running everything locally, it can just be `file://`.
-- `htcondor_user_proxy`: To establish your identity on the grid, you might need to specify your valid VOMS grid proxy location.
+In case you want to run the setup on a distributed platform, e.g. the grid, you will need to set the grid storage in the law configuration file `law.cfg` in teh `[wlcg_fs]` section.
+- `base`: Since the intermediate and final outputs of the tasks are gathered on a storage accessible in a distributed system, you need to set the prefix-path to this reachable storage. In case you are running everything locally, it can just be `file://`.
+The user proxy HTCondor is using is read automatically from your environment variables or the default path.
 
 #### HTCondor parameters
 Depending on the configuration of your HTCondor batch system you will need to set the according parameters:

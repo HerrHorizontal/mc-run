@@ -1,32 +1,48 @@
-#!/bin/sh
+#!/bin/bash
 
-action(){
+# determine the directy of this file
+if [ -n "$ZSH_VERSION" ]; then
+    this_file="${(%):-%x}"
+else
+    this_file="${BASH_SOURCE[0]}"
+fi
+this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 
-    # source grid environment
-    source /cvmfs/grid.cern.ch/centos7-wn-4.0.5-1_umd4v1/etc/profile.d/setup-c7-wn-example.sh
 
-    # Set up Rivet
-    # Set up GCC and Python (v3 also supported):
-    source /cvmfs/sft.cern.ch/lcg/releases/LCG_96/Python/2.7.16/x86_64-centos7-gcc62-opt/Python-env.sh
-    # Set up Rivet
-    source /cvmfs/sft.cern.ch/lcg/releases/LCG_96b/MCGenerators/rivet/3.1.2/x86_64-centos7-gcc8-opt/rivetenv-genser.sh
-    # Set up a working LaTeX (needed if on lxplus7)
-    export PATH=/cvmfs/sft.cern.ch/lcg/external/texlive/2016/bin/x86_64-linux:$PATH
-
-    # Export rivet analysis path for plugin analyses
-    if [ ! -z "$ZSH_VERSION" ]; then
-        local this_file="${(%):-%x}"
-    else
-        local this_file="${BASH_SOURCE[0]}"
+source_rivet(){
+    # Check OS and source Rivet with dependencies from according LCG Stack
+    view_base=/cvmfs/sft.cern.ch/lcg/views
+    LCG=LCG_105
+    local prefix
+    source "$this_dir/os-version.sh"
+    if [[ "$distro" == "CentOS" ]]; then
+        if [[ ${os_version:0:1} == "7" ]]; then
+            prefix=x86_64-centos7
+        fi
+    elif [[ "$distro" == "RedHatEnterprise" || "$distro" == "Alma" || "$distro" == "Rocky" ]]; then
+        if [[ ${os_version:0:1} == "9" ]]; then
+            prefix=x86_64-el9
+        fi
+    elif [[ "$distro" == "Ubuntu" ]]; then
+        if [[ ${os_version:0:2} == "22" ]]; then
+            prefix=x86_64-ubuntu2204
+        fi
     fi
-    local base="$( cd "$( dirname "$this_file" )" && pwd)"
-    local parent="$( dirname "$base" )"
+    if [[ -z "$prefix" ]]; then
+        echo "Rivet with LCG Stack $LCG not available for $distro $os_version"
+        return 1
+    fi
+    platform=${prefix}-gcc11-opt
+    local lcg_path=$view_base/$LCG/$platform/setup.sh
+    echo "Sourcing LCG Stack from $lcg_path"
+    # shellcheck disable=SC1090
+    source "$lcg_path"
 
+    # Add local Rivet analyses to RIVET_ANALYSIS_PATH
+    parent="$( dirname "$this_dir" )"
+    echo "Adding Rivet analyses from $parent/analyses to RIVET_ANALYSIS_PATH"
     export RIVET_ANALYSIS_PATH="$parent/analyses:$RIVET_ANALYSIS_PATH"
-    #export RIVET_INFO_PATH="$RIVET_ANALYSIS_PATH"
-    
 }
 
-action "$@"
-
-    
+source_rivet "$@"
+rivet --version

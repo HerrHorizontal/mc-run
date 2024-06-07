@@ -4,7 +4,7 @@
   BEAM_2  2212; BEAM_ENERGY_2 6500.;
 
   # tags and settings for ME generators
-  LOOPGEN:=Blackhat;
+  LOOPGEN:=OpenLoops;
   ME_SIGNAL_GENERATOR Amegic Comix LOOPGEN;
   EVENT_GENERATION_MODE Weighted;
 

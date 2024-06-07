@@ -1,17 +1,17 @@
 
-import luigi, law
+import luigi
+import law
 from luigi.util import inherits
 import os
 import json
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, rivet_env
+from generation.framework.utils import run_command, set_environment_variables
 from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from RivetMerge import RivetMerge
-from DeriveNPCorr import DeriveNPCorr
+from .RivetMerge import RivetMerge
+from .DeriveNPCorr import DeriveNPCorr
 
 from law.logger import get_logger
 
@@ -93,8 +93,21 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None."
     )
 
+
     exclude_params_req = {
         "source_script",
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
     }
 
 
@@ -225,6 +238,9 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
 
         logger.info("Executable: {}".format(" ".join(executable)))
 
+        rivet_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        )
         try:
             run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:
@@ -327,6 +343,9 @@ class PlotNPCorrSummary(PlotNPCorr):
 
         logger.info("Executable: {}".format(" ".join(executable_summary)))
 
+        rivet_env = set_environment_variables(
+            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+        )
         try:
             run_command(executable_summary, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
         except RuntimeError as e:

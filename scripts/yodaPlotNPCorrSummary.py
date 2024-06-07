@@ -168,7 +168,7 @@ pp.pprint(aos_ratios)
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
+# yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
@@ -227,7 +227,7 @@ for sname, splits in splittings.items():
 
         assert(len(binlabels) == len(aos))
 
-        for i, (label, color, marker, lname, ao) in enumerate(reversed(zip(binlabels, colors, markers, lnames, aos))):
+        for i, (label, color, marker, lname, ao) in enumerate(reversed(list(zip(binlabels, colors, markers, lnames, aos)))):
             print("Plot bin {}...".format(label))
             xErrs = np.array(ao.xErrs())
             yErrs = np.array(ao.yErrs())

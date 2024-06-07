@@ -1,18 +1,17 @@
+from .HerwigBuild import *
+from .HerwigIntegrate import *
+from .HerwigMerge import *
+from .HerwigRun import *
 
+from .SherpaBuild import *
+from .SherpaIntegrate import *
+from .SherpaRun import *
 
-import HerwigBuild
-import HerwigIntegrate
-import HerwigMerge
-import HerwigRun
+from .RivetBuild import *
+from .RunRivet import *
+from .RivetMerge import *
 
-import SherpaBuild
-import SherpaIntegrate
-import SherpaRun
+from .DeriveNPCorr import *
+from .PlotNPCorr import *
 
-import RunRivet
-import RivetMerge
-
-import DeriveNPCorr
-import PlotNPCorr
-
-import PlotScenarioComparison
+from .PlotScenarioComparison import *

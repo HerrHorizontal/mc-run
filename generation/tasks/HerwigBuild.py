@@ -54,6 +54,20 @@ class HerwigBuild(GenRivetTask):
     setupfile = luigi.Parameter()
 
 
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
+    }
+
+
     def requires(self):
         return {
             'HerwigConfig': HerwigConfig.req(self),

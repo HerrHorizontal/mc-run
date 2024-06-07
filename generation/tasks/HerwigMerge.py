@@ -8,8 +8,8 @@ from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
-from HerwigIntegrate import HerwigIntegrate
-from HerwigBuild import HerwigBuild
+from .HerwigIntegrate import HerwigIntegrate
+from .HerwigBuild import HerwigBuild
 
 from law.logger import get_logger
 
@@ -27,6 +27,19 @@ class HerwigMerge(GenRivetTask):
 
     exclude_params_req = {
         "source_script"
+    }
+
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
     }
 
 

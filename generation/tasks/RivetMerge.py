@@ -1,16 +1,13 @@
-
-
-import law
 import luigi
 from luigi.util import inherits
 import os
 
-from subprocess import PIPE
-from generation.framework.utils import run_command, rivet_env
+from generation.framework.utils import run_command, set_environment_variables
 
 from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
 
-from RunRivet import RunRivet
+from .RunRivet import RunRivet
+from .RivetBuild import RivetBuild
 
 from law.logger import get_logger
 
@@ -24,7 +21,15 @@ class RivetMerge(GenRivetTask):
     Merge separate YODA files from Rivet analysis runs to a single YODA file 
     """
 
+    rivet_env = set_environment_variables(
+        os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+    )
+
     # configuration variables
+    rivet_analyses = luigi.ListParameter(
+        default=["MC_XS","MC_WEIGHTS"],
+        description="List of IDs of Rivet analyses to run."
+    )
     chunk_size = luigi.IntParameter(
         description="Number of individual YODA files to merge in a single `rivet-merge` call."
     )
@@ -32,15 +37,32 @@ class RivetMerge(GenRivetTask):
         default="herwig",
         description="Name of the MC generator used for event generation."
     )
+
+
     exclude_params_req = {
         "chunk_size",
         "source_script"
+    }
+    exclude_params_req_get = {
+        "htcondor_remote_job",
+        "htcondor_accounting_group",
+        "htcondor_request_cpus",
+        "htcondor_universe",
+        "htcondor_docker_image",
+        "transfer_logs",
+        "local_scheduler",
+        "tolerance",
+        "acceptance",
+        "only_missing"
     }
 
 
     def requires(self):
         return {
+            # all analysis jobs to be finished
             'RunRivet': RunRivet.req(self),
+            # and all the Rivet analyses to be built
+            "analyses": RivetBuild.req(self, branch=-1)
         }
 
 
@@ -91,11 +113,11 @@ class RivetMerge(GenRivetTask):
         else:
             logger.info("Input files: {}".format(inputfile_list))
             logger.info('Executable: {}'.format(" ".join(_rivet_exec + _rivet_args + _rivet_in)))
-        
-        run_command(_rivet_exec+_rivet_args+_rivet_in, env=rivet_env)
+
+        run_command(_rivet_exec+_rivet_args+_rivet_in, env=self.rivet_env)
         if not os.path.exists(output_file):
             raise IOError("Could not find output file {}!".format(output_file))
-        
+
         print("-------------------------------------------------------")
 
         return output_file
@@ -113,7 +135,7 @@ class RivetMerge(GenRivetTask):
         
         final_input_files = list()
         
-        for chunk, inlist in inputfile_dict.iteritems():
+        for chunk, inlist in inputfile_dict.items():
             _outfile=self.mergeSingleYodaChunk(inputfile_list=inlist, inputfile_chunk=chunk)
             final_input_files.append(_outfile)
         
@@ -135,6 +157,21 @@ class RivetMerge(GenRivetTask):
         print("=======================================================")
         print("Starting merging of YODA files")
         print("=======================================================")
+
+        # adjust rivet environment
+        dirname = os.path.expandvars("$ANALYSIS_PATH")
+        self.rivet_env["RIVET_ANALYSIS_PATH"] = ":".join((dirname, self.rivet_env.get("RIVET_ANALYSIS_PATH","")))
+
+        # identify and get the compiled Rivet analyses
+        logger.info("Shared object Rivet files: {}".format(self.input()["analyses"]["collection"].targets.values()))
+        local_so_files = []
+        for target in self.input()["analyses"]["collection"].targets.values():
+            with target.localize('r') as so_file:
+                local_path = os.path.join(dirname, str(os.path.basename(so_file.path)).split("_",1)[1])
+                so_file.copy_to_local(
+                    local_path
+                )
+                local_so_files.append(local_path)
 
         # localize the separate YODA files on grid storage
         inputfile_list = []
@@ -164,6 +201,9 @@ class RivetMerge(GenRivetTask):
         except Exception as e:
             self.output().remove()
             raise e
+        finally:
+            for so_file in local_so_files:
+                os.remove(so_file)
 
 
         print("=======================================================")

@@ -190,7 +190,7 @@ for sname, splits in splittings.items():
         assert(len(labels) == len(aos))
 
         # plot
-        for i, (campaign, shift, label, color, marker, linestyle, lname, ao) in enumerate(reversed(zip(campaigns, shifts, labels, colors, markers, linestyles, lnames, aos))):
+        for i, (campaign, shift, label, color, marker, linestyle, lname, ao) in enumerate(reversed(list(zip(campaigns, shifts, labels, colors, markers, linestyles, lnames, aos)))):
             print("Plot bin {} for campaign {} ...".format(label, campaign))
             print(shift, color, marker, linestyle, lname)
             xVals = np.array(ao["xs"])

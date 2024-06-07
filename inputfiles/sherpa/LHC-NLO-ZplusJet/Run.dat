@@ -3,7 +3,7 @@
   # me generator settings
   ME_SIGNAL_GENERATOR Comix Amegic LOOPGEN;
   EVENT_GENERATION_MODE Weighted;
-  LOOPGEN:=BlackHat;
+  LOOPGEN:=OpenLoops;
 
   # Physics parameters
   PDF_LIBRARY LHAPDFSherpa;
