@@ -165,3 +165,23 @@ def run_command(executable, env, *args, **kwargs):
         if error:
             logger.info('Error:\n{}'.format(error))
     return code, out, error
+
+
+@staticmethod
+def check_outdir(outputdict):
+    """ensure that the output directory exists"""
+    for output in outputdict.values():
+        try:
+            output.parent.touch()
+        except IOError:
+            logger.error("Output target {} doesn't exist!".format(output.parent))
+            output.makedirs()
+
+
+@staticmethod
+def localize_input(input):
+    """localize the separate inputs on grid or local storage"""
+    logger.info("Input: {}".format(input))
+    with input.localize('r') as _file:
+        logger.info("\tfile: {}".format(_file.path))
+        return _file.path
