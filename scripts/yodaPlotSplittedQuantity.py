@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import json
 import os.path
 import matplotlib as mpl
-
-mpl.use("Agg")
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 import yoda
@@ -22,90 +20,87 @@ GENERATOR_LABEL_DICT = {
 
 
 parser = argparse.ArgumentParser(
-    description="Plot multiple Rick-Field-style UE observables for different phase-space regions into summary plots",
-    add_help=True,
+    description = "Plot multiple Rick-Field-style UE observables for different phase-space regions into summary plots",
+    add_help = True
 )
 parser.add_argument(
     "--in",
     dest="INFILE",
-    type=valid_yoda_file,
-    required=True,
-    help="YODA file containing the analyzed Rick-Field-style UE observables in analysis objects",
+    type = valid_yoda_file,
+    required = True,
+    help = "YODA file containing the analyzed Rick-Field-style UE observables in analysis objects"
 )
 parser.add_argument(
     "--generator",
-    choices=("herwig", "sherpa"),
+    choices=("herwig","sherpa"),
     default=None,
-    help="Generator name to be used as plot title",
+    help="Generator name to be used as plot title"
 )
 parser.add_argument(
     "--xlabel",
     dest="XLABEL",
     type=str,
     default="Observable",
-    help="label for the x-axis to plot",
+    help="label for the x-axis to plot"
 )
 parser.add_argument(
     "--ylabel",
     dest="YLABEL",
     type=str,
     default="NP corr.",
-    help="label for the y-axis to plot",
+    help="label for the y-axis to plot"
 )
 parser.add_argument(
     "--yrange",
     nargs=2,
     type=float,
-    default=[0.8, 1.3],
-    metavar=("ymin", "ymax"),
-    help="range for the y-axis of the ratio plot",
+    default=[0.8,1.3],
+    metavar=("ymin","ymax"),
+    help="range for the y-axis of the ratio plot"
 )
 parser.add_argument(
-    "-m",
-    "--match",
+    "-m", "--match",
     dest="MATCH",
     metavar="PATT",
     default=None,
-    type=json.loads,
-    help="only write out analysis objects whose path matches this regex",
+    type=str,
+    nargs="*",
+    help="only write out analysis objects whose path matches these regexes"
 )
 parser.add_argument(
-    "-M",
-    "--unmatch",
+    "-M", "--unmatch",
     dest="UNMATCH",
     metavar="PATT",
     default=None,
-    type=json.loads,
-    help="exclude analysis objects whose path matches this regex",
-)
-parser.add_argument(
-    "--splittings",
-    "-s",
-    dest="SPLITTINGS",
-    type=json.loads,
-    help="optional dictionary containing identifier used to match the analysis objects to plot and additional labels and axis-limits",
-)
-parser.add_argument(
-    "--add-splittings-labels",
-    dest="LABELS",
     type=str,
     nargs="*",
-    help="additional plot labels to be plotted into canvas area under jet label, one per splitting"
+    help="exclude analysis objects whose path matches these regexes"
 )
 parser.add_argument(
-    "--jets",
-    "-j",
+    "--splittings", "-s",
+    dest="SPLITTINGS",
+    type=json.loads,
+    help="optional dictionary containing identifier used to match the analysis objects to plot and additional labels and axis-limits"
+)
+parser.add_argument(
+    "--jets", "-j",
     dest="JETS",
     type=json.loads,
-    help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles",
+    help="optional dictionary containing identifier used to match the jet splittings to plot and additional labels and styles"
 )
 parser.add_argument(
-    "--plot-dir",
-    "-p",
+    "--plot-dir", "-p",
     dest="PLOTDIR",
     type=str,
     default="plots",
-    help="output path for the directory containing the ratio plots",
+    help="output path for the directory containing the ratio plots"
+)
+parser.add_argument(
+    "--output-file", "-o",
+    dest="OUTFILE",
+    type=str,
+    default="ratios.dat",
+    help="output path for the YODA file containing the ratios"
 )
 
 args = parser.parse_args()
@@ -113,30 +108,24 @@ args = parser.parse_args()
 
 yoda_file = args.INFILE
 
-print(f"match: {args.MATCH}")
-print(f"unmatch: {args.UNMATCH}")
-
-aos_dict = yoda.readYODA(
-    yoda_file, asdict=True, patterns=list(args.MATCH), unpatterns=list(args.UNMATCH)
-)
+aos = yoda.readYODA(yoda_file, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH)
 
 import pprint
-
 pp = pprint.PrettyPrinter(depth=2)
 print("analysis objects:")
-pp.pprint(aos_dict)
+pp.pprint(aos)
 
 # plot the analysis objects
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-xmin = min(ao.xMin() for ao in aos_dict.values())
-xmax = max(ao.xMax() for ao in aos_dict.values())
+xmin = min(ao.xMin() for ao in aos.values())
+xmax = max(ao.xMax() for ao in aos.values())
 
-xticks = [x for x in XTICKS if x <= xmax and x >= xmin]
+xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 
-xlabel = args.XLABEL
-ylabel = args.YLABEL
+xlabel=args.XLABEL
+ylabel=args.YLABEL
 
 splittings = None
 if args.SPLITTINGS:
@@ -146,61 +135,45 @@ jets = {"": dict(ident="", label="", linestyle="solid")}
 if args.JETS:
     jets = args.JETS
 
-if args.LABELS:
-    add_splittings_labels = args.LABELS
-    assert len(add_splittings_labels)==len(splittings.keys())
-else:
-    add_splittings_labels = None
-
-for i_s, (sname, splits) in enumerate(splittings.items()):
+for sname, splits in splittings.items():
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6, 5+(len(splits)-5)/2)
-        axmain = fig.add_subplot(1, 1, 1)
+        fig.set_size_inches(6,2*0.5*len(splits))
+        axmain = fig.add_subplot(1,1,1)
 
-        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
-        axmain.set_ylabel(
-            ylabel=r"{}".format(ylabel),
-            y=1,
-            ha="right",
-            labelpad=None,
-        )
+        axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
         axmain.set_xlim([xmin, xmax])
         axmain.set_xscale("log")
 
         yminmain = args.yrange[0]
         ymaxmain = args.yrange[1]
-        axmain.set_ylim([yminmain, ymaxmain])
 
         binlabels = []
         colors = []
         markers = []
         lnames = []
         aos = []
-        for i, (k, v) in enumerate(sorted(splits.items())):
-            for name, ao in aos_dict.items():
-                # print("ident: {}".format(v["ident"]))
-                # print(f"name: {name}")
-                if v["ident"] in name and list(args.MATCH)[0] in name:# and jet["ident"] in name:
+        for i,(k,v) in enumerate(sorted(splits.items())):
+            for name, ao in aos_ratios.items():
+                if v["ident"] in name and jet["ident"] in name:
                     yminmain = min(v["ylim"][0], yminmain)
                     ymaxmain = max(v["ylim"][1], ymaxmain)
                     binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
                     colors.append(v["color"])
                     markers.append(v["marker"])
-                    lnames.append(name.replace(v["ident"], k))
+                    lnames.append(name.replace(v["ident"],k))
                     aos.append(ao)
                 else:
                     continue
+            axmain.set_ylim([yminmain, (ymaxmain+i)])
 
-        # print(f"AOS:\n{aos}")
-        assert len(binlabels) == len(aos)
-        assert len(colors) == len(aos)
-        assert len(markers) == len(aos)
-        assert len(lnames) == len(aos)
+        assert(len(binlabels) == len(aos))
+        assert(len(colors) == len(aos))
+        assert(len(markers) == len(aos))
+        assert(len(lnames) == len(aos))
 
-        for i, (label, color, marker, lname, ao) in enumerate(
-            reversed(list(zip(binlabels, colors, markers, lnames, aos)))
-        ):
+        for i, (label, color, marker, lname, ao) in enumerate(reversed(list(zip(binlabels, colors, markers, lnames, aos)))):
             print("Plot bin {}...".format(label))
             xErrs = np.array(ao.xErrs())
             yErrs = np.array(ao.yErrs())
@@ -208,13 +181,16 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             yVals = np.array(ao.yVals())
             xEdges = np.append(ao.xMins(), ao.xMax())
             yEdges = np.append(ao.yVals(), ao.yVals()[-1])
-            yEdgesUp = yEdges + np.append(yErrs, yErrs[-1])
-            yEdgesDown = yEdges - np.append(yErrs, yErrs[-1])
-            # print(f"\t yVals: {yVals}")
+            yEdgesUp = yEdges + np.append(yErrs,yErrs[-1])
+            yEdgesDown = yEdges - np.append(yErrs,yErrs[-1])
 
-            axmain.plot(xVals, yVals, color=color, linestyle="-", label=label)
+            axmain.plot(
+                xVals, yVals,
+                color=color, linestyle="-", label=label
+            )
             axmain.fill_between(
-                xVals, yVals + yErrs, yVals - yErrs, facecolor=color, alpha=0.5
+                xVals, yVals+yErrs, yVals-yErrs,
+                facecolor=color, alpha=0.5
             )
             # axmain.step(xEdges, yEdges, where="post", color=color, linestyle="-", label=label)
             # axmain.fill_between(
@@ -222,57 +198,31 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             #     step="post",
             #     facecolor=color, alpha=0.5
             # )
-
+        
         axmain.set_xticks(xticks)
         axmain.set_xticklabels(xticks)
         axmain.yaxis.get_ticklocs(minor=True)
         axmain.minorticks_on()
 
         handles, labels = axmain.get_legend_handles_labels()
-        axmain.legend(
-            reversed(handles),
-            reversed(labels),
-            frameon=False,
-            handlelength=1,
-            loc="upper right",
-        )
+        axmain.legend(reversed(handles), reversed(labels), frameon=False, handlelength=1, loc='upper right')
 
-        # plot additional labels
-        label_fontsize = 12
         axmain.text(
-            x=0.03,
-            y=0.9,
+            x=0.03, y=0.97,
             s=jet["label"],
-            fontsize=label_fontsize,
-            ha="left",
-            va="top",
-            transform=axmain.transAxes,
-        )
-        axmain.text(
-            x=0.03,
-            y=0.97,
-            s=add_splittings_labels[i_s],
-            fontsize=label_fontsize+1,
-            fontweight="demi",
-            ha="left",
-            va="top",
-            transform=axmain.transAxes,
+            fontsize=12,
+            ha='left', va='top',
+            transform=axmain.transAxes
         )
 
         title = ""
         if args.generator:
             title = GENERATOR_LABEL_DICT[args.generator]
-        axmain.set_title(label=title, loc="left")
+        axmain.set_title(label=title, loc='left')
 
-        name = "{}_{}_{}_summary".format(list(args.MATCH)[0], jet["ident"], sname)
+        name = "{}_{}_{}_summary".format(args.MATCH, jet["ident"], sname)
         print("name: {}".format(name))
 
-        fig.savefig(
-            os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)),
-            bbox_inches="tight",
-        )
-        fig.savefig(
-            os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)),
-            bbox_inches="tight",
-        )
+        fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
+        fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")
         plt.close()
