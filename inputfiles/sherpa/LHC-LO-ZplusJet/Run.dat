@@ -1,6 +1,6 @@
 (run){
   # tags for process setup
-  QCUT:=20.;
+  QCUT:=15.;
 
   # me generator settings
   ME_SIGNAL_GENERATOR Comix;
@@ -18,11 +18,12 @@
 (processes){
   Process 93 93 -> 13 -13 93;
   Order (*,2);
+  CKKW sqr(QCUT/E_CMS);
+  Cut_Core 1;
   End process;
 }(processes)
 
 (selector){
   Mass 13 -13 60. 120.;
-  NJetFinder 1 20. 0. 0.7 -1;
 }(selector)
 
