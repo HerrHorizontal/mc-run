@@ -2,9 +2,7 @@
 
 import argparse
 import json
-import sys
-from os import mkdir
-import os.path
+import os
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
