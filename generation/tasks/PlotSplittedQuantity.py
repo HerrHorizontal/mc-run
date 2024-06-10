@@ -46,17 +46,9 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     filter_label_pad_tuples = luigi.TupleParameter(
         default=((".*", "", "Observable", "NP corr."),),
         description='Tuple of tuples containing four strings each:\n \
-            - the identifying filters for identification of the analysis objects to plot, match and unmatch, \n\
+            - the filters for identification of the analysis objects to plot, match and unmatch, \n\
             - the x- and y-axis labels, \n\
             (("match", "unmatch", "xlabel", "ylabel"), (...), ...)',
-    )
-    match = luigi.ListParameter(
-        default=[],
-        description='Additional filters to match for reducing the analysis objects in the YODA file'
-    )
-    unmatch = luigi.ListParameter(
-        default=[],
-        description='Additional filters to unmatch for reducing the analysis objects in the YODA file'
     )
     yrange = luigi.TupleParameter(
         default=[0.0, 10],
@@ -64,12 +56,12 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
         description="Value range for the y-axis of the plot.",
     )
 
-    splittings_conf_summary = luigi.DictParameter(
+    splittings_conf_all = luigi.Parameter(
         # default="zjet",
         description="BINS identifier (predefined binning configuration in generation/framework/config.py) for all splittings. \
              Will set parameter 'splittings'. Overwritten by --splittings-all."
     )
-    splittings_summary = luigi.DictParameter(
+    splittings_all = luigi.DictParameter(
         default=None,
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None.",
     )
@@ -121,7 +113,9 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     def output(self):
         out = dict()
         out["summary"] = self.local_target(
-            "m-{match}-um-{unmatch}/".format(
+            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
+                full=self.mc_setting_full,
+                partial=self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
             )
@@ -131,10 +125,11 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     def run(self):
         check_outdir(self.output())
         print("=======================================================")
-        print("Starting summary plotting for quantity {} with YODA".format(self.branch_data["match"]))
+        print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")
 
         inputs = dict()
+        logger.debug("\n\nInput:\n{}\n\n".format(self.input()))
         inputs["Rivet"] = localize_input(self.input()["Rivet"])
 
         # assign paths for output YODA file and plots
@@ -167,18 +162,14 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
             "{}".format(self.yrange[1]),
             "--splittings",
             "{}".format(json.dumps(splittings_summary)),
-            "--add-splittings-labels",
-        ] + [
-            label.split("_")[0] for label in splittings_summary.keys()
-        ] + [
             "--jets",
-            "{}".format(json.dumps({key: JETS[key] for key in ["AK4"]})),
+            "{}".format(json.dumps(JETS)),
             "--generator",
             "{}".format(str(self.mc_generator).lower()),
             "--match",
-            "{}".format(json.dumps(list((self.branch_data["match"],))+list(self.match))),
+            "{}".format(self.branch_data["match"]),
             "--unmatch",
-            "{}".format(json.dumps(list((self.branch_data["unmatch"],))+list(self.unmatch))),
+            "{}".format(self.branch_data["unmatch"]),
             "--xlabel",
             "{}".format(self.branch_data["xlabel"]),
             "--ylabel",

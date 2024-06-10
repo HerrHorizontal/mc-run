@@ -285,6 +285,7 @@ class PlotNPCorrSummary(PlotNPCorr):
         print("=======================================================")
 
         inputs = dict()
+        logger.debug("\n\nInput:\n{}\n\n".format(self.input()))
         inputs["ratio"] = localize_input(self.input()["ratio"])
         inputs["Fits"] = localize_input(self.input()["Fits"]["single"])
 
