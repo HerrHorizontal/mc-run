@@ -124,11 +124,11 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         if self.mc_setting == "withNP":
             _gen_opts = []
         elif self.mc_setting == "NPoff":
-            _gen_opts = ["-F Off", "-M Off"]
+            _gen_opts = ["FRAGMENTATION=Off", "MI_HANDLER=None"]
         elif self.mc_setting == "Hadoff":
-            _gen_opts = ["-F Off"]
+            _gen_opts = ["FRAGMENTATION=Off"]
         elif self.mc_setting == "MPIoff":
-            _gen_opts = ["-M Off"]
+            _gen_opts = ["MI_HANDLER=None"]
         else:
             raise ValueError("Unknown mc_setting: {}".format(self.mc_setting))
 
