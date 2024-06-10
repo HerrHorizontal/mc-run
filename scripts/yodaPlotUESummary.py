@@ -3,11 +3,21 @@
 import argparse
 import os.path
 import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
-mpl.use("Agg")
 import yoda
+import numpy as np
 
 from util import valid_yoda_file
+
+
+XTICKS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
+GENERATOR_LABEL_DICT = {
+    "herwig": r"MG $\oplus$ Herwig7",
+    "sherpa": "Sherpa",
+}
+
 
 parser = argparse.ArgumentParser(
     description = "Plot multiple Rick-Field-style UE observables for different phase-space regions into summary plots",
@@ -15,15 +25,16 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument(
     "--in",
+    dest="INFILE",
     type = valid_yoda_file,
     required = True,
     help = "YODA file containing the analyzed Rick-Field-style UE observables in analysis objects"
 )
 parser.add_argument(
-    "--label",
-    type = str,
-    default = "full",
-    help = "Legend label for the quantity"
+    "--generator",
+    choices=("herwig","sherpa"),
+    default=None,
+    help="Generator name to be used as plot title"
 )
 parser.add_argument(
     "--xlabel",
@@ -95,3 +106,123 @@ parser.add_argument(
 args = parser.parse_args()
 
 
+yoda_file = args.INFILE
+
+aos = yoda.readYODA(yoda_file, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH)
+
+import pprint
+pp = pprint.PrettyPrinter(depth=2)
+print("analysis objects:")
+pp.pprint(aos)
+
+# plot the analysis objects
+if not os.path.isdir(args.PLOTDIR):
+    os.mkdir(args.PLOTDIR)
+
+xmin = min(ao.xMin() for ao in aos.values())
+xmax = max(ao.xMax() for ao in aos.values())
+
+xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
+
+xlabel=args.XLABEL
+ylabel=args.YLABEL
+
+splittings = None
+if args.SPLITTINGS:
+    splittings = args.SPLITTINGS
+
+jets = {"": dict(ident="", label="", linestyle="solid")}
+if args.JETS:
+    jets = args.JETS
+
+for sname, splits in splittings.items():
+    for jet in jets.values():
+        fig = plt.figure()
+        fig.set_size_inches(6,2*0.5*len(splits))
+        axmain = fig.add_subplot(1,1,1)
+
+        axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
+        axmain.set_xlim([xmin, xmax])
+        axmain.set_xscale("log")
+
+        yminmain = args.yrange[0]
+        ymaxmain = args.yrange[1]
+
+        binlabels = []
+        colors = []
+        markers = []
+        lnames = []
+        aos = []
+        for i,(k,v) in enumerate(sorted(splits.items())):
+            for name, ao in aos_ratios.items():
+                if v["ident"] in name and jet["ident"] in name:
+                    yminmain = min(v["ylim"][0], yminmain)
+                    ymaxmain = max(v["ylim"][1], ymaxmain)
+                    binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
+                    colors.append(v["color"])
+                    markers.append(v["marker"])
+                    lnames.append(name.replace(v["ident"],k))
+                    aos.append(ao)
+                else:
+                    continue
+            axmain.set_ylim([yminmain, (ymaxmain+i)])
+
+        assert(len(binlabels) == len(aos))
+        assert(len(colors) == len(aos))
+        assert(len(markers) == len(aos))
+        assert(len(lnames) == len(aos))
+
+        for i, (label, color, marker, lname, ao) in enumerate(reversed(list(zip(binlabels, colors, markers, lnames, aos)))):
+            print("Plot bin {}...".format(label))
+            xErrs = np.array(ao.xErrs())
+            yErrs = np.array(ao.yErrs())
+            xVals = np.array(ao.xVals())
+            yVals = np.array(ao.yVals())
+            xEdges = np.append(ao.xMins(), ao.xMax())
+            yEdges = np.append(ao.yVals(), ao.yVals()[-1])
+            yEdgesUp = yEdges + np.append(yErrs,yErrs[-1])
+            yEdgesDown = yEdges - np.append(yErrs,yErrs[-1])
+
+            axmain.plot(
+                xVals, yVals,
+                color=color, linestyle="-", label=label
+            )
+            axmain.fill_between(
+                xVals, yVals+yErrs, yVals-yErrs,
+                facecolor=color, alpha=0.5
+            )
+            # axmain.step(xEdges, yEdges, where="post", color=color, linestyle="-", label=label)
+            # axmain.fill_between(
+            #     xEdges, yEdgesUp, yEdgesDown,
+            #     step="post",
+            #     facecolor=color, alpha=0.5
+            # )
+        
+        axmain.set_xticks(xticks)
+        axmain.set_xticklabels(xticks)
+        axmain.yaxis.get_ticklocs(minor=True)
+        axmain.minorticks_on()
+
+        handles, labels = axmain.get_legend_handles_labels()
+        axmain.legend(reversed(handles), reversed(labels), frameon=False, handlelength=1, loc='upper right')
+
+        axmain.text(
+            x=0.03, y=0.97,
+            s=jet["label"],
+            fontsize=12,
+            ha='left', va='top',
+            transform=axmain.transAxes
+        )
+
+        title = ""
+        if args.generator:
+            title = GENERATOR_LABEL_DICT[args.generator]
+        axmain.set_title(label=title, loc='left')
+
+        name = "{}_{}_{}_summary".format(args.MATCH, jet["ident"], sname)
+        print("name: {}".format(name))
+
+        fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.png".format(name)), bbox_inches="tight")
+        fig.savefig(os.path.join(os.getcwd(), args.PLOTDIR, "{}.pdf".format(name)), bbox_inches="tight")
+        plt.close()
