@@ -102,14 +102,6 @@ parser.add_argument(
     default="plots",
     help="output path for the directory containing the ratio plots",
 )
-parser.add_argument(
-    "--output-file",
-    "-o",
-    dest="OUTFILE",
-    type=str,
-    default="ratios.dat",
-    help="output path for the YODA file containing the ratios",
-)
 
 args = parser.parse_args()
 
