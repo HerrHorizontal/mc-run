@@ -167,6 +167,7 @@ def run_command(executable, env, *args, **kwargs):
     return code, out, error
 
 
+@staticmethod
 def check_outdir(outputdict):
     """ensure that the output directory exists"""
     for output in outputdict.values():
@@ -177,9 +178,10 @@ def check_outdir(outputdict):
             output.makedirs()
 
 
+@staticmethod
 def localize_input(input):
     """localize the separate inputs on grid or local storage"""
-    logger.debug("Input: {}".format(input))
+    logger.info("Input: {}".format(input))
     with input.localize('r') as _file:
-        logger.info("\t Input file: {}".format(_file.path))
+        logger.info("\tfile: {}".format(_file.path))
         return _file.path
