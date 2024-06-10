@@ -6,7 +6,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import yoda
 
-from .util import valid_yoda_file
+from util import valid_yoda_file
 
 
 parser = argparse.ArgumentParser(
