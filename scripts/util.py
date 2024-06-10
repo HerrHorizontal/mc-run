@@ -1,6 +1,8 @@
 
 import json
 import base64
+import os
+from argparse import ArgumentTypeError
 import numpy as np
 
 class NumpyEncoder(json.JSONEncoder):
@@ -63,9 +65,9 @@ def valid_yoda_file(param):
     Returns:
         AnyStr@abspath: 
     """
-    base, ext = os.path.splitext(param)
+    _, ext = os.path.splitext(param)
     if ext.lower() not in ('.yoda'):
-        raise argparse.ArgumentTypeError('File must have a yoda extension')
+        raise ArgumentTypeError('File must have a yoda extension')
     if not os.path.exists(param):
         raise IOError('{}: No such file'.format(param))
     return os.path.abspath(param)
