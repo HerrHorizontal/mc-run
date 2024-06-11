@@ -194,39 +194,18 @@ BINS = {
 # according 3D dijet config
 BINS["dijets"] = {k: dict(v, ident=k) for k,v in BINS["zjet"].items()}
 
-# add bin configs for 3D underlying event analyses
-BINS["zjet_RFUE_all"] = {
+BINS["zjet_RFUE"] = {
     "_".join((region,k)): dict(
         v,
-        ident="_".join([
-            region,
-            v["ident"][:2]+"="+"{:.6f}".format(float(v["ident"][2:10])+0.5),
-            v["ident"][10:12]+"="+"{:.6f}".format(float(v["ident"][12:])+0.5)
-        ]),
-        label=v["label"]
+        ident=v["ident"][:2]+"="+v["ident"][2:8]+"="+v["ident"][8:],
+        label=v["label"]+"\n"+region
     )
     for k,v in BINS["zjet"].items()
     for region in ["Towards", "Transverse", "Away"]
 }
-for region in ["Towards", "Transverse", "Away"]:
-    BINS[f"zjet_RFUE_{region}"] = {
-        "_".join((region,k)): dict(
-            v,
-            ident="_".join([
-                region,
-                v["ident"][:2]+"="+"{:.6f}".format(float(v["ident"][2:10])+0.5),
-                v["ident"][10:12]+"="+"{:.6f}".format(float(v["ident"][12:])+0.5)
-            ]),
-            label=v["label"]
-        )
-        for k,v in BINS["zjet"].items()
-    }
-# filtered yb=0 and ys=0 bins only
-    BINS[f"YB0_zjet_RFUE_{region}"] = {k: v for k,v in BINS[f"zjet_RFUE_{region}"].items() if "YB_00_05" in k}
-    BINS[f"YS0_zjet_RFUE_{region}"] = {k: v for k,v in BINS[f"zjet_RFUE_{region}"].items() if "YS_00_05" in k}
 
-BINS["YB0_zjet"] = {k: v for k,v in BINS["zjet"].items() if "YB_00_05" in k}
-BINS["YS0_zjet"] = {k: v for k,v in BINS["zjet"].items() if "YS_00_05" in k}
+BINS["YB0"] = {k: v for k,v in BINS["zjet"].items() if "YB_00_05" in k}
+BINS["YS0"] = {k: v for k,v in BINS["zjet"].items() if "YS_00_05" in k}
 
 BINS["YB0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YB_00_05" in k}
 BINS["YS0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YS_00_05" in k}
