@@ -15,3 +15,4 @@ from .DeriveNPCorr import *
 from .PlotNPCorr import *
 
 from .PlotScenarioComparison import *
+from .PlotSplittedQuantity import *
