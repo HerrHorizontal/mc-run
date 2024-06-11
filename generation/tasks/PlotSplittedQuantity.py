@@ -56,12 +56,12 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
         description="Value range for the y-axis of the plot.",
     )
 
-    splittings_conf_all = luigi.Parameter(
+    splittings_conf_summary = luigi.DictParameter(
         # default="zjet",
         description="BINS identifier (predefined binning configuration in generation/framework/config.py) for all splittings. \
              Will set parameter 'splittings'. Overwritten by --splittings-all."
     )
-    splittings_all = luigi.DictParameter(
+    splittings_summary = luigi.DictParameter(
         default=None,
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None.",
     )
@@ -113,9 +113,7 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     def output(self):
         out = dict()
         out["summary"] = self.local_target(
-            "{full}-{partial}-Ratio-Plots/m-{match}-um-{unmatch}/".format(
-                full=self.mc_setting_full,
-                partial=self.mc_setting_partial,
+            "m-{match}-um-{unmatch}/".format(
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
             )
@@ -125,7 +123,7 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     def run(self):
         check_outdir(self.output())
         print("=======================================================")
-        print("Starting NP-factor summary plotting with YODA")
+        print("Starting summary plotting for quantity {} with YODA".format(self.branch_data["match"]))
         print("=======================================================")
 
         inputs = dict()
