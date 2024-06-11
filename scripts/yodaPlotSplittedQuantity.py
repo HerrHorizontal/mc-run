@@ -67,8 +67,7 @@ parser.add_argument(
     metavar="PATT",
     default=None,
     type=str,
-    nargs="*",
-    help="only write out analysis objects whose path matches these regexes",
+    help="only write out analysis objects whose path matches this regex",
 )
 parser.add_argument(
     "-M",
@@ -77,8 +76,7 @@ parser.add_argument(
     metavar="PATT",
     default=None,
     type=str,
-    nargs="*",
-    help="exclude analysis objects whose path matches these regexes",
+    help="exclude analysis objects whose path matches this regex",
 )
 parser.add_argument(
     "--splittings",
@@ -86,6 +84,13 @@ parser.add_argument(
     dest="SPLITTINGS",
     type=json.loads,
     help="optional dictionary containing identifier used to match the analysis objects to plot and additional labels and axis-limits",
+)
+parser.add_argument(
+    "--add-splittings-labels",
+    dest="LABELS",
+    type=str,
+    nargs="*",
+    help="additional plot labels to be plotted into canvas area under jet label, one per splitting"
 )
 parser.add_argument(
     "--jets",
@@ -108,7 +113,7 @@ args = parser.parse_args()
 
 yoda_file = args.INFILE
 
-aos = yoda.readYODA(
+aos_dict = yoda.readYODA(
     yoda_file, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH
 )
 
@@ -116,14 +121,14 @@ import pprint
 
 pp = pprint.PrettyPrinter(depth=2)
 print("analysis objects:")
-pp.pprint(aos)
+pp.pprint(aos_dict)
 
 # plot the analysis objects
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-xmin = min(ao.xMin() for ao in aos.values())
-xmax = max(ao.xMax() for ao in aos.values())
+xmin = min(ao.xMin() for ao in aos_dict.values())
+xmax = max(ao.xMax() for ao in aos_dict.values())
 
 xticks = [x for x in XTICKS if x <= xmax and x >= xmin]
 
@@ -138,10 +143,16 @@ jets = {"": dict(ident="", label="", linestyle="solid")}
 if args.JETS:
     jets = args.JETS
 
-for sname, splits in splittings.items():
+if args.LABELS:
+    add_splittings_labels = args.LABELS
+    assert len(add_splittings_labels)==len(splittings.keys())
+else:
+    add_splittings_labels = None
+
+for i_s, (sname, splits) in enumerate(splittings.items()):
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6, 2 * 0.5 * len(splits))
+        fig.set_size_inches(6, 5)
         axmain = fig.add_subplot(1, 1, 1)
 
         axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
@@ -156,6 +167,7 @@ for sname, splits in splittings.items():
 
         yminmain = args.yrange[0]
         ymaxmain = args.yrange[1]
+        axmain.set_ylim([yminmain, ymaxmain])
 
         binlabels = []
         colors = []
@@ -163,7 +175,7 @@ for sname, splits in splittings.items():
         lnames = []
         aos = []
         for i, (k, v) in enumerate(sorted(splits.items())):
-            for name, ao in aos_ratios.items():
+            for name, ao in aos_dict.items():
                 if v["ident"] in name and jet["ident"] in name:
                     yminmain = min(v["ylim"][0], yminmain)
                     ymaxmain = max(v["ylim"][1], ymaxmain)
@@ -174,7 +186,6 @@ for sname, splits in splittings.items():
                     aos.append(ao)
                 else:
                     continue
-            axmain.set_ylim([yminmain, (ymaxmain + i)])
 
         assert len(binlabels) == len(aos)
         assert len(colors) == len(aos)
@@ -219,12 +230,24 @@ for sname, splits in splittings.items():
             loc="upper right",
         )
 
+        # plot additional labels
+        label_fontsize = 12
         axmain.text(
             x=0.03,
             y=0.97,
             s=jet["label"],
-            fontsize=12,
+            fontsize=label_fontsize,
             ha="left",
+            va="top",
+            transform=axmain.transAxes,
+        )
+        axmain.text(
+            x=0.97,
+            y=0.97,
+            s=add_splittings_labels[i_s],
+            fontsize=label_fontsize+1,
+            fontweight="demi",
+            ha="right",
             va="top",
             transform=axmain.transAxes,
         )

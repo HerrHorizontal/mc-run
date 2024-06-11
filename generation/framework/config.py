@@ -210,9 +210,11 @@ for region in ["Towards", "Transverse", "Away"]:
         )
         for k,v in BINS["zjet"].items()
     }
+    BINS[f"YB0_zjet_RFUE_{region}"] = {k: v for k,v in BINS[f"zjet_RFUE_{region}"].items() if "YB_00_05" in k}
+    BINS[f"YS0_zjet_RFUE_{region}"] = {k: v for k,v in BINS[f"zjet_RFUE_{region}"].items() if "YS_00_05" in k}
 
-BINS["YB0"] = {k: v for k,v in BINS["zjet"].items() if "YB_00_05" in k}
-BINS["YS0"] = {k: v for k,v in BINS["zjet"].items() if "YS_00_05" in k}
+BINS["YB0_zjet"] = {k: v for k,v in BINS["zjet"].items() if "YB_00_05" in k}
+BINS["YS0_zjet"] = {k: v for k,v in BINS["zjet"].items() if "YS_00_05" in k}
 
 BINS["YB0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YB_00_05" in k}
 BINS["YS0_dijets"] = {k: v for k,v in BINS["dijets"].items() if "YS_00_05" in k}
