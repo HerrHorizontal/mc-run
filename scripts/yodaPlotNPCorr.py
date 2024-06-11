@@ -149,7 +149,7 @@ if args.YORIGIN and not args.ORIGIN:
 elif args.ORIGIN and not all([args.partial, args.full]):
     raise argparse.ArgumentError("Files containing the analysis objects for the full and partial simulation need to be given for origin pad!")
 elif args.YORIGIN:
-    originylabel = r"${}$".format(args.YORIGIN)
+    originylabel = r"{}".format(args.YORIGIN)
 else:
     originylabel = "arb. units"
 
@@ -272,7 +272,7 @@ for name, ao in aos_ratios.items():
             xEdges = np.append(aotop.xMins(), aotop.xMax())
             yEdges = np.append(aotop.yVals(), aotop.yVals()[-1])
 
-            label=r"${}$".format(LABELS[i])
+            label=r"{}".format(LABELS[i])
 
             axorigin.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[i], linestyle="none", linewidth=1.4, capthick=1.4)
             axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=label)
@@ -285,7 +285,7 @@ for name, ao in aos_ratios.items():
 
     axmain.axhline(1.0, color="gray") #< Ratio = 1 marker line
 
-    axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+    axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
     axmain.set_ylabel(ylabel=r"{}".format(ylabel), y=1, ha="right", labelpad=None)
 
     yminmain = args.yrange[0]

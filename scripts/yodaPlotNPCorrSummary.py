@@ -173,7 +173,7 @@ for sname, splits in splittings.items():
         fig.set_size_inches(6,2*0.5*len(splits))
         axmain = fig.add_subplot(1,1,1)
 
-        axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
         axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
 
         yminmain = args.yrange[0]

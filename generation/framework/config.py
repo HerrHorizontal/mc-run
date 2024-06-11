@@ -192,6 +192,16 @@ BINS = {
 }
 BINS["dijets"] = {k: dict(v, ident=k) for k,v in BINS["zjet"].items()}
 
+BINS["zjet_RFUE"] = {
+    "_".join((region,k)): dict(
+        v,
+        ident=v["ident"][:2]+"="+v["ident"][2:8]+"="+v["ident"][8:],
+        label=v["label"]+"\n"+region
+    )
+    for k,v in BINS["zjet"].items()
+    for region in ["Towards", "Transverse", "Away"]
+}
+
 BINS["YB0"] = {k: v for k,v in BINS["zjet"].items() if "YB_00_05" in k}
 BINS["YS0"] = {k: v for k,v in BINS["zjet"].items() if "YS_00_05" in k}
 
