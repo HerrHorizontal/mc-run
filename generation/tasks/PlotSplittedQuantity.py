@@ -160,6 +160,10 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
             "{}".format(self.yrange[1]),
             "--splittings",
             "{}".format(json.dumps(splittings_summary)),
+            "--add-splittings-labels",
+        ] + [
+            label.split("_")[0] for label in splittings_summary.keys()
+        ] + [
             "--jets",
             "{}".format(json.dumps(JETS)),
             "--generator",
