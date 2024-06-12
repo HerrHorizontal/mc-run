@@ -207,7 +207,11 @@ for region in ["Towards", "Transverse", "Away"]:
     BINS[f"zjet_RFUE_{region}"] = {
         "_".join((region,k)): dict(
             v,
-            ident=v["ident"][:2]+"="+v["ident"][2:8]+"="+v["ident"][8:],
+            ident="_".join([
+                region,
+                v["ident"][:2]+"="+"{:.6f}".format(float(v["ident"][2:10])+0.5),
+                v["ident"][10:12]+"="+"{:.6f}".format(float(v["ident"][12:])+0.5)
+            ]),
             label=v["label"]+"\n"+region
         )
         for k,v in BINS["zjet"].items()
