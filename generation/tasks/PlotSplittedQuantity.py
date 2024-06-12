@@ -46,9 +46,17 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     filter_label_pad_tuples = luigi.TupleParameter(
         default=((".*", "", "Observable", "NP corr."),),
         description='Tuple of tuples containing four strings each:\n \
-            - the filters for identification of the analysis objects to plot, match and unmatch, \n\
+            - the identifying filters for identification of the analysis objects to plot, match and unmatch, \n\
             - the x- and y-axis labels, \n\
             (("match", "unmatch", "xlabel", "ylabel"), (...), ...)',
+    )
+    match = luigi.ListParameter(
+        default=[],
+        description='Additional filters to match for reducing the analysis objects in the YODA file'
+    )
+    unmatch = luigi.ListParameter(
+        default=[],
+        description='Additional filters to unmatch for reducing the analysis objects in the YODA file'
     )
     yrange = luigi.TupleParameter(
         default=[0.0, 10],
@@ -165,13 +173,13 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
             label.split("_")[0] for label in splittings_summary.keys()
         ] + [
             "--jets",
-            "{}".format(json.dumps(JETS)),
+            "{}".format(json.dumps({key: JETS[key] for key in ["AK4"]})),
             "--generator",
             "{}".format(str(self.mc_generator).lower()),
             "--match",
-            "{}".format(self.branch_data["match"]),
+            "{}".format(json.dumps(list((self.branch_data["match"],))+list(self.match))),
             "--unmatch",
-            "{}".format(self.branch_data["unmatch"]),
+            "{}".format(json.dumps(list((self.branch_data["unmatch"],))+list(self.unmatch))),
             "--xlabel",
             "{}".format(self.branch_data["xlabel"]),
             "--ylabel",

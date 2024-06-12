@@ -66,7 +66,7 @@ parser.add_argument(
     dest="MATCH",
     metavar="PATT",
     default=None,
-    type=str,
+    type=json.loads,
     help="only write out analysis objects whose path matches this regex",
 )
 parser.add_argument(
@@ -75,7 +75,7 @@ parser.add_argument(
     dest="UNMATCH",
     metavar="PATT",
     default=None,
-    type=str,
+    type=json.loads,
     help="exclude analysis objects whose path matches this regex",
 )
 parser.add_argument(
@@ -113,8 +113,11 @@ args = parser.parse_args()
 
 yoda_file = args.INFILE
 
+print(f"match: {args.MATCH}")
+print(f"unmatch: {args.UNMATCH}")
+
 aos_dict = yoda.readYODA(
-    yoda_file, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH
+    yoda_file, asdict=True, patterns=list(args.MATCH), unpatterns=list(args.UNMATCH)
 )
 
 import pprint
@@ -178,7 +181,7 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             for name, ao in aos_dict.items():
                 # print("ident: {}".format(v["ident"]))
                 # print(f"name: {name}")
-                if v["ident"] in name:# and jet["ident"] in name:
+                if v["ident"] in name and list(args.MATCH)[0] in name:# and jet["ident"] in name:
                     yminmain = min(v["ylim"][0], yminmain)
                     ymaxmain = max(v["ylim"][1], ymaxmain)
                     binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
@@ -261,7 +264,7 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             title = GENERATOR_LABEL_DICT[args.generator]
         axmain.set_title(label=title, loc="left")
 
-        name = "{}_{}_{}_summary".format(args.MATCH, jet["ident"], sname)
+        name = "{}_{}_{}_summary".format(list(args.MATCH)[0], jet["ident"], sname)
         print("name: {}".format(name))
 
         fig.savefig(
