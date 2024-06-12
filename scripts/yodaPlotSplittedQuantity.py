@@ -155,7 +155,7 @@ else:
 for i_s, (sname, splits) in enumerate(splittings.items()):
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6, 5)
+        fig.set_size_inches(6, 5+(len(splits)-5)/2)
         axmain = fig.add_subplot(1, 1, 1)
 
         axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
@@ -241,7 +241,7 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
         label_fontsize = 12
         axmain.text(
             x=0.03,
-            y=0.97,
+            y=0.9,
             s=jet["label"],
             fontsize=label_fontsize,
             ha="left",
@@ -249,12 +249,12 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             transform=axmain.transAxes,
         )
         axmain.text(
-            x=0.97,
+            x=0.03,
             y=0.97,
             s=add_splittings_labels[i_s],
             fontsize=label_fontsize+1,
             fontweight="demi",
-            ha="right",
+            ha="left",
             va="top",
             transform=axmain.transAxes,
         )
