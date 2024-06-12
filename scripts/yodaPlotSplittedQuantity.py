@@ -176,7 +176,9 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
         aos = []
         for i, (k, v) in enumerate(sorted(splits.items())):
             for name, ao in aos_dict.items():
-                if v["ident"] in name and jet["ident"] in name:
+                # print("ident: {}".format(v["ident"]))
+                # print(f"name: {name}")
+                if v["ident"] in name:# and jet["ident"] in name:
                     yminmain = min(v["ylim"][0], yminmain)
                     ymaxmain = max(v["ylim"][1], ymaxmain)
                     binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
@@ -187,6 +189,7 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
                 else:
                     continue
 
+        # print(f"AOS:\n{aos}")
         assert len(binlabels) == len(aos)
         assert len(colors) == len(aos)
         assert len(markers) == len(aos)
@@ -204,6 +207,7 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             yEdges = np.append(ao.yVals(), ao.yVals()[-1])
             yEdgesUp = yEdges + np.append(yErrs, yErrs[-1])
             yEdgesDown = yEdges - np.append(yErrs, yErrs[-1])
+            # print(f"\t yVals: {yVals}")
 
             axmain.plot(xVals, yVals, color=color, linestyle="-", label=label)
             axmain.fill_between(
