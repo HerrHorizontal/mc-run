@@ -67,6 +67,7 @@ JETS = {
 }
 
 BINS = {
+    # general 3D z+jet bins config 
     "zjet": OrderedDict({
         'YB_00_05_YS_00_05' : dict(
             ident="Ys0.000000Yb0.000000",
@@ -190,8 +191,10 @@ BINS = {
         ),
     }),
 }
+# according 3D dijet config
 BINS["dijets"] = {k: dict(v, ident=k) for k,v in BINS["zjet"].items()}
 
+# add bin configs for 3D underlying event analyses
 BINS["zjet_RFUE_all"] = {
     "_".join((region,k)): dict(
         v,
@@ -218,6 +221,7 @@ for region in ["Towards", "Transverse", "Away"]:
         )
         for k,v in BINS["zjet"].items()
     }
+# filtered yb=0 and ys=0 bins only
     BINS[f"YB0_zjet_RFUE_{region}"] = {k: v for k,v in BINS[f"zjet_RFUE_{region}"].items() if "YB_00_05" in k}
     BINS[f"YS0_zjet_RFUE_{region}"] = {k: v for k,v in BINS[f"zjet_RFUE_{region}"].items() if "YS_00_05" in k}
 

@@ -135,7 +135,6 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
         print("=======================================================")
 
         inputs = dict()
-        logger.debug("\n\nInput:\n{}\n\n".format(self.input()))
         inputs["Rivet"] = localize_input(self.input()["Rivet"])
 
         # assign paths for output YODA file and plots
