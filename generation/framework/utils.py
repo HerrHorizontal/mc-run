@@ -179,7 +179,7 @@ def check_outdir(outputdict):
 
 def localize_input(input):
     """localize the separate inputs on grid or local storage"""
-    logger.info("Input: {}".format(input))
+    logger.debug("Input: {}".format(input))
     with input.localize('r') as _file:
-        logger.info("\tfile: {}".format(_file.path))
+        logger.info("\t Input file: {}".format(_file.path))
         return _file.path
