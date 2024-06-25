@@ -143,7 +143,7 @@ for sname, splits in splittings.items():
         fig.set_size_inches(6,2*0.5*len(splits))
         axmain = fig.add_subplot(1,1,1)
 
-        axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
         axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
 
         yminmain = args.yrange[0]
@@ -224,14 +224,14 @@ for sname, splits in splittings.items():
         if not args.NOLEGEND:
             handles, labels = axmain.get_legend_handles_labels()
             campaign_handles = []
+            # adjust legend handles for plotted analysis objects
             for handle in handles:
                 campaign_handle = mpl.lines.Line2D([0],[0],color="black")
                 campaign_handle.update_from(handle)
                 campaign_handle.set_linestyle("solid")
                 campaign_handles.append(campaign_handle)
+            # add legend handles and labels to distinguish campaigns
             for campaign in args.campaign:
-                # import pickle
-                # campaign_handle = pickle.loads(pickle.dumps(handles[-1]))
                 add_handle = mpl.lines.Line2D([0],[0],color="black")
                 add_handle.update_from(handles[-1])
                 add_handle.set_color(adjust_lightness("black",CAMPAIGN_MODS[campaign]["lightencolor"]))
@@ -240,7 +240,7 @@ for sname, splits in splittings.items():
                 campaign_label = CAMPAIGN_MODS[campaign]["label"]
                 labels = [campaign_label] + labels
             assert(len(handles)+len(args.campaign) == len(campaign_handles))
-            axmain.legend(campaign_handles, labels, frameon=False, handlelength=1, loc='upper right')
+            axmain.legend(campaign_handles, labels, frameon=False, handlelength=1.5, loc='upper right')
 
         axmain.text(
             x=0.03, y=0.97,

@@ -12,32 +12,11 @@ import numpy as np
 import yoda
 
 from fit import scipy_fit as fit
-from util import NumpyEncoder, json_numpy_obj_hook
+from util import NumpyEncoder, valid_yoda_file
 
 
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
 XTICKS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
-
-
-def valid_yoda_file(param):
-    """Helper function which checks for validity (YODA extension and existence) of the provided input files
-
-    Args:
-        param (AnyStr): File to check
-
-    Raises:
-        argparse.ArgumentTypeError: Wrong file extension
-        IOError: No such file
-
-    Returns:
-        AnyStr@abspath: 
-    """
-    base, ext = os.path.splitext(param)
-    if ext.lower() not in ('.yoda'):
-        raise argparse.ArgumentTypeError('File must have a yoda extension')
-    if not os.path.exists(param):
-        raise IOError('{}: No such file'.format(param))
-    return os.path.abspath(param)
 
 
 parser = argparse.ArgumentParser(
@@ -170,7 +149,7 @@ if args.YORIGIN and not args.ORIGIN:
 elif args.ORIGIN and not all([args.partial, args.full]):
     raise argparse.ArgumentError("Files containing the analysis objects for the full and partial simulation need to be given for origin pad!")
 elif args.YORIGIN:
-    originylabel = r"${}$".format(args.YORIGIN)
+    originylabel = r"{}".format(args.YORIGIN)
 else:
     originylabel = "arb. units"
 
@@ -293,7 +272,7 @@ for name, ao in aos_ratios.items():
             xEdges = np.append(aotop.xMins(), aotop.xMax())
             yEdges = np.append(aotop.yVals(), aotop.yVals()[-1])
 
-            label=r"${}$".format(LABELS[i])
+            label=r"{}".format(LABELS[i])
 
             axorigin.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[i], linestyle="none", linewidth=1.4, capthick=1.4)
             axorigin.step(xEdges, yEdges, where="post", color=COLORS[i], linestyle="-", linewidth=1.4, label=label)
@@ -306,7 +285,7 @@ for name, ao in aos_ratios.items():
 
     axmain.axhline(1.0, color="gray") #< Ratio = 1 marker line
 
-    axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+    axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
     axmain.set_ylabel(ylabel=r"{}".format(ylabel), y=1, ha="right", labelpad=None)
 
     yminmain = args.yrange[0]

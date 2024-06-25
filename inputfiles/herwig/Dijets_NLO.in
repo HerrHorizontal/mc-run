@@ -57,10 +57,12 @@ do Factory:Process p p -> j j
 ## specialized NLO package
 
 read Matchbox/MadGraph-NJet.in
+set /Herwig/MatrixElements/Matchbox/Amplitudes/MadGraph:MadgraphPrefix /cvmfs/sft.cern.ch/lcg/releases/LCG_104c_ATLAS_3/MCGenerators/madgraph5amc/3.5.1.atlas2/aarch64-el9-gcc13-opt
 
 # read Matchbox/MadGraph-GoSam.in
 # read Matchbox/MadGraph-MadGraph.in
 # read Matchbox/MadGraph-OpenLoops.in
+# read Matchbox/OpenLoops-OpenLoops.in
 # read Matchbox/HJets.in
 # read Matchbox/VBFNLO.in
 ## Uncomment this to use ggh effective couplings
@@ -180,4 +182,4 @@ set /Herwig/Analysis/HepMC:Units GeV_mm
 do /Herwig/MatrixElements/Matchbox/Factory:ProductionMode
 
 cd /Herwig/Generators
-saverun Dijets_cms_NLO EventGenerator
+saverun Dijets_NLO EventGenerator

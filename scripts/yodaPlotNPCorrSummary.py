@@ -2,9 +2,7 @@
 
 import argparse
 import json
-import sys
-from os import mkdir
-import os.path
+import os
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -12,7 +10,7 @@ import numpy as np
 import yoda
 
 from fit import scipy_fit as fit
-from util import NumpyEncoder, json_numpy_obj_hook
+from util import NumpyEncoder, json_numpy_obj_hook, valid_yoda_file
 
 
 COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
@@ -22,27 +20,6 @@ GENERATOR_LABEL_DICT = {
     "herwig": r"MG $\oplus$ Herwig7",
     "sherpa": "Sherpa",
 }
-
-
-def valid_yoda_file(param):
-    """Helper function which checks for validity (YODA extension and existence) of the provided input files
-
-    Args:
-        param (AnyStr): File to check
-
-    Raises:
-        argparse.ArgumentTypeError: Wrong file extension
-        IOError: No such file
-
-    Returns:
-        AnyStr@abspath: 
-    """
-    base, ext = os.path.splitext(param)
-    if ext.lower() not in ('.yoda'):
-        raise argparse.ArgumentTypeError('File must have a yoda extension')
-    if not os.path.exists(param):
-        raise IOError('{}: No such file'.format(param))
-    return os.path.abspath(param)
 
 
 parser = argparse.ArgumentParser(
@@ -196,7 +173,7 @@ for sname, splits in splittings.items():
         fig.set_size_inches(6,2*0.5*len(splits))
         axmain = fig.add_subplot(1,1,1)
 
-        axmain.set_xlabel(xlabel=r"${}$".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
         axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
 
         yminmain = args.yrange[0]

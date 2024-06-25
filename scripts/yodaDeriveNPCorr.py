@@ -6,26 +6,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import yoda
 
-
-def valid_yoda_file(param):
-    """Helper function which checks for validity (YODA extension and existence) of the provided input files
-
-    Args:
-        param (AnyStr): File to check
-
-    Raises:
-        argparse.ArgumentTypeError: Wrong file extension
-        IOError: No such file
-
-    Returns:
-        AnyStr@abspath: 
-    """
-    base, ext = os.path.splitext(param)
-    if ext.lower() not in ('.yoda'):
-        raise argparse.ArgumentTypeError('File must have a yoda extension')
-    if not os.path.exists(param):
-        raise IOError('{}: No such file'.format(param))
-    return os.path.abspath(param)
+from util import valid_yoda_file
 
 
 parser = argparse.ArgumentParser(

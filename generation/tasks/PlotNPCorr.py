@@ -5,7 +5,7 @@ from luigi.util import inherits
 import os
 import json
 
-from generation.framework.utils import run_command, set_environment_variables
+from generation.framework.utils import run_command, set_environment_variables, localize_input, check_outdir
 from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
@@ -61,7 +61,7 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
     filter_label_pad_tuples = luigi.TupleParameter(
         default=((".*","","Observable","NP corr.","arb. units"),),
         description="Tuple of tuples containing four or five strings:\n \
-            - the filter for identification of the analysis objects to plot, match and unmatch, \n\
+            - the filters for identification of the analysis objects to plot, match and unmatch, \n\
             - the x- and y-axis labels for the ratio pad (showing i.e. the NP-correction), \n\
             - OPTIONAL: the label for a top pad showing the original distributions used to derive the ratio \n\
             ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", [\"origin-ylabel\"]), (...), ...)"
@@ -143,7 +143,7 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
                 bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel, oylabel=oylabel)
         return bm
 
-    
+
     def requires(self):
         return self.workflow_requires()
 
@@ -166,27 +166,8 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         return out
 
 
-    @staticmethod
-    def check_outdir(outputdict):
-        """ensure that the output directory exists"""
-        for output in outputdict.values():
-            try:
-                output.parent.touch()
-            except IOError:
-                logger.error("Output target {} doesn't exist!".format(output.parent))
-                output.makedirs()
-
-    @staticmethod
-    def localize_input(input):
-        """localize the separate inputs on grid or local storage"""
-        logger.info("Input: {}".format(input))
-        with input.localize('r') as _file:
-            logger.info("\tfull: {}".format(_file.path))
-            return _file.path
-
-
     def run(self):
-        PlotNPCorr.check_outdir(self.output())
+        check_outdir(self.output())
 
         if len(self.yrange) != 2:
             raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
@@ -197,9 +178,9 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         print("=======================================================")
 
         inputs = dict()
-        inputs["full"] = self.localize_input(self.input()["full"])
-        inputs["partial"] = self.localize_input(self.input()["partial"])
-        inputs["ratio"] = self.localize_input(self.input()["ratio"])
+        inputs["full"] = localize_input(self.input()["full"])
+        inputs["partial"] = localize_input(self.input()["partial"])
+        inputs["ratio"] = localize_input(self.input()["ratio"])
 
         # assign paths for output YODA file and plots
         plot_dir_single = self.output()["single"].parent.path
@@ -298,15 +279,14 @@ class PlotNPCorrSummary(PlotNPCorr):
 
 
     def run(self):
-        PlotNPCorrSummary.check_outdir(self.output())
+        check_outdir(self.output())
         print("=======================================================")
         print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")
 
         inputs = dict()
-        print("\n\n{}\n\n".format(self.input()))
-        inputs["ratio"] = self.localize_input(self.input()["ratio"])
-        inputs["Fits"] = self.localize_input(self.input()["Fits"]["single"])
+        inputs["ratio"] = localize_input(self.input()["ratio"])
+        inputs["Fits"] = localize_input(self.input()["Fits"]["single"])
 
         # assign paths for output YODA file and plots
         plot_dir_summary = self.output()["summary"].parent.path
