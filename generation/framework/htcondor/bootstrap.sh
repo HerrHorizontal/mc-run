@@ -12,7 +12,7 @@ bootstrap_htcondor_standalone() {
     # set env variables
     local BASE_DIR="${PWD}"
     export HOME="${PWD}"
-    export LCG_DIR="/cvmfs/grid.cern.ch/centos7-ui-200122"
+    export LCG_DIR="/cvmfs/grid.cern.ch/alma9-ui-test"
     export ANALYSIS_PATH="${BASE_DIR}/repo"
 
     # source the law wlcg tools, mainly for law_wlcg_get_file
@@ -20,7 +20,7 @@ bootstrap_htcondor_standalone() {
 
     # when gfal-* executables are not available, source the lcg dir
     if ! law_wlcg_check_executable "gfal-ls" "silent" && [ -n "${LCG_DIR}" ] && [ -d "${LCG_DIR}" ]; then
-        source "${LCG_DIR}/etc/profile.d/setup-c7-ui-python3-example.sh" ""
+        source "${LCG_DIR}/etc/profile.d/setup-alma9-test.sh" ""
     fi
 
     # load the repo bundle
