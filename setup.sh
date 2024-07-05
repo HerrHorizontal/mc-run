@@ -14,7 +14,7 @@ this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 source_lcg_stack() {
     # Check OS and source according LCG Stack
     local view_base=/cvmfs/sft.cern.ch/lcg/views
-    LCG=LCG_106
+    LCG=LCG_105
     local prefix
     local grid_ui
     local platform
