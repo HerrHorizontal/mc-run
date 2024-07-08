@@ -20,7 +20,7 @@ bootstrap_htcondor_standalone() {
 
     # when gfal-* executables are not available, source the lcg dir
     if ! law_wlcg_check_executable "gfal-ls" "silent" && [ -n "${LCG_DIR}" ] && [ -d "${LCG_DIR}" ]; then
-        source "${LCG_DIR}/etc/profile.d/setup-alma9-test.sh" ""
+        source "${LCG_DIR}/etc/profile.d/setup-alma9-test.sh"
     fi
 
     # load the repo bundle
