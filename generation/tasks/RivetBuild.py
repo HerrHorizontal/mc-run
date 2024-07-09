@@ -34,6 +34,7 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
     rivet_env = set_environment_variables(
         os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
     )
+    rivet_os_version = rivet_env["RIVET_OS_DISTRO"]
 
 
     exclude_params_req = {
@@ -66,6 +67,7 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
     def remote_path(self, *path):
         parts = (
             self.__class__.__name__,
+            self.rivet_os_version,
         ) + path
         return os.path.join(*parts)
 

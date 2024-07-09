@@ -45,6 +45,7 @@ source_rivet(){
     parent="$( dirname "$this_dir" )"
     echo "Adding Rivet analyses from $parent/analyses to RIVET_ANALYSIS_PATH"
     export RIVET_ANALYSIS_PATH="$parent/analyses:$RIVET_ANALYSIS_PATH"
+    export RIVET_OS_DISTRO="$distro${os_version:0:1}"
 }
 
 source_rivet "$@"
