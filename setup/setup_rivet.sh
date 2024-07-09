@@ -12,7 +12,7 @@ this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 source_rivet(){
     # Check OS and source Rivet with dependencies from according LCG Stack
     view_base=/cvmfs/sft.cern.ch/lcg/views
-    LCG=LCG_106
+    LCG=LCG_105
     local prefix
     local platform
     source "$this_dir/os-version.sh"
