@@ -21,6 +21,8 @@ source_lcg_stack() {
     source $this_dir/setup/os-version.sh
     if [[ "$distro" == "CentOS" ]]; then
         if [[ ${os_version:0:1} == "7" ]]; then
+            echo "CentOS7 is not supported anymore! Use an updated OS."
+            return 1
             prefix=x86_64-centos7
             grid_ui="/cvmfs/grid.cern.ch/centos7-ui-200122/etc/profile.d/setup-c7-ui-python3-example.sh"
             platform=${prefix}-gcc11-opt

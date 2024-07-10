@@ -18,6 +18,8 @@ source_rivet(){
     source "$this_dir/os-version.sh"
     if [[ "$distro" == "CentOS" ]]; then
         if [[ ${os_version:0:1} == "7" ]]; then
+            echo "CentOS7 is not supported anymore! Use an updated OS."
+            return 1
             prefix=x86_64-centos7
             platform=${prefix}-gcc11-opt
         fi
