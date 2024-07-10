@@ -12,7 +12,7 @@ source_sherpa() {
     # Check OS and source Sherpa with dependencies from according LCG Stack
     base=/cvmfs/sft.cern.ch/lcg/releases
     view_base=/cvmfs/sft.cern.ch/lcg/views
-    LCG=LCG_106
+    LCG=LCG_105
     local prefix
     local platform
     source "$this_dir/os-version.sh"
