@@ -17,31 +17,39 @@ source_lcg_stack() {
     LCG=LCG_105
     local prefix
     local grid_ui
+    local platform
     source $this_dir/setup/os-version.sh
     if [[ "$distro" == "CentOS" ]]; then
         if [[ ${os_version:0:1} == "7" ]]; then
+            echo "CentOS7 is not supported anymore! Use an updated OS."
+            return 1
             prefix=x86_64-centos7
             grid_ui="/cvmfs/grid.cern.ch/centos7-ui-200122/etc/profile.d/setup-c7-ui-python3-example.sh"
+            platform=${prefix}-gcc11-opt
         fi
     elif [[ "$distro" == "RedHatEnterprise" || "$distro" == "Alma" || "$distro" == "Rocky" ]]; then
         if [[ ${os_version:0:1} == "9" ]]; then
             prefix=x86_64-el9
             grid_ui="/cvmfs/grid.cern.ch/alma9-ui-test/etc/profile.d/setup-alma9-test.sh"
+            platform=${prefix}-gcc13-opt
         fi
     elif [[ "$distro" == "Ubuntu" ]]; then
         if [[ ${os_version:0:2} == "22" ]]; then
             prefix=x86_64-ubuntu2204
+            platform=${prefix}-gcc11-opt
         fi
     fi
     if [[ -z "$prefix" ]]; then
         echo "LCG Stack $LCG not available for $distro $os_version"
         return 1
     fi
-    platform=${prefix}-gcc11-opt
     local lcg_path=$view_base/$LCG/$platform/setup.sh
     echo "Sourcing LCG Stack from $lcg_path"
     # shellcheck disable=SC1090
     source "$lcg_path"
+    # echo "Applying updates ontop of LCG stack from $lcg_path_updates"
+    # local lcg_path_updates=$view_base/$LCG1/$platform/setup.sh
+    # source "$lcg_path_updates"
     echo "Sourcing grid-ui from $grid_ui"
     # shellcheck disable=SC1090
     source "$grid_ui"

@@ -57,7 +57,6 @@ do Factory:Process p p -> j j
 ## specialized NLO package
 
 read Matchbox/MadGraph-NJet.in
-set /Herwig/MatrixElements/Matchbox/Amplitudes/MadGraph:MadgraphPrefix /cvmfs/sft.cern.ch/lcg/releases/LCG_104c_ATLAS_3/MCGenerators/madgraph5amc/3.5.1.atlas2/aarch64-el9-gcc13-opt
 
 # read Matchbox/MadGraph-GoSam.in
 # read Matchbox/MadGraph-MadGraph.in
