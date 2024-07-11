@@ -79,7 +79,7 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
 
     fit_method = luigi.Parameter(
         default="Nelder-Mead",
-        description="Optimizer method for performing the smoothing fit"
+        description="Optimizer method for performing the smoothing fit. Choose between 'Nelder-Mead','trust-exact','BFGS'."
     )
 
     splittings_conf_all = luigi.Parameter(
