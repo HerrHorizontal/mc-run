@@ -23,7 +23,12 @@ class HerwigMerge(GenRivetTask):
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
 
-    setupfile = luigi.Parameter()
+    setupfile = luigi.Parameter(
+        default=None
+    )
+    mc_setting = luigi.Parameter(
+        default=None
+    )
 
     exclude_params_req = {
         "source_script"

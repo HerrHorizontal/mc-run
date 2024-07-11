@@ -69,8 +69,11 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     def workflow_requires(self):
         # integration requires successful build step
+        mc_setting=self.mc_setting
+        if self.mc_setting!="PSoff":
+            mc_setting = None
         return {
-            'HerwigMerge': HerwigMerge.req(self)
+            'HerwigMerge': HerwigMerge.req(self,mc_setting=mc_setting)
         }
 
 
@@ -89,8 +92,11 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     def requires(self):
         # current branch task requires existing Herwig-cache and run-file
+        mc_setting=self.mc_setting
+        if self.mc_setting!="PSoff":
+            mc_setting = None
         return {
-            'HerwigMerge': HerwigMerge.req(self)
+            'HerwigMerge': HerwigMerge.req(self,mc_setting=mc_setting)
         }
 
 
