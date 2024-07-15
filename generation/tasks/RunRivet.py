@@ -49,7 +49,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     )
 
     # dummy parameter for run step
-    number_of_jobs = luigi.IntParameter()
+    number_of_gen_jobs = luigi.IntParameter()
 
 
     exclude_params_req = {
@@ -69,6 +69,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         if str(self.mc_generator).lower() == "herwig":
             reqs["MCRun"] = HerwigRun.req(
                 self,
+                number_of_jobs=self.number_of_gen_jobs,
                 branches=branches,
                 _exclude=[
                     "start_branch", "end_branch",
@@ -80,6 +81,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         elif str(self.mc_generator).lower() == "sherpa":
             reqs["MCRun"] = SherpaRun.req(
                 self,
+                number_of_jobs=self.number_of_gen_jobs,
                 branches=branches,
                 _exclude=[
                     "start_branch", "end_branch",
@@ -98,9 +100,15 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     def create_branch_map(self):
         # each analysis job analyzes a chunk of HepMC files
         if str(self.mc_generator).lower() == "herwig":
-            branch_chunks = HerwigRun.req(self).get_all_branch_chunks(self.files_per_job)
+            branch_chunks = HerwigRun.req(
+                self,
+                number_of_jobs=self.number_of_gen_jobs
+            ).get_all_branch_chunks(self.files_per_job)
         elif str(self.mc_generator).lower() == "sherpa":
-            branch_chunks = SherpaRun.req(self).get_all_branch_chunks(self.files_per_job)
+            branch_chunks = SherpaRun.req(
+                self,
+                number_of_jobs=self.number_of_gen_jobs
+            ).get_all_branch_chunks(self.files_per_job)
         else:
             raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
         # one by one job to inputfile matching
@@ -115,12 +123,20 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         req = dict()
         if str(self.mc_generator).lower() == "herwig":
             req["MCRun"] = [
-                    HerwigRun.req(self, branch=b)
+                    HerwigRun.req(
+                        self,
+                        number_of_jobs=self.number_of_gen_jobs,
+                        branch=b
+                    )
                     for b in self.branch_data
                 ]
         elif str(self.mc_generator).lower() == "sherpa":
             req["MCRun"] = [
-                    SherpaRun.req(self, branch=b)
+                    SherpaRun.req(
+                        self,
+                        number_of_jobs=self.number_of_gen_jobs,
+                        branch=b
+                    )
                     for b in self.branch_data
                 ]
         # and all the Rivet analyses to be built

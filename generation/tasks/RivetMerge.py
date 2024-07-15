@@ -40,7 +40,7 @@ class RivetMerge(GenRivetTask):
     )
 
     # dummy parameter for run step
-    number_of_jobs = luigi.IntParameter()
+    number_of_gen_jobs = luigi.IntParameter()
 
 
     exclude_params_req = {
@@ -231,7 +231,7 @@ class RivetMergeExtensions(RivetMerge):
         reqs["analyses"] = super(RivetMergeExtensions,self).requires()["analyses"]
         for extension, nJobs in self.extensions.items():
             if nJobs and nJobs > 0:
-                reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}", number_of_jobs=nJobs)
+                reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}", number_of_gen_jobs=nJobs)
             else:
                 reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}")
         return reqs
