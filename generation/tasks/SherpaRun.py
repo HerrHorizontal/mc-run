@@ -44,7 +44,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     exclude_params_req = {
         "setupfile",
-        "number_of_jobs",
+        #"number_of_jobs",
         "events_per_job",
         "start_seed",
         "htcondor_walltime", "htcondor_request_memory",

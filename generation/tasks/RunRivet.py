@@ -48,6 +48,10 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         description="Name of the MC generator used for event generation."
     )
 
+    # dummy parameter for run step
+    number_of_jobs = luigi.IntParameter()
+
+
     exclude_params_req = {
         "files_per_job",
         "bootstrap_file", 

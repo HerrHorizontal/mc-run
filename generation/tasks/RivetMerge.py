@@ -39,6 +39,9 @@ class RivetMerge(GenRivetTask):
         description="Name of the MC generator used for event generation."
     )
 
+    # dummy parameter for run step
+    number_of_jobs = luigi.IntParameter()
+
 
     exclude_params_req = {
         "source_script"
@@ -212,18 +215,25 @@ class RivetMerge(GenRivetTask):
 
 class RivetMergeExtensions(RivetMerge):
 
-    extensions = luigi.ListParameter(
-        default=[],
-        description="Campaign extensions (e.g. dedicated MC campaigns enhancing statistics in parts of phase space) identified by a list of suffices to the campaign name."
+    extensions = luigi.DictParameter(
+        default=dict(),
+        description="Campaign extensions (e.g. dedicated MC campaigns enhancing statistics in parts of phase space) identified by a list of suffices to the campaign name with a corresponding number of generation jobs to be expected."
     )
+
+    exclude_params_req = RivetMerge.exclude_params_req
+    exclude_params_req.add("extensions")
+
 
     def requires(self):
         reqs = {
             "RivetMerge": RivetMerge.req(self)
         }
         reqs["analyses"] = super(RivetMergeExtensions,self).requires()["analyses"]
-        for extension in self.extensions:
-            reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}")
+        for extension, nJobs in self.extensions.items():
+            if nJobs and nJobs > 0:
+                reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}", number_of_jobs=nJobs)
+            else:
+                reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}")
         return reqs
     
     def run(self):
