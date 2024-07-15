@@ -86,9 +86,10 @@ class HerwigMerge(GenRivetTask):
             os.system('tar -xzf {}'.format(_file.path))
 
         for branch, target in self.input()['HerwigIntegrate']["collection"].targets.items():
-            if branch <= 10:
+            logger_cut = 11
+            if branch < logger_cut:
                 logger.info('Getting Herwig integration file: {}'.format(target))
-            if branch == 11:
+            if branch == logger_cut:
                 logger.info(
                     'Getting {} more Herwig integration files'.format(
                         len(self.input()['HerwigIntegrate']["collection"].targets.items())-10

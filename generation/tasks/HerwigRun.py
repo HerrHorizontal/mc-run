@@ -73,7 +73,7 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         if self.mc_setting!="PSoff":
             mc_setting = None
         return {
-            'HerwigMerge': HerwigMerge.req(self,mc_setting=mc_setting)
+            'HerwigMerge': HerwigMerge.req(self, mc_setting=mc_setting)
         }
 
 
@@ -96,7 +96,7 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         if self.mc_setting!="PSoff":
             mc_setting = None
         return {
-            'HerwigMerge': HerwigMerge.req(self,mc_setting=mc_setting)
+            'HerwigMerge': HerwigMerge.req(self, mc_setting=mc_setting)
         }
 
 
