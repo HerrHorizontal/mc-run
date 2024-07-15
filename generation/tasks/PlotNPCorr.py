@@ -10,7 +10,7 @@ from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from .RivetMerge import RivetMerge
+from .RivetMerge import RivetMergeExtensions
 from .DeriveNPCorr import DeriveNPCorr
 
 from law.logger import get_logger
@@ -113,11 +113,11 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
 
     def workflow_requires(self):
         req = super(PlotNPCorr, self).workflow_requires()
-        req["full"] = RivetMerge.req(
+        req["full"] = RivetMergeExtensions.req(
             self, 
             mc_setting = self.mc_setting_full
         )
-        req["partial"] = RivetMerge.req(
+        req["partial"] = RivetMergeExtensions.req(
             self,
             mc_setting = self.mc_setting_partial
         )

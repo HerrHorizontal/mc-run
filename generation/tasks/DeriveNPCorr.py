@@ -6,7 +6,7 @@ import os
 from generation.framework.utils import run_command, set_environment_variables
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from .RivetMerge import RivetMerge
+from .RivetMerge import RivetMergeExtensions
 
 from law.logger import get_logger
 
@@ -73,11 +73,11 @@ class DeriveNPCorr(PostprocessingTask):
 
     def requires(self):
         req = dict()
-        req["full"] = RivetMerge.req(
+        req["full"] = RivetMergeExtensions.req(
             self, 
             mc_setting = self.mc_setting_full
         )
-        req["partial"] = RivetMerge.req(
+        req["partial"] = RivetMergeExtensions.req(
             self,
             mc_setting = self.mc_setting_partial
         )
