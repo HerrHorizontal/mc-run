@@ -27,6 +27,7 @@ software/
 **/sherpa/*/SConstruct
 **/sherpa/*/*.db*
 **/sherpa/*/*.dat
+!**/sherpa/*/Run.dat
 **Sherpa_Reference.tex
 
 # Herwig installations
