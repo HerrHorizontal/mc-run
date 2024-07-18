@@ -145,7 +145,7 @@ pp.pprint(aos_ratios)
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-# yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
+# yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize="large", mfont=None, textfigs=True)
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
@@ -173,8 +173,20 @@ for sname, splits in splittings.items():
         fig.set_size_inches(6,2*0.5*len(splits))
         axmain = fig.add_subplot(1,1,1)
 
-        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
-        axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
+        axmain.set_xlabel(
+            xlabel=r"{}".format(xlabel),
+            x=1,
+            ha="right",
+            labelpad=None,
+            fontsize="large"
+        )
+        axmain.set_ylabel(
+            ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]),
+            y=1,
+            ha="right",
+            labelpad=None,
+            fontsize="large"
+        )
 
         yminmain = args.yrange[0]
         ymaxmain = args.yrange[1]
@@ -271,7 +283,7 @@ for sname, splits in splittings.items():
         axmain.text(
             x=0.03, y=0.97,
             s=jet["label"],
-            fontsize=12,
+            fontsize="large",
             ha='left', va='top',
             transform=axmain.transAxes
         )

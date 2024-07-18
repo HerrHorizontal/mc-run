@@ -202,7 +202,7 @@ pp.pprint(aos_ratios)
 if not os.path.isdir(args.PLOTDIR):
     os.mkdir(args.PLOTDIR)
 
-# yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize=12, mfont=None, textfigs=True)
+# yoda.plotting.mplinit(engine='MPL', font='TeX Gyre Pagella', fontsize="large", mfont=None, textfigs=True)
 
 xmin = min(ao.xMin() for ao in aos_ratios.values())
 xmax = max(ao.xMax() for ao in aos_ratios.values())
@@ -309,7 +309,13 @@ for name, ao in aos_ratios.items():
 
     label=r"$\frac{{{}}}{{{}}}$".format(LABELS[0], LABELS[1])
 
-    axmain.errorbar(xVals, yVals, xerr=xErrs.T, yerr=yErrs.T, color=COLORS[0], linestyle="none", linewidth=1.4, capthick=1.4, label=label)
+    axmain.errorbar(
+        xVals, yVals,
+        xerr=xErrs.T, yerr=yErrs.T,
+        color=COLORS[0],
+        linestyle="none", linewidth=1.4, capthick=1.4,
+        label=label
+    )
     # axmain.step(xEdges, yEdges, where="post", color=COLORS[0], linestyle="-", linewidth=1.4, label=label)
 
     fit_results = fit(xVals, yVals, np.amax(yErrs, axis=1), N_PARS=3, method=args.METHOD)
@@ -327,7 +333,7 @@ for name, ao in aos_ratios.items():
     axmain.text(
         x=0.97, y=0.03,
         s=r"$\chi^2/\mathrm{ndof}=$"+"{:5.3f}/{}".format(fit_results["chi2"],fit_results["ndf"])+"={:5.3f}".format(fit_results["chi2ndf"]),
-        fontsize=10,
+        fontsize="medium",
         ha='right', va='bottom',
         transform=axmain.transAxes
     )
@@ -336,13 +342,13 @@ for name, ao in aos_ratios.items():
     axmain.set_xticklabels(xticks)
 
     if not args.NOLEGEND:
-        axmain.legend(frameon=False, handlelength=1, loc='upper right')
+        axmain.legend(frameon=False, handlelength=1, loc='upper right', prop={'size': 'medium'})
 
     if binlabel:
         axmain.text(
             x=0.03, y=0.97,
             s=binlabel,
-            fontsize=10,
+            fontsize="medium",
             ha='left', va='top',
             transform=axmain.transAxes
         )
