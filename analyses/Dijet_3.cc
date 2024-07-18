@@ -98,7 +98,7 @@ namespace Rivet {
       };
 
 #if 1
-    std::vector<double> binExtension = {23, 27, 32, 37, 42, 47, 57, 67, 77, 87, 97, 107, 127};
+    std::vector<double> binExtension = {37, 42, 47, 57, 67, 77, 87, 97, 107, 127};
     for (std::vector<double> & binEdges: binEdgesPtAve) {
       binEdges.insert(binEdges.begin(), binExtension.begin(), binExtension.end());
     }
