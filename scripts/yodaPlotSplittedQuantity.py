@@ -158,12 +158,19 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
         fig.set_size_inches(6, 5+(len(splits)-5)/2)
         axmain = fig.add_subplot(1, 1, 1)
 
-        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
+        axmain.set_xlabel(
+            xlabel=r"{}".format(xlabel),
+            x=1,
+            ha="right",
+            labelpad=None,
+            fontsize="large"
+        )
         axmain.set_ylabel(
             ylabel=r"{}".format(ylabel),
             y=1,
             ha="right",
             labelpad=None,
+            fontsize="large"
         )
         axmain.set_xlim([xmin, xmax])
         axmain.set_xscale("log")
@@ -238,12 +245,11 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
         )
 
         # plot additional labels
-        label_fontsize = 12
         axmain.text(
             x=0.03,
             y=0.9,
             s=jet["label"],
-            fontsize=label_fontsize,
+            fontsize="large",
             ha="left",
             va="top",
             transform=axmain.transAxes,
@@ -252,7 +258,7 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             x=0.03,
             y=0.97,
             s=add_splittings_labels[i_s],
-            fontsize=label_fontsize+1,
+            fontsize="x-large",
             fontweight="demi",
             ha="left",
             va="top",

@@ -14,7 +14,7 @@ from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from .RivetMerge import RivetMerge
+from .RivetMerge import RivetMergeExtensions
 
 from law.logger import get_logger
 
@@ -92,7 +92,7 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
 
     def workflow_requires(self):
         req = super(PlotSplittedQuantity, self).workflow_requires()
-        req["Rivet"] = RivetMerge.req(self)
+        req["Rivet"] = RivetMergeExtensions.req(self)
         return req
 
     def create_branch_map(self):

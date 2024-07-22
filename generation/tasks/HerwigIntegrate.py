@@ -32,7 +32,13 @@ class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 Should not be greater than the number of subprocesses."
     )
 
-    setupfile = luigi.Parameter()
+    setupfile = luigi.Parameter(
+        default=None
+    )
+    mc_setting = luigi.Parameter(
+        default=None
+    )
+
 
     exclude_params_req = {
         "bootstrap_file",
@@ -120,7 +126,11 @@ class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 )
             )
         else:
-            raise IOError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
+            if code==0 and any("Assuming empty integration job" in _out for _out in [out,error]):
+                logger.info(f"Integration job {_jobid} empty. You can reduce number of integration jobs for this process.")
+                open("Herwig-int.tar.gz", "x").close()
+            else:
+                raise IOError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
 
         output_file = os.path.abspath("Herwig-int.tar.gz")
         if os.path.exists(output_file):

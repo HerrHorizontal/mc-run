@@ -23,7 +23,12 @@ class HerwigMerge(GenRivetTask):
     Merge grid files from subprocess 'Herwig integrate' generation and complete Herwig-cache 
     """
 
-    setupfile = luigi.Parameter()
+    setupfile = luigi.Parameter(
+        default=None
+    )
+    mc_setting = luigi.Parameter(
+        default=None
+    )
 
     exclude_params_req = {
         "source_script"
@@ -81,8 +86,15 @@ class HerwigMerge(GenRivetTask):
             os.system('tar -xzf {}'.format(_file.path))
 
         for branch, target in self.input()['HerwigIntegrate']["collection"].targets.items():
-            if branch <=10:
+            logger_cut = 11
+            if branch < logger_cut:
                 logger.info('Getting Herwig integration file: {}'.format(target))
+            elif branch == logger_cut:
+                logger.info(
+                    'Getting {} more Herwig integration files'.format(
+                        len(self.input()['HerwigIntegrate']["collection"].targets.items())-logger_cut-1
+                    )
+                )
             with target.localize('r') as _file:
                 os.system('tar -xzf {}'.format(_file.path))
 

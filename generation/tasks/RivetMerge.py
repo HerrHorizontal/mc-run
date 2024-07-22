@@ -31,6 +31,7 @@ class RivetMerge(GenRivetTask):
         description="List of IDs of Rivet analyses to run."
     )
     chunk_size = luigi.IntParameter(
+        default=100,
         description="Number of individual YODA files to merge in a single `rivet-merge` call."
     )
     mc_generator = luigi.Parameter(
@@ -38,9 +39,11 @@ class RivetMerge(GenRivetTask):
         description="Name of the MC generator used for event generation."
     )
 
+    # dummy parameter for run step
+    number_of_gen_jobs = luigi.IntParameter()
+
 
     exclude_params_req = {
-        "chunk_size",
         "source_script"
     }
     exclude_params_req_get = {
@@ -53,17 +56,19 @@ class RivetMerge(GenRivetTask):
         "local_scheduler",
         "tolerance",
         "acceptance",
-        "only_missing"
+        "only_missing",
+        "extensions"
     }
 
 
     def requires(self):
-        return {
+        reqs = {
             # all analysis jobs to be finished
             'RunRivet': RunRivet.req(self),
             # and all the Rivet analyses to be built
             "analyses": RivetBuild.req(self, branch=-1)
         }
+        return reqs
 
 
     def remote_path(self, *path):
@@ -205,5 +210,96 @@ class RivetMerge(GenRivetTask):
             for so_file in local_so_files:
                 os.remove(so_file)
 
+        print("=======================================================")
+
+
+class RivetMergeExtensions(RivetMerge):
+
+    extensions = luigi.DictParameter(
+        default=dict(),
+        description="Campaign extensions (e.g. dedicated MC campaigns enhancing statistics in parts of phase space) identified by a list of suffices to the campaign name with a corresponding number of generation jobs to be expected."
+    )
+
+    exclude_params_req = RivetMerge.exclude_params_req
+    exclude_params_req.add("extensions")
+
+
+    def requires(self):
+        reqs = {
+            "RivetMerge": RivetMerge.req(self)
+        }
+        reqs["analyses"] = super(RivetMergeExtensions,self).requires()["analyses"]
+        for extension, nJobs in self.extensions.items():
+            if nJobs and nJobs > 0:
+                reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}", number_of_gen_jobs=nJobs)
+            else:
+                reqs[f"RivetMerge{extension}"] = RivetMerge.req(self, campaign=f"{self.campaign}{extension}")
+        return reqs
+    
+    def run(self):
+
+        # ensure that the output directory exists
+        output = self.output()
+        try:
+            output.parent.touch()
+        except IOError:
+            logger.error("Output target doesn't exist!")
+
+        # actual payload:
+        print("=======================================================")
+        print("Starting merging of extension YODA files with base")
+        print("=======================================================")
+
+        # adjust rivet environment
+        dirname = os.path.expandvars("$ANALYSIS_PATH")
+        self.rivet_env["RIVET_ANALYSIS_PATH"] = ":".join((dirname, self.rivet_env.get("RIVET_ANALYSIS_PATH","")))
+
+        # identify and get the compiled Rivet analyses
+        logger.info("Shared object Rivet files: {}".format(self.input()["analyses"]["collection"].targets.values()))
+        local_so_files = []
+        for target in self.input()["analyses"]["collection"].targets.values():
+            with target.localize('r') as so_file:
+                local_path = os.path.join(dirname, str(os.path.basename(so_file.path)).split("_",1)[1])
+                so_file.copy_to_local(
+                    local_path
+                )
+                local_so_files.append(local_path)
+
+        # localize the separate YODA files on grid storage
+        inputfile_list = []
+        rivetMerge_dict = {k: v for k, v in self.input().items() if k.startswith("RivetMerge")}
+        for target in rivetMerge_dict.values():
+            if target.exists():
+                with target.localize('r') as _file:
+                    inputfile_list.append(_file.path)
+
+        # merge in chunks
+        chunk_size = self.chunk_size
+
+        final_input_files=inputfile_list
+        try:
+            if len(final_input_files) > 1:
+                while len(final_input_files)>chunk_size:
+                    final_input_files=self.mergeChunkwise(full_inputfile_list=final_input_files,chunk_size=chunk_size)
+                
+                _output_file = self.mergeSingleYodaChunk(inputfile_list=final_input_files)
+            else:
+                logger.info(f"No extensions met! Copying main campaign {self.campaign} RivetMerge output.")
+                _output_file = final_input_files[0]
+            _output_file = os.path.abspath(_output_file)
+
+            if os.path.exists(_output_file):
+                output.copy_from_local(_output_file)
+                os.remove(_output_file)
+                for _outfile in final_input_files:
+                    os.remove(_outfile)
+            else:
+                raise IOError("Could not find output file {}!".format(_output_file))
+        except Exception as e:
+            self.output().remove()
+            raise e
+        finally:
+            for so_file in local_so_files:
+                os.remove(so_file)
 
         print("=======================================================")

@@ -98,7 +98,7 @@ namespace Rivet {
       };
 
 #if 1
-    std::vector<double> binExtension = {22, 27, 32, 37, 42, 47, 57, 67, 77, 87, 97, 107, 127};
+    std::vector<double> binExtension = {37, 42, 47, 57, 67, 77, 87, 97, 107, 127};
     for (std::vector<double> & binEdges: binEdgesPtAve) {
       binEdges.insert(binEdges.begin(), binExtension.begin(), binExtension.end());
     }
@@ -137,9 +137,9 @@ namespace Rivet {
       const FastJets& fj_ak04 = apply<FastJets>(event, "JetsAK4");
       const FastJets& fj_ak08 = apply<FastJets>(event, "JetsAK8");
 
-      // select all jets above 50 GeV within rapidity acceptance
-      const Jets& jets_ak04 = fj_ak04.jetsByPt(Cuts::pt >= 50*GeV && Cuts::absrap < 5);
-      const Jets& jets_ak08 = fj_ak08.jetsByPt(Cuts::pt >= 50*GeV && Cuts::absrap < 5);
+      // select all jets above minimum pt threshold within rapidity acceptance
+      const Jets& jets_ak04 = fj_ak04.jetsByPt(Cuts::pt >= _subleadingjetpt && Cuts::absrap < 5);
+      const Jets& jets_ak08 = fj_ak08.jetsByPt(Cuts::pt >= _subleadingjetpt && Cuts::absrap < 5);
 
       // fill histograms for both jet sizes
       fillHistograms(jets_ak04, m_hist_ybys_ptave_ak04, m_hist_ybys_mass_ak04);
@@ -151,10 +151,10 @@ namespace Rivet {
       if (jets.size() < 2) return;
 
       // check dijet phase space: want events where the leading and subleading jets
-      // pass the required pt thresholds of 100 and 50 GeV, respectively, //
+      // pass the required pt thresholds, respectively, //
       // and both satisfy |y| < 3.0
-      if ( (jets[0].pt() >= 100*GeV) && (jets[0].absrap() < 3) &&
-           (jets[1].pt() >= 50*GeV)  && (jets[1].absrap() < 3) ) {
+      if ( (jets[0].pt() >= _leadingjetpt) && (jets[0].absrap() < 3) &&
+           (jets[1].pt() >= _subleadingjetpt)  && (jets[1].absrap() < 3) ) {
 
         // calculate observables
         double ystar = 0.5 * std::abs(jets[0].rap() - jets[1].rap());
@@ -210,6 +210,12 @@ namespace Rivet {
       else
           return -1;
     }
+
+  /// @name Selections
+    ///@{
+  const double _leadingjetpt = 25*GeV; // minimum jet pT
+  const double _subleadingjetpt = 20*GeV; // minimum jet pT
+  ///@}
 
   };
 

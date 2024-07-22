@@ -56,7 +56,7 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     exclude_params_req = {
         # "setupfile",
-        "number_of_jobs",
+        #"number_of_jobs",
         "events_per_job",
         "start_seed", 
         "htcondor_walltime", "htcondor_request_memory", 
@@ -69,8 +69,11 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     def workflow_requires(self):
         # integration requires successful build step
+        mc_setting=self.mc_setting
+        if self.mc_setting!="PSoff":
+            mc_setting = None
         return {
-            'HerwigMerge': HerwigMerge.req(self)
+            'HerwigMerge': HerwigMerge.req(self, mc_setting=mc_setting)
         }
 
 
@@ -89,8 +92,11 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     def requires(self):
         # current branch task requires existing Herwig-cache and run-file
+        mc_setting=self.mc_setting
+        if self.mc_setting!="PSoff":
+            mc_setting = None
         return {
-            'HerwigMerge': HerwigMerge.req(self)
+            'HerwigMerge': HerwigMerge.req(self, mc_setting=mc_setting)
         }
 
 

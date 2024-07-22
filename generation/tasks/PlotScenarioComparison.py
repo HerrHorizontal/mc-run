@@ -85,6 +85,17 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
         description="Dictionary of identifier and splittings plot settings. Set via --splittings-conf from config, if None."
     )
 
+    splittings_conf_all = luigi.Parameter(
+        # default=splittings_conf_summary.values()[-1],
+        description="BINS identifier (predefined binning configuration in generation/framework/config.py) covering all splittings. \
+             Will set parameter 'splittings'. Overwritten by --splittings-all."
+    )
+
+    splittings_all = luigi.DictParameter(
+        default=None,
+        description="Splittings plot settings covering all splittings. Set via --splittings-conf-all from config, if None."
+    )
+
 
     exclude_params_req_get = {
         "htcondor_remote_job",
@@ -110,7 +121,11 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
 
     def workflow_requires(self):
         req = super(PlotScenarioComparison, self).workflow_requires()
-        if self.splittings:
+        if self.splittings_conf_all:
+            splits_all = BINS[self.splittings_conf_all]
+        elif self.splittings_all:
+            splits_all = self.splittings_all
+        elif self.splittings:
             splits_all = dict()
             for v in (self.splittings).values():
                 splits_all.update(v)
@@ -142,7 +157,11 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
 
     def requires(self):
         req = dict()
-        if self.splittings:
+        if self.splittings_conf_all:
+            splits_all = BINS[self.splittings_conf_all]
+        elif self.splittings_all:
+            splits_all = self.splittings_all
+        elif self.splittings:
             splits_all = dict()
             for v in (self.splittings).values():
                 splits_all.update(v)

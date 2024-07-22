@@ -10,7 +10,7 @@ from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
 
 from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
 
-from .RivetMerge import RivetMerge
+from .RivetMerge import RivetMergeExtensions
 from .DeriveNPCorr import DeriveNPCorr
 
 from law.logger import get_logger
@@ -79,7 +79,7 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
 
     fit_method = luigi.Parameter(
         default="Nelder-Mead",
-        description="Optimizer method for performing the smoothing fit"
+        description="Optimizer method for performing the smoothing fit. Choose between 'Nelder-Mead', 'trust-exact', 'BFGS'."
     )
 
     splittings_conf_all = luigi.Parameter(
@@ -113,11 +113,11 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
 
     def workflow_requires(self):
         req = super(PlotNPCorr, self).workflow_requires()
-        req["full"] = RivetMerge.req(
+        req["full"] = RivetMergeExtensions.req(
             self, 
             mc_setting = self.mc_setting_full
         )
-        req["partial"] = RivetMerge.req(
+        req["partial"] = RivetMergeExtensions.req(
             self,
             mc_setting = self.mc_setting_partial
         )
@@ -253,6 +253,17 @@ class PlotNPCorrSummary(PlotNPCorr):
     splittings_summary = luigi.DictParameter(
         default=None,
         description="Dictionary of identifier and splittings plot settings for all bins. Set via --splittings-conf-summary from config, if None."
+    )
+
+    splittings_conf_all = luigi.Parameter(
+        # default=splittings_conf_summary.values()[-1],
+        description="BINS identifier (predefined binning configuration in generation/framework/config.py) covering all splittings. \
+             Will set parameter 'splittings'. Overwritten by --splittings-all."
+    )
+
+    splittings_all = luigi.DictParameter(
+        default=None,
+        description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None."
     )
 
 

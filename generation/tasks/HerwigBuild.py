@@ -51,7 +51,13 @@ class HerwigBuild(GenRivetTask):
                 Should not be greater than the number of subprocesses."
     )
 
-    setupfile = luigi.Parameter()
+    setupfile = luigi.Parameter(
+        default=None
+    )
+    mc_setting = luigi.Parameter(
+        default=None
+    )
+
 
 
     exclude_params_req_get = {
