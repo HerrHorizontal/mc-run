@@ -89,10 +89,10 @@ class HerwigMerge(GenRivetTask):
             logger_cut = 11
             if branch < logger_cut:
                 logger.info('Getting Herwig integration file: {}'.format(target))
-            if branch == logger_cut:
+            elif branch == logger_cut:
                 logger.info(
                     'Getting {} more Herwig integration files'.format(
-                        len(self.input()['HerwigIntegrate']["collection"].targets.items())-10
+                        len(self.input()['HerwigIntegrate']["collection"].targets.items())-logger_cut-1
                     )
                 )
             with target.localize('r') as _file:
