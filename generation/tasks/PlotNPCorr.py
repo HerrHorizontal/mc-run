@@ -255,6 +255,17 @@ class PlotNPCorrSummary(PlotNPCorr):
         description="Dictionary of identifier and splittings plot settings for all bins. Set via --splittings-conf-summary from config, if None."
     )
 
+    splittings_conf_all = luigi.Parameter(
+        # default=splittings_conf_summary.values()[-1],
+        description="BINS identifier (predefined binning configuration in generation/framework/config.py) covering all splittings. \
+             Will set parameter 'splittings'. Overwritten by --splittings-all."
+    )
+
+    splittings_all = luigi.DictParameter(
+        default=None,
+        description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None."
+    )
+
 
     def workflow_requires(self):
         reqs = super(PlotNPCorrSummary,self).workflow_requires()
