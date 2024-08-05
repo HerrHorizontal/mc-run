@@ -209,10 +209,15 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             reversed(list(zip(binlabels, colors, markers, lnames, aos)))
         ):
             print("Plot bin {}...".format(label))
-            xErrs = np.array(ao.xErrs())
-            yErrs = np.array(ao.yErrs())
             xVals = np.array(ao.xVals())
             yVals = np.array(ao.yVals())
+            xErrs = np.array(ao.xErrs())
+            try:
+                yErrs = np.array(ao.yErrs())
+            except:
+                # assume a 50% uncertainty if yoda yErrs estimation fails
+                # TODO: implement a more robust yErrs method in yoda 
+                yErrs = yVals*0.5
             xEdges = np.append(ao.xMins(), ao.xMax())
             yEdges = np.append(ao.yVals(), ao.yVals()[-1])
             yEdgesUp = yEdges + np.append(yErrs, yErrs[-1])
