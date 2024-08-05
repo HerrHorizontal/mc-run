@@ -265,10 +265,15 @@ for name, ao in aos_ratios.items():
         axorigin.set_yscale("log")
 
         for i, aotop in enumerate([aos_full[name], aos_partial[name]]):
-            xErrs = np.array(aotop.xErrs())
-            yErrs = np.array(aotop.yErrs())
             xVals = np.array(aotop.xVals())
             yVals = np.array(aotop.yVals())
+            xErrs = np.array(aotop.xErrs())
+            try:
+                yErrs = np.array(aotop.yErrs())
+            except:
+                # assume a 50% uncertainty if yoda yErrs estimation fails
+                # TODO: implement a more robust yErrs method in yoda 
+                yErrs = yVals*0.5
             xEdges = np.append(aotop.xMins(), aotop.xMax())
             yEdges = np.append(aotop.yVals(), aotop.yVals()[-1])
 
