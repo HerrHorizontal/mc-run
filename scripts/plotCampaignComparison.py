@@ -140,7 +140,7 @@ xticks = [x for x in XTICKS if x<=xmax and x>=xmin]
 for sname, splits in splittings.items():
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6,2*0.5*len(splits))
+        fig.set_size_inches(6,2*0.5*len(splits)+0.5*len(args.campaign))
         axmain = fig.add_subplot(1,1,1)
 
         axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)

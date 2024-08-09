@@ -13,13 +13,13 @@ MCCHAIN_SCENARIO_LABELS = {
 CAMPAIGN_MODS = {
     "herwigLHC-LO-ZplusJet": dict(
         order="LO",
-        label=r"MG@LO $\oplus$ Herwig7",
+        label=r"Herwig7 LO",
         lightencolor=1.0,
-        linestyle="dotted"
+        linestyle="solid"
     ),
     "herwigLHC-NLO-ZplusJet": dict(
         order="NLO",
-        label=r"MG@NLO $\oplus$ Herwig7",
+        label=r"Herwig7 NLO",
         lightencolor=0.7,
         linestyle="solid"
     ),
@@ -27,13 +27,19 @@ CAMPAIGN_MODS = {
         order="LO",
         label=r"Sherpa LO",
         lightencolor=0.5,
-        linestyle="dashed"
+        linestyle="dotted"
     ),
     "sherpaLHC-NLO-ZplusJet": dict(
         order="NLO",
         label=r"Sherpa NLO",
-        lightencolor=0.3,
-        linestyle="dashdot"
+        lightencolor=0.7,
+        linestyle="dashed"
+    ),
+    "sherpaLHC-ZJetMerging": dict(
+        order="NLO",
+        label=r"Sherpa Merged",
+        lightencolor=1.0,
+        linestyle="solid"
     ),
     "herwigDijets_LO": dict(
         order="LO",

@@ -16,7 +16,7 @@ from util import valid_yoda_file
 
 XTICKS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
 GENERATOR_LABEL_DICT = {
-    "herwig": r"MG $\oplus$ Herwig7",
+    "herwig": "Herwig7",
     "sherpa": "Sherpa",
 }
 
