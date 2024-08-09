@@ -269,9 +269,13 @@ class RivetMergeExtensions(RivetMerge):
         inputfile_list = []
         rivetMerge_dict = {k: v for k, v in self.input().items() if k.startswith("RivetMerge")}
         for target in rivetMerge_dict.values():
+            logger.debug(f"Trying to download input YODA file target {target}...")
             if target.exists():
                 with target.localize('r') as _file:
+                    logger.debug(f"\tDownload of {target} successfull! Input path: {_file.abspath}")
                     inputfile_list.append(_file.path)
+            else:
+                logger.error(f"Input target {target} didn't exist!")
 
         # merge in chunks
         chunk_size = self.chunk_size
@@ -286,6 +290,7 @@ class RivetMergeExtensions(RivetMerge):
             else:
                 logger.info(f"No extensions met! Copying main campaign {self.campaign} RivetMerge output.")
                 _output_file = final_input_files[0]
+                final_input_files.remove(_output_file)
             _output_file = os.path.abspath(_output_file)
 
             if os.path.exists(_output_file):
