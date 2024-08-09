@@ -91,7 +91,10 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
     def htcondor_create_job_manager(self, **kwargs):
         kwargs = merge_dicts(self.htcondor_job_manager_defaults, kwargs)
-        return HTCondorJobManager(**kwargs)
+        job_manager = super().htcondor_create_job_manager(**kwargs)
+        job_manager.job_grouping_submit = False
+        job_manager.chunk_size_submit = 0
+        return job_manager
 
     def htcondor_output_directory(self):
         job_dir = law.config.get_expanded("job", "job_file_dir")
