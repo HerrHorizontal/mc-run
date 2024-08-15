@@ -212,7 +212,7 @@ for sname, splits in splittings.items():
                 else:
                     continue
             axmain.set_ylim([yminmain, (ymaxmain-1)+(i+1)])
-            axmain.axhline(1.0*(0.5*i+1), color="gray") #< Ratio = 1 marker line
+            axmain.axhline(1.0*(0.5*i+1), color="gray", linestyle=(0,(1,1.5)), linewidth=1.0) #< Ratio = 1 marker line
 
         assert(len(binlabels) == len(aos))
 

@@ -27,7 +27,7 @@ CAMPAIGN_MODS = {
         order="LO",
         label=r"Sherpa LO",
         lightencolor=0.5,
-        linestyle="dotted"
+        linestyle="dashdot"
     ),
     "sherpaLHC-NLO-ZplusJet": dict(
         order="NLO",

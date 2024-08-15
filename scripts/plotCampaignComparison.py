@@ -143,8 +143,8 @@ for sname, splits in splittings.items():
         fig.set_size_inches(6,2*0.5*len(splits)+0.5*len(args.campaign))
         axmain = fig.add_subplot(1,1,1)
 
-        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None)
-        axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None)
+        axmain.set_xlabel(xlabel=r"{}".format(xlabel), x=1, ha="right", labelpad=None, fontsize="large")
+        axmain.set_ylabel(ylabel=r"$\frac{{{}}}{{{}}}+$X".format(LABELS[0], LABELS[1]), y=1, ha="right", labelpad=None, fontsize="large")
 
         yminmain = args.yrange[0]
         ymaxmain = args.yrange[1]
@@ -180,7 +180,7 @@ for sname, splits in splittings.items():
                             lnames.append(name.replace(v["ident"],k))
                             aos.append(ao)
             axmain.set_ylim([yminmain, (ymaxmain-1)+(i+1)])
-            axmain.axhline(1.0*(0.5*i+1), color="gray") #< Ratio = 1 marker line
+            axmain.axhline(1.0*(0.5*i+1), color="gray", linestyle=(0,(1,1.5)), linewidth=1.0) #< Ratio = 1 marker line
 
         assert(len(campaigns) > 0)
         assert(len(campaigns) == len(aos))
@@ -245,7 +245,7 @@ for sname, splits in splittings.items():
         axmain.text(
             x=0.03, y=0.97,
             s=jet["label"],
-            fontsize=12,
+            fontsize="large",
             ha='left', va='top',
             transform=axmain.transAxes
         )
