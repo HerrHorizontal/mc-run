@@ -3,16 +3,14 @@
 import argparse
 import json
 import os.path
+
 import matplotlib as mpl
 
 mpl.use("Agg")
 import matplotlib.pyplot as plt
-
-import yoda
 import numpy as np
-
+import yoda
 from util import valid_yoda_file
-
 
 XTICKS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
 GENERATOR_LABEL_DICT = {
@@ -90,7 +88,7 @@ parser.add_argument(
     dest="LABELS",
     type=str,
     nargs="*",
-    help="additional plot labels to be plotted into canvas area under jet label, one per splitting"
+    help="additional plot labels to be plotted into canvas area under jet label, one per splitting",
 )
 parser.add_argument(
     "--jets",
@@ -148,14 +146,14 @@ if args.JETS:
 
 if args.LABELS:
     add_splittings_labels = args.LABELS
-    assert len(add_splittings_labels)==len(splittings.keys())
+    assert len(add_splittings_labels) == len(splittings.keys())
 else:
     add_splittings_labels = None
 
 for i_s, (sname, splits) in enumerate(splittings.items()):
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6, 5+(len(splits)-5)/2)
+        fig.set_size_inches(6, 5 + (len(splits) - 5) / 2)
         axmain = fig.add_subplot(1, 1, 1)
 
         axmain.set_xlabel(
@@ -163,14 +161,14 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             x=1,
             ha="right",
             labelpad=None,
-            fontsize="large"
+            fontsize="large",
         )
         axmain.set_ylabel(
             ylabel=r"{}".format(ylabel),
             y=1,
             ha="right",
             labelpad=None,
-            fontsize="large"
+            fontsize="large",
         )
         axmain.set_xlim([xmin, xmax])
         axmain.set_xscale("log")
@@ -188,7 +186,9 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
             for name, ao in aos_dict.items():
                 # print("ident: {}".format(v["ident"]))
                 # print(f"name: {name}")
-                if v["ident"] in name and list(args.MATCH)[0] in name:# and jet["ident"] in name:
+                if (
+                    v["ident"] in name and list(args.MATCH)[0] in name
+                ):  # and jet["ident"] in name:
                     yminmain = min(v["ylim"][0], yminmain)
                     ymaxmain = max(v["ylim"][1], ymaxmain)
                     binlabels.append(r"{}".format(v["label"]).replace("\n", " "))
@@ -216,8 +216,8 @@ for i_s, (sname, splits) in enumerate(splittings.items()):
                 yErrs = np.array(ao.yErrs())
             except:
                 # assume a 50% uncertainty if yoda yErrs estimation fails
-                # TODO: implement a more robust yErrs method in yoda 
-                yErrs = yVals*0.5
+                # TODO: implement a more robust yErrs method in yoda
+                yErrs = yVals * 0.5
             xEdges = np.append(ao.xMins(), ao.xMax())
             yEdges = np.append(ao.yVals(), ao.yVals()[-1])
             yEdgesUp = yEdges + np.append(yErrs, yErrs[-1])

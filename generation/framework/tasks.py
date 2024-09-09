@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+from warnings import simplefilter
+
+import law
 import law.contrib
 import luigi
-import law
-from luigi.util import inherits
 from law.logger import get_logger
-
 from luigi.parameter import UnconsumedParameterWarning
-from warnings import simplefilter
+from luigi.util import inherits
 
 # Ignore warnings about unused parameters that are set in the default config but not used by all tasks
 simplefilter("ignore", UnconsumedParameterWarning)
@@ -38,7 +38,9 @@ class GenerationScenarioConfig(luigi.Config):
 class BaseTask(law.Task):
     def local_path():
         try:
-            raise NotImplementedError("Local path method not implemented for this base class object! Use derived class instead!")
+            raise NotImplementedError(
+                "Local path method not implemented for this base class object! Use derived class instead!"
+            )
         except NotImplementedError as e:
             print(repr(e))
 
@@ -47,7 +49,9 @@ class BaseTask(law.Task):
 
     def remote_path():
         try:
-            raise NotImplementedError("Remote path method not implemented for this base class object! Use derived class instead!")
+            raise NotImplementedError(
+                "Remote path method not implemented for this base class object! Use derived class instead!"
+            )
         except NotImplementedError as e:
             print(repr(e))
 
@@ -62,11 +66,21 @@ class BaseTask(law.Task):
 class GenRivetTask(BaseTask):
 
     def local_path(self, *path):
-        parts = (os.getenv("ANALYSIS_DATA_PATH"),) + (self.__class__.__name__,  self.campaign,) + path
+        parts = (
+            (os.getenv("ANALYSIS_DATA_PATH"),)
+            + (
+                self.__class__.__name__,
+                self.campaign,
+            )
+            + path
+        )
         return os.path.join(*parts)
 
     def remote_path(self, *path):
-        parts = (self.__class__.__name__, self.campaign,) + path
+        parts = (
+            self.__class__.__name__,
+            self.campaign,
+        ) + path
         return os.path.join(*parts)
 
 

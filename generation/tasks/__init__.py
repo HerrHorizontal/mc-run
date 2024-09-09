@@ -1,18 +1,14 @@
+from .DeriveNPCorr import *
 from .HerwigBuild import *
 from .HerwigIntegrate import *
 from .HerwigMerge import *
 from .HerwigRun import *
-
+from .PlotNPCorr import *
+from .PlotScenarioComparison import *
+from .PlotSplittedQuantity import *
+from .RivetBuild import *
+from .RivetMerge import *
+from .RunRivet import *
 from .SherpaBuild import *
 from .SherpaIntegrate import *
 from .SherpaRun import *
-
-from .RivetBuild import *
-from .RunRivet import *
-from .RivetMerge import *
-
-from .DeriveNPCorr import *
-from .PlotNPCorr import *
-
-from .PlotScenarioComparison import *
-from .PlotSplittedQuantity import *

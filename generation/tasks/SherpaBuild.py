@@ -1,16 +1,17 @@
+import os
+from subprocess import PIPE
+
 import law
 import luigi
-from luigi.util import inherits
-from law.util import interruptable_popen
-import os
-
-from subprocess import PIPE
-from generation.framework.utils import run_command, identify_inputfile, set_environment_variables
-
-from generation.framework import GenRivetTask, GenerationScenarioConfig
-
+from generation.framework import GenerationScenarioConfig, GenRivetTask
+from generation.framework.utils import (
+    identify_inputfile,
+    run_command,
+    set_environment_variables,
+)
 from law.logger import get_logger
-
+from law.util import interruptable_popen
+from luigi.util import inherits
 
 logger = get_logger(__name__)
 
@@ -23,13 +24,10 @@ class SherpaConfig(law.ExternalTask):
     config_path = luigi.Parameter(
         significant=True,
         default="default",
-        description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[campaign]`."
+        description="Directory where the Sherpa config file resides. Default translates to `inputfiles/sherpa/[campaign]`.",
     )
 
-
-    exclude_params_req = {
-        "config_path"
-    }
+    exclude_params_req = {"config_path"}
     exclude_params_req_get = {
         "htcondor_remote_job",
         "htcondor_accounting_group",
@@ -40,9 +38,8 @@ class SherpaConfig(law.ExternalTask):
         "local_scheduler",
         "tolerance",
         "acceptance",
-        "only_missing"
+        "only_missing",
     }
-
 
     def output(self):
         return law.LocalFileTarget(
@@ -57,18 +54,14 @@ class SherpaBuild(GenRivetTask):
 
     def requires(self):
         return {
-            'SherpaConfig': SherpaConfig.req(self),
+            "SherpaConfig": SherpaConfig.req(self),
         }
 
     def output(self):
         return {
             "Process": law.LocalDirectoryTarget(
                 os.path.join(
-                    "$ANALYSIS_PATH",
-                    "inputfiles",
-                    "sherpa",
-                    self.campaign,
-                    "Process"
+                    "$ANALYSIS_PATH", "inputfiles", "sherpa", self.campaign, "Process"
                 )
             ),
         }
@@ -85,11 +78,11 @@ class SherpaBuild(GenRivetTask):
         )
 
         # Initialize Sherpa
-        work_dir = self.input()['SherpaConfig'].parent.path
+        work_dir = self.input()["SherpaConfig"].parent.path
         sherpa_init = [
             "Sherpa",
             "-f",
-            self.input()['SherpaConfig'].path,
+            self.input()["SherpaConfig"].path,
             "INIT_ONLY=1",
         ]
         logger.info('Running command: "{}"'.format(" ".join(sherpa_init)))
@@ -102,9 +95,9 @@ class SherpaBuild(GenRivetTask):
         )
         if code != 1:  # init willr return 1 for normal exit
             raise RuntimeError(
-                'Sherpa initialization failed with error code {}!\n'.format(code)
-                + 'Output:\n{}\n'.format(out)
-                + 'Error:\n{}\n'.format(error)
+                "Sherpa initialization failed with error code {}!\n".format(code)
+                + "Output:\n{}\n".format(out)
+                + "Error:\n{}\n".format(error)
             )
         else:
             logger.info("Sherpa initialization successful.")

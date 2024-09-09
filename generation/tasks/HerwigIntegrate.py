@@ -1,20 +1,16 @@
-
-import luigi
-import law
-from luigi.util import inherits
 import os
-
 from subprocess import PIPE
-from generation.framework.utils import run_command
 
-from law.contrib.htcondor.job import HTCondorJobManager
-from generation.framework import GenRivetTask, GenerationScenarioConfig
+import law
+import luigi
+from generation.framework import GenerationScenarioConfig, GenRivetTask
 from generation.framework.htcondor import HTCondorWorkflow
+from generation.framework.utils import run_command
+from law.contrib.htcondor.job import HTCondorJobManager
+from law.logger import get_logger
+from luigi.util import inherits
 
 from .HerwigBuild import HerwigBuild
-
-from law.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -32,51 +28,49 @@ class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 Should not be greater than the number of subprocesses."
     )
 
-    setupfile = luigi.Parameter(
-        default=None
-    )
-    mc_setting = luigi.Parameter(
-        default=None
-    )
-
+    setupfile = luigi.Parameter(default=None)
+    mc_setting = luigi.Parameter(default=None)
 
     exclude_params_req = {
         "bootstrap_file",
-        "htcondor_walltime", "htcondor_request_memory", 
-        "htcondor_requirements", "htcondor_request_disk"
+        "htcondor_walltime",
+        "htcondor_request_memory",
+        "htcondor_requirements",
+        "htcondor_request_disk",
     }
-
 
     def workflow_requires(self):
         # integration requires successful build step
-        return {
-            'HerwigBuild': HerwigBuild.req(self)
-        }
-
+        return {"HerwigBuild": HerwigBuild.req(self)}
 
     def create_branch_map(self):
         # each integration job is indexed by it's job number
-        return {jobnum: intjobnum for jobnum, intjobnum in enumerate(range(int(self.integration_maxjobs)))}
-
+        return {
+            jobnum: intjobnum
+            for jobnum, intjobnum in enumerate(range(int(self.integration_maxjobs)))
+        }
 
     def requires(self):
         # current branch task requires existing integrationList
-        return {
-            'HerwigBuild': HerwigBuild.req(self)
-        }
+        return {"HerwigBuild": HerwigBuild.req(self)}
 
-
-    def remote_path(self,*path):
+    def remote_path(self, *path):
         if self.mc_setting == "PSoff":
-            parts = (self.__class__.__name__,self.campaign, self.mc_setting, ) + path
+            parts = (
+                self.__class__.__name__,
+                self.campaign,
+                self.mc_setting,
+            ) + path
             return os.path.join(*parts)
         else:
-            parts = (self.__class__.__name__, self.campaign,) + path
+            parts = (
+                self.__class__.__name__,
+                self.campaign,
+            ) + path
             return os.path.join(*parts)
 
     def output(self):
         return self.remote_target("Herwig-int{}.tar.gz".format(self.branch))
-
 
     def run(self):
         # branch data
@@ -96,17 +90,17 @@ class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         my_env = os.environ
 
         # get the prepared Herwig-cache and runfiles and unpack them
-        with self.input()['HerwigBuild'].localize('r') as _file:
-            os.system('tar -xzf {}'.format(_file.path))
+        with self.input()["HerwigBuild"].localize("r") as _file:
+            os.system("tar -xzf {}".format(_file.path))
 
         # run Herwig integration
         _herwig_exec = ["Herwig", "integrate"]
         _herwig_args = [
             "--jobid={JOBID}".format(JOBID=_jobid),
-            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config)
+            "{INPUT_FILE_NAME}.run".format(INPUT_FILE_NAME=_my_config),
         ]
 
-        logger.info('Executable: {}'.format(" ".join(_herwig_exec + _herwig_args)))
+        logger.info("Executable: {}".format(" ".join(_herwig_exec + _herwig_args)))
 
         try:
             code, out, error = run_command(_herwig_exec + _herwig_args, env=my_env)
@@ -115,27 +109,32 @@ class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
             raise e
 
         _output_dir = "Herwig-cache/{INPUT_FILE_NAME}/integrationJob{JOBID}".format(
-            JOBID=_jobid,
-            INPUT_FILE_NAME=_my_config
+            JOBID=_jobid, INPUT_FILE_NAME=_my_config
         )
 
-        if os.path.exists(os.path.join(_output_dir,"HerwigGrids.xml")):
+        if os.path.exists(os.path.join(_output_dir, "HerwigGrids.xml")):
             os.system(
-                'tar -czf Herwig-int.tar.gz {OUTPUT_FILE}'.format(
+                "tar -czf Herwig-int.tar.gz {OUTPUT_FILE}".format(
                     OUTPUT_FILE=_output_dir
                 )
             )
         else:
-            if code==0 and any("Assuming empty integration job" in _out for _out in [out,error]):
-                logger.info(f"Integration job {_jobid} empty. You can reduce number of integration jobs for this process.")
+            if code == 0 and any(
+                "Assuming empty integration job" in _out for _out in [out, error]
+            ):
+                logger.info(
+                    f"Integration job {_jobid} empty. You can reduce number of integration jobs for this process."
+                )
                 open("Herwig-int.tar.gz", "x").close()
             else:
-                raise IOError('Error: Grid file {} is not existent. Something went wrong in integration step! Abort!'.format(os.path.join(_output_dir,"HerwigGrids.xml")))
+                raise IOError(
+                    "Error: Grid file {} is not existent. Something went wrong in integration step! Abort!".format(
+                        os.path.join(_output_dir, "HerwigGrids.xml")
+                    )
+                )
 
         output_file = os.path.abspath("Herwig-int.tar.gz")
         if os.path.exists(output_file):
             output.copy_from_local(output_file)
 
         print("=======================================================")
-
-        

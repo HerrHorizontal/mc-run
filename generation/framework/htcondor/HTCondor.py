@@ -1,10 +1,10 @@
 import os
 import re
-import luigi
-import law
-from law.util import merge_dicts
-from generation.framework.htcondor.BundleSoftware import BundleRepo
 
+import law
+import luigi
+from generation.framework.htcondor.BundleSoftware import BundleRepo
+from law.util import merge_dicts
 
 law.contrib.load("tasks", "wlcg", "git", "htcondor")
 
@@ -127,6 +127,8 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.custom_content.append(("request_cpus", self.htcondor_request_cpus))
         config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
         config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
+
+        config.custom_content.append(("JobBatchName", self.task_id))
 
         # include the wlcg specific tools script in the input sandbox
         tools_file = law.util.law_src_path("contrib/wlcg/scripts/law_wlcg_tools.sh")

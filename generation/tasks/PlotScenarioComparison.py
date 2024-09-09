@@ -1,18 +1,19 @@
+import json
+import os
 
 import law
 import luigi
-import os
-import json
-
-from generation.framework.utils import run_command, set_environment_variables
-from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS, CAMPAIGN_MODS
-
+from generation.framework.config import (
+    BINS,
+    CAMPAIGN_MODS,
+    JETS,
+    MCCHAIN_SCENARIO_LABELS,
+)
 from generation.framework.tasks import PostprocessingTask
-
-from .PlotNPCorr import PlotNPCorr
-
+from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 
+from .PlotNPCorr import PlotNPCorr
 
 logger = get_logger(__name__)
 
@@ -21,29 +22,30 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
     """Plot a comparison of fitted NP factors created with different scenarios"""
 
     rivet_analyses = luigi.ListParameter(
-        default=["ZplusJet_3"],
-        description="List of IDs of Rivet analyses to run"
+        default=["ZplusJet_3"], description="List of IDs of Rivet analyses to run"
     )
 
     mc_setting_full = luigi.Parameter(
         default="withNP",
         description="Scenario identifier for the full MC production, typically `withNP`. \
-                Used to identify the output-paths for the full generation scenario."
+                Used to identify the output-paths for the full generation scenario.",
     )
     mc_setting_partial = luigi.Parameter(
         default="NPoff",
         description="Scenario identifier for the partial MC production, typically `PSoff`, `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to identify the output-paths for the partial generation scenario, \
-                where parts of the generation chain are turned off."
+                where parts of the generation chain are turned off.",
     )
     mc_generators = luigi.ListParameter(
-        default=["herwig",],
-        description="Name of the MC generators used for event generation."
+        default=[
+            "herwig",
+        ],
+        description="Name of the MC generators used for event generation.",
     )
 
     campaigns = luigi.ListParameter(
         default=["LHC-LO-ZplusJet", "LHC-NLO-ZplusJet"],
-        description="Campaigns to compare identified by the name of their Herwig input file"
+        description="Campaigns to compare identified by the name of their Herwig input file",
     )
 
     # match = luigi.ListParameter(
@@ -57,22 +59,22 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
     #     description="Require exclusion of analysis objects which names match these regexes in the YODA files."
     # )
     filter_label_pad_tuples = luigi.TupleParameter(
-        default=(("ZPt","RAW","p_T^Z\,/\,\mathrm{GeV}","NP corr."),),
-        description="Tuple of tuples containing four or five strings:\n \
+        default=(("ZPt", "RAW", "p_T^Z\,/\,\mathrm{GeV}", "NP corr."),),
+        description='Tuple of tuples containing four or five strings:\n \
             - the filter for identification of the analysis objects to plot, match and unmatch, \n\
             - the x- and y-axis labels for the ratio pad (showing i.e. the NP-correction), \n\
             - OPTIONAL: the label for a top pad showing the original distributions used to derive the ratio \n\
-            ((\"match\", \"unmatch\", \"xlabel\", \"ylabel\", [\"origin-ylabel\"]), (...), ...)"
+            (("match", "unmatch", "xlabel", "ylabel", ["origin-ylabel"]), (...), ...)',
     )
     yrange = luigi.TupleParameter(
-        default=[0.8,1.3],
+        default=[0.8, 1.3],
         significant=False,
-        description="Value range for the y-axis of the ratio plot."
+        description="Value range for the y-axis of the ratio plot.",
     )
 
     fits = luigi.DictParameter(
         default=None,
-        description="Dictionary of keys and paths to the files containing the fit information"
+        description="Dictionary of keys and paths to the files containing the fit information",
     )
 
     splittings_conf = luigi.DictParameter(
@@ -82,7 +84,7 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
 
     splittings = luigi.DictParameter(
         default=None,
-        description="Dictionary of identifier and splittings plot settings. Set via --splittings-conf from config, if None."
+        description="Dictionary of identifier and splittings plot settings. Set via --splittings-conf from config, if None.",
     )
 
     splittings_conf_all = luigi.Parameter(
@@ -93,9 +95,8 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
 
     splittings_all = luigi.DictParameter(
         default=None,
-        description="Splittings plot settings covering all splittings. Set via --splittings-conf-all from config, if None."
+        description="Splittings plot settings covering all splittings. Set via --splittings-conf-all from config, if None.",
     )
-
 
     exclude_params_req_get = {
         "htcondor_remote_job",
@@ -107,17 +108,16 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
         "local_scheduler",
         "tolerance",
         "acceptance",
-        "only_missing"
+        "only_missing",
     }
 
-
     def _default_fits(self):
-        return {"{a}_{q}{j}{k}.json".format(a=ana,q="ZPt",j=jet,k=k): k
+        return {
+            "{a}_{q}{j}{k}.json".format(a=ana, q="ZPt", j=jet, k=k): k
             for k in BINS["all"]
             for ana in self.rivet_analyses
             for jet in JETS.keys()
         }
-
 
     def workflow_requires(self):
         req = super(PlotScenarioComparison, self).workflow_requires()
@@ -137,23 +137,34 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
             fits = self._default_fits()
         for scen in self.campaigns:
             for gen in self.mc_generators:
-                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
-                                       splittings_all=splits_all)
+                req[gen + scen] = PlotNPCorr.req(
+                    self,
+                    mc_generator=gen,
+                    campaign=scen,
+                    fits=fits,
+                    splittings_all=splits_all,
+                )
         return req
-    
 
     def create_branch_map(self):
         bm = dict()
         for jobid, flp in enumerate(self.filter_label_pad_tuples):
             try:
                 match, unmatch, xlabel, ylabel = flp
-                bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel)
+                bm[jobid] = dict(
+                    match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel
+                )
             except ValueError as e:
                 logger.info("Acounted {}, trying with origin-y-label".format(e))
                 match, unmatch, xlabel, ylabel, oylabel = flp
-                bm[jobid] = dict(match=match, unmatch=unmatch, xlabel=xlabel, ylabel=ylabel, oylabel=oylabel)
+                bm[jobid] = dict(
+                    match=match,
+                    unmatch=unmatch,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    oylabel=oylabel,
+                )
         return bm
-    
 
     def requires(self):
         req = dict()
@@ -173,23 +184,26 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
             fits = self._default_fits()
         for scen in self.campaigns:
             for gen in self.mc_generators:
-                req[gen+scen] = PlotNPCorr.req(self, mc_generator=gen, campaign=scen, fits=fits,
-                                       splittings_all=splits_all)
+                req[gen + scen] = PlotNPCorr.req(
+                    self,
+                    mc_generator=gen,
+                    campaign=scen,
+                    fits=fits,
+                    splittings_all=splits_all,
+                )
         return req
-
 
     def output(self):
         return self.local_target(
             "m-{match}-um-{unmatch}/{full}-{partial}-Ratio-Plots/{campaigns}-{mc_generators}/".format(
-                full = self.mc_setting_full,
-                partial = self.mc_setting_partial,
+                full=self.mc_setting_full,
+                partial=self.mc_setting_partial,
                 match=self.branch_data["match"],
                 unmatch=self.branch_data["unmatch"],
                 campaigns="-".join(self.campaigns),
                 mc_generators="-".join(self.mc_generators),
             )
         )
-
 
     def run(self):
         # ensure that the output directory exists
@@ -201,15 +215,23 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
             output.makedirs()
 
         if len(self.yrange) != 2:
-            raise ValueError("Argument --yrange takes exactly two values, but {} given!".format(len(self.yrange)))
-        
+            raise ValueError(
+                "Argument --yrange takes exactly two values, but {} given!".format(
+                    len(self.yrange)
+                )
+            )
+
         # actual payload:
         print("=======================================================")
-        print("Starting comparison NP-factor plotting for campaigns {} and generators {}".format(self.campaigns, self.mc_generators))
+        print(
+            "Starting comparison NP-factor plotting for campaigns {} and generators {}".format(
+                self.campaigns, self.mc_generators
+            )
+        )
         print("=======================================================")
 
         plot_dir = output.parent.path
-        
+
         if self.fits:
             fits = self.fits
         else:
@@ -220,31 +242,68 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
             splittings = self.splittings
         else:
             if self.splittings_conf:
-                splittings = {k: BINS[v] for k,v in self.splittings_conf.items()}
+                splittings = {k: BINS[v] for k, v in self.splittings_conf.items()}
             else:
-                raise TypeError("Splittings undefined (None), configuration for --splittings or --splittings-conf needed!")
+                raise TypeError(
+                    "Splittings undefined (None), configuration for --splittings or --splittings-conf needed!"
+                )
         # print(self.input())
         for campaign in self.campaigns:
             for generator in self.mc_generators:
-                fits_dict[generator+campaign] = {os.path.join(self.input()[generator+campaign]["single"].path, k): v for k,v in fits.items()}
+                fits_dict[generator + campaign] = {
+                    os.path.join(
+                        self.input()[generator + campaign]["single"].path, k
+                    ): v
+                    for k, v in fits.items()
+                }
         from pprint import pformat
+
         logger.debug("Fits dictionary:\n{}".format(pformat(fits_dict)))
 
         # execute the script reading the fitted NP corrections and plotting the comparison
-        executable = ["python", os.path.expandvars("$ANALYSIS_PATH/scripts/plotCampaignComparison.py")]
+        executable = [
+            "python",
+            os.path.expandvars("$ANALYSIS_PATH/scripts/plotCampaignComparison.py"),
+        ]
         for campaign, fits in fits_dict.items():
-            executable += ["--campaign", "{}".format(campaign), "--fit", "{}".format(json.dumps(fits))]
+            executable += [
+                "--campaign",
+                "{}".format(campaign),
+                "--fit",
+                "{}".format(json.dumps(fits)),
+            ]
         executable += ["--mods", "{}".format(json.dumps(CAMPAIGN_MODS))]
         executable += [
-            "--plot-dir", "{}".format(plot_dir),
-            "--yrange", "{}".format(self.yrange[0]), "{}".format(self.yrange[1]),
-            "--splittings", "{}".format(json.dumps(splittings)),
-            "--jets", "{}".format(json.dumps(JETS)),
-            "--full-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)),
-            "--partial-label", "{}".format(MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_partial, self.mc_setting_partial))
+            "--plot-dir",
+            "{}".format(plot_dir),
+            "--yrange",
+            "{}".format(self.yrange[0]),
+            "{}".format(self.yrange[1]),
+            "--splittings",
+            "{}".format(json.dumps(splittings)),
+            "--jets",
+            "{}".format(json.dumps(JETS)),
+            "--full-label",
+            "{}".format(
+                MCCHAIN_SCENARIO_LABELS.get(self.mc_setting_full, self.mc_setting_full)
+            ),
+            "--partial-label",
+            "{}".format(
+                MCCHAIN_SCENARIO_LABELS.get(
+                    self.mc_setting_partial, self.mc_setting_partial
+                )
+            ),
         ]
-        executable += ["--xlabel", "{}".format(self.branch_data["xlabel"])] if self.branch_data["xlabel"] else []
-        executable += ["--ylabel", "{}".format(self.branch_data["ylabel"])] if self.branch_data["ylabel"] else []
+        executable += (
+            ["--xlabel", "{}".format(self.branch_data["xlabel"])]
+            if self.branch_data["xlabel"]
+            else []
+        )
+        executable += (
+            ["--ylabel", "{}".format(self.branch_data["ylabel"])]
+            if self.branch_data["ylabel"]
+            else []
+        )
 
         logger.info("Executable: {}".format(" ".join(executable)))
 
@@ -252,12 +311,14 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
             os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
         )
         try:
-            run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
+            run_command(
+                executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH")
+            )
         except RuntimeError as e:
             logger.error("Summary plots creation failed!")
             output.remove()
             raise e
-        
+
         if not os.listdir(plot_dir):
             output.remove()
             raise LookupError("Plot directory {} is empty!".format(plot_dir))

@@ -2,53 +2,56 @@
 
 import argparse
 import os.path
-import matplotlib as mpl
-mpl.use('Agg')
-import yoda
 
+import matplotlib as mpl
+
+mpl.use("Agg")
+import yoda
 from util import valid_yoda_file
 
-
 parser = argparse.ArgumentParser(
-    description = "Calculate (non-perturbative correction factors by computing) the ratio of analysis objects in two YODA files",
-    add_help = True
+    description="Calculate (non-perturbative correction factors by computing) the ratio of analysis objects in two YODA files",
+    add_help=True,
 )
 parser.add_argument(
     "--full",
-    type = valid_yoda_file,
-    required = True,
-    help = "YODA file containing the analyzed objects of the nominator (e.g. full) simulation run"
+    type=valid_yoda_file,
+    required=True,
+    help="YODA file containing the analyzed objects of the nominator (e.g. full) simulation run",
 )
 parser.add_argument(
     "--partial",
-    type = valid_yoda_file,
-    required = True,
-    help = "YODA file containing the analyzed objects of the denominator (e.g. partial) simulation run"
+    type=valid_yoda_file,
+    required=True,
+    help="YODA file containing the analyzed objects of the denominator (e.g. partial) simulation run",
 )
 parser.add_argument(
-    "-m", "--match",
+    "-m",
+    "--match",
     dest="MATCH",
     metavar="PATT",
     default=None,
     type=str,
     nargs="*",
-    help="only write out histograms whose path matches these regexes"
+    help="only write out histograms whose path matches these regexes",
 )
 parser.add_argument(
-    "-M", "--unmatch",
+    "-M",
+    "--unmatch",
     dest="UNMATCH",
     metavar="PATT",
     default=None,
     type=str,
     nargs="*",
-    help="exclude histograms whose path matches these regexes"
+    help="exclude histograms whose path matches these regexes",
 )
 parser.add_argument(
-    "--output-file", "-o",
+    "--output-file",
+    "-o",
     dest="OUTFILE",
     type=str,
     default="ratios.dat",
-    help="output path for the YODA file containing the ratios"
+    help="output path for the YODA file containing the ratios",
 )
 
 args = parser.parse_args()
@@ -57,8 +60,12 @@ args = parser.parse_args()
 yoda_file_full = args.full
 yoda_file_partial = args.partial
 
-aos_full = yoda.readYODA(yoda_file_full, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH)
-aos_partial = yoda.readYODA(yoda_file_partial, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH)
+aos_full = yoda.readYODA(
+    yoda_file_full, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH
+)
+aos_partial = yoda.readYODA(
+    yoda_file_partial, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH
+)
 
 # loop through all histograms in both scenarios and divide full by partial
 if not aos_full or not aos_partial:
@@ -69,11 +76,11 @@ if not aos_full or not aos_partial:
     else:
         raise RuntimeError("No partial analysis objects matching the filters!")
 if not aos_full.keys() == aos_partial.keys():
-    raise KeyError("Unmatched key(s) {} in provided YODA files {}, {}".format(
-        (aos_full.keys() - aos_partial.keys()),
-        aos_full,
-        aos_partial
-    ))
+    raise KeyError(
+        "Unmatched key(s) {} in provided YODA files {}, {}".format(
+            (aos_full.keys() - aos_partial.keys()), aos_full, aos_partial
+        )
+    )
 
 ratios = {}
 for hist in aos_full.keys():
@@ -82,7 +89,7 @@ for hist in aos_full.keys():
     ao_partial = aos_partial[hist]
     try:
         ao_ratio = yoda.divide(ao_full, ao_partial)
-        ratios[hist]=yoda.Scatter2D(ao_ratio, hist)
+        ratios[hist] = yoda.Scatter2D(ao_ratio, hist)
         # print("\t{}".format(type(ao_ratio)))
     except Exception as e:
         print("\tSkipping, since {}".format(e))

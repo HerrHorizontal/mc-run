@@ -1,19 +1,16 @@
-import law
-import luigi
-from luigi.util import inherits
 import os
 import random
 
-from generation.framework.utils import run_command, set_environment_variables
-
-from generation.framework.tasks import GenRivetTask, GenerationScenarioConfig
+import law
+import luigi
 from generation.framework.htcondor import HTCondorWorkflow
-
-from .SherpaIntegrate import SherpaIntegrate
-from .SherpaBuild import SherpaConfig
-
+from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
+from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
+from luigi.util import inherits
 
+from .SherpaBuild import SherpaConfig
+from .SherpaIntegrate import SherpaIntegrate
 
 logger = get_logger(__name__)
 
@@ -31,28 +28,27 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     # configuration variables
     start_seed = luigi.IntParameter(
         default=42,
-        description="Start seed for random generation of individual job seeds. Currently not used!"
+        description="Start seed for random generation of individual job seeds. Currently not used!",
     )
     number_of_jobs = luigi.IntParameter(
         default=1,
-        description="Number of individual generation jobs. Each will generate statistically independent events."
+        description="Number of individual generation jobs. Each will generate statistically independent events.",
     )
     events_per_job = luigi.IntParameter(
-        default=10000,
-        description="Number of events generated in each job."
+        default=10000, description="Number of events generated in each job."
     )
 
     exclude_params_req = {
         "setupfile",
-        #"number_of_jobs",
+        # "number_of_jobs",
         "events_per_job",
         "start_seed",
-        "htcondor_walltime", "htcondor_request_memory",
-        "htcondor_requirements", "htcondor_request_disk"
+        "htcondor_walltime",
+        "htcondor_request_memory",
+        "htcondor_requirements",
+        "htcondor_request_disk",
     }
-    exclude_params_req_get = {
-        "bootstrap_file"
-    }
+    exclude_params_req_get = {"bootstrap_file"}
 
     def workflow_requires(self):
         # Each job requires the sherpa setup to be present
@@ -66,7 +62,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     def create_branch_map(self):
         # create list of seeds
         seed_list = []
-        if (False):
+        if False:
             random.seed(self.startseed)
             for _jobnum in range(0, int(self.number_of_jobs)):
                 seed_list.append(random.randint(1, int(9e9)))
@@ -80,12 +76,14 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         return os.path.join(*parts)
 
     def output(self):
-        dir_number = int(self.branch)/1000
-        return self.remote_target("{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
-            DIR_NUMBER=int(dir_number),
-            INPUT_FILE_NAME=str(self.campaign),
-            JOB_NUMBER=str(self.branch)
-            ))
+        dir_number = int(self.branch) / 1000
+        return self.remote_target(
+            "{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
+                DIR_NUMBER=int(dir_number),
+                INPUT_FILE_NAME=str(self.campaign),
+                JOB_NUMBER=str(self.branch),
+            )
+        )
 
     def run(self):
         # branch data
@@ -109,8 +107,8 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         )
         work_dir = os.getcwd()
         # get the prepared HSherpack and runfiles and unpack them
-        with self.input()['SherpaIntegrate'].localize('r') as _file:
-            os.system('tar -xzf {}'.format(_file.path))
+        with self.input()["SherpaIntegrate"].localize("r") as _file:
+            os.system("tar -xzf {}".format(_file.path))
 
         # run Sherpa event generation
         out_name = "{}-{}-{}.hepmc".format(self.campaign, self.mc_setting, seed)
@@ -133,26 +131,32 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
             raise ValueError("Unknown mc_setting: {}".format(self.mc_setting))
 
         try:
-            run_command(_sherpa_exec + _sherpa_args + _gen_opts, env=sherpa_env, cwd=work_dir)
+            run_command(
+                _sherpa_exec + _sherpa_args + _gen_opts, env=sherpa_env, cwd=work_dir
+            )
             logger.info("Seed: {}".format(seed))
         except RuntimeError as e:
             output.remove()
             raise e
 
         os.chdir(work_dir)
-        output_file_hepmc = os.path.abspath(os.path.join(work_dir, "{}".format(out_name)))
-        output_file = "{INPUT_FILE_NAME}.tar.bz2".format(
-            INPUT_FILE_NAME=_my_config
+        output_file_hepmc = os.path.abspath(
+            os.path.join(work_dir, "{}".format(out_name))
         )
+        output_file = "{INPUT_FILE_NAME}.tar.bz2".format(INPUT_FILE_NAME=_my_config)
 
         if os.path.exists(output_file_hepmc):
-            os.system('tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}'.format(
-                OUTPUT_FILE=output_file,
-                HEPMC_FILE=os.path.relpath(output_file_hepmc)
-            ))
+            os.system(
+                "tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}".format(
+                    OUTPUT_FILE=output_file,
+                    HEPMC_FILE=os.path.relpath(output_file_hepmc),
+                )
+            )
         else:
             os.system("ls -l")
-            raise IOError("HepMC file {} doesn't exist! Abort!".format(output_file_hepmc))
+            raise IOError(
+                "HepMC file {} doesn't exist! Abort!".format(output_file_hepmc)
+            )
 
         output_file = os.path.abspath(output_file)
 

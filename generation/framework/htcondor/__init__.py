@@ -1,3 +1,3 @@
-__all__ = ['HTCondorWorkflow']
+__all__ = ["HTCondorWorkflow"]
 
 from .HTCondor import HTCondorWorkflow

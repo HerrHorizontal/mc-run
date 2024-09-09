@@ -1,6 +1,5 @@
-
-import scipy.optimize as opt
 import numpy as np
+import scipy.optimize as opt
 
 
 def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
@@ -19,72 +18,160 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
     """
 
     N_PARS = N_PARS
+
     def model(x, pars):
         """model function"""
         if N_PARS == 3:
-            a,b,c = pars
-            return a*x**(b) + c
+            a, b, c = pars
+            return a * x ** (b) + c
         elif N_PARS == 2:
-            a,b = pars
-            return a*x**(b) + 1
+            a, b = pars
+            return a * x ** (b) + 1
         elif N_PARS == 1:
-            a,b = pars
-            return a*x + b
+            a, b = pars
+            return a * x + b
         else:
-            raise NotImplementedError("No model function implemented for N_PARS={}".format(N_PARS))
+            raise NotImplementedError(
+                "No model function implemented for N_PARS={}".format(N_PARS)
+            )
 
     def objective(pars):
         _res = (model(xVal, pars) - yVal) / yErr
         return np.sum(_res**2)
-    
+
     def jac(pars):
         """Analytical gradient of objective function"""
         if N_PARS == 3:
-            a,b,c = pars
+            a, b, c = pars
             return np.array(
-                [np.sum(2*(a*(xVal**(2*b))+(c-yVal)*(xVal**b))/(yErr**2)),
-                 np.sum(2*((a**2)*(xVal**(2*b))+a*(c-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)),
-                 np.sum(2*(a*(xVal**b)+c-yVal)/(yErr**2))]
+                [
+                    np.sum(
+                        2 * (a * (xVal ** (2 * b)) + (c - yVal) * (xVal**b)) / (yErr**2)
+                    ),
+                    np.sum(
+                        2
+                        * ((a**2) * (xVal ** (2 * b)) + a * (c - yVal) * (xVal**b))
+                        * np.log(xVal)
+                        / (yErr**2)
+                    ),
+                    np.sum(2 * (a * (xVal**b) + c - yVal) / (yErr**2)),
+                ]
             )
         elif N_PARS == 2:
-            a,b = pars
+            a, b = pars
             return np.array(
-                [np.sum(2*(a*(xVal**(2*b))+(1-yVal)*(xVal**b))/(yErr**2)),
-                 np.sum(2*((a**2)*(xVal**(2*b))+a*(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2))]
+                [
+                    np.sum(
+                        2 * (a * (xVal ** (2 * b)) + (1 - yVal) * (xVal**b)) / (yErr**2)
+                    ),
+                    np.sum(
+                        2
+                        * ((a**2) * (xVal ** (2 * b)) + a * (1 - yVal) * (xVal**b))
+                        * np.log(xVal)
+                        / (yErr**2)
+                    ),
+                ]
             )
         elif N_PARS == 1:
-            a,b = pars
+            a, b = pars
             return np.array(
-                [np.sum(2*(a*(xVal**2)+(b-yVal)*xVal)/(yErr**2)),
-                 np.sum(2*(a*xVal+b-yVal)/(yErr**2))]
+                [
+                    np.sum(2 * (a * (xVal**2) + (b - yVal) * xVal) / (yErr**2)),
+                    np.sum(2 * (a * xVal + b - yVal) / (yErr**2)),
+                ]
             )
         else:
-            raise NotImplementedError("Gradient for N_PARS={} not implemented".format(N_PARS))
+            raise NotImplementedError(
+                "Gradient for N_PARS={} not implemented".format(N_PARS)
+            )
 
     def hess(pars):
         """Analytical hessian matrix of objective function"""
         if N_PARS == 3:
-            a,b,c = pars
+            a, b, c = pars
             return np.array(
-                [[np.sum(2*(xVal**(2*b))/(yErr**2)), np.sum(2*(2*a*(xVal**(2*b))+(c-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(xVal**b)/(yErr**2))],
-                [np.sum(2*(2*a*(xVal**(2*b))+(c-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(2*(a**2)*(xVal**(2*b))+a*(c-yVal)*(xVal**b))*np.log(xVal)*np.log(xVal)/(yErr**2)), np.sum(2*a*(xVal**b)*np.log(xVal)/(yErr**2))],
-                [np.sum(2*(xVal**b)/(yErr**2)), np.sum(2*a*(xVal**b)*np.log(xVal)/(yErr**2)), np.sum(2/yErr**2)]]
+                [
+                    [
+                        np.sum(2 * (xVal ** (2 * b)) / (yErr**2)),
+                        np.sum(
+                            2
+                            * (2 * a * (xVal ** (2 * b)) + (c - yVal) * (xVal**b))
+                            * np.log(xVal)
+                            / (yErr**2)
+                        ),
+                        np.sum(2 * (xVal**b) / (yErr**2)),
+                    ],
+                    [
+                        np.sum(
+                            2
+                            * (2 * a * (xVal ** (2 * b)) + (c - yVal) * (xVal**b))
+                            * np.log(xVal)
+                            / (yErr**2)
+                        ),
+                        np.sum(
+                            2
+                            * (
+                                2 * (a**2) * (xVal ** (2 * b))
+                                + a * (c - yVal) * (xVal**b)
+                            )
+                            * np.log(xVal)
+                            * np.log(xVal)
+                            / (yErr**2)
+                        ),
+                        np.sum(2 * a * (xVal**b) * np.log(xVal) / (yErr**2)),
+                    ],
+                    [
+                        np.sum(2 * (xVal**b) / (yErr**2)),
+                        np.sum(2 * a * (xVal**b) * np.log(xVal) / (yErr**2)),
+                        np.sum(2 / yErr**2),
+                    ],
+                ]
             )
         elif N_PARS == 2:
-            a,b = pars
+            a, b = pars
             return np.array(
-                [[np.sum(2*(xVal**(2*b))/(yErr**2)), np.sum(2*(2*a*(xVal**(2*b))+(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2))],
-                [np.sum(2*(2*a*(xVal**(2*b))+(1-yVal)*(xVal**b))*np.log(xVal)/(yErr**2)), np.sum(2*(2*(a**2)*(xVal**(2*b))+a*(1-yVal)*(xVal**b))*np.log(xVal)*np.log(xVal)/(yErr**2))]]
+                [
+                    [
+                        np.sum(2 * (xVal ** (2 * b)) / (yErr**2)),
+                        np.sum(
+                            2
+                            * (2 * a * (xVal ** (2 * b)) + (1 - yVal) * (xVal**b))
+                            * np.log(xVal)
+                            / (yErr**2)
+                        ),
+                    ],
+                    [
+                        np.sum(
+                            2
+                            * (2 * a * (xVal ** (2 * b)) + (1 - yVal) * (xVal**b))
+                            * np.log(xVal)
+                            / (yErr**2)
+                        ),
+                        np.sum(
+                            2
+                            * (
+                                2 * (a**2) * (xVal ** (2 * b))
+                                + a * (1 - yVal) * (xVal**b)
+                            )
+                            * np.log(xVal)
+                            * np.log(xVal)
+                            / (yErr**2)
+                        ),
+                    ],
+                ]
             )
         elif N_PARS == 1:
-            a,b = pars
+            a, b = pars
             return np.array(
-                [[np.sum(2*(xVal**2)/(yErr**2)), np.sum(2*xVal/(yErr**2))],
-                 [np.sum(2*xVal/(yErr**2)), np.sum(2/(yErr**2))]]
+                [
+                    [np.sum(2 * (xVal**2) / (yErr**2)), np.sum(2 * xVal / (yErr**2))],
+                    [np.sum(2 * xVal / (yErr**2)), np.sum(2 / (yErr**2))],
+                ]
             )
         else:
-            raise NotImplementedError("Hessian for N_PARS={} not implemented".format(N_PARS))
-
+            raise NotImplementedError(
+                "Hessian for N_PARS={} not implemented".format(N_PARS)
+            )
 
     def fit_error(xVal, popt, pcov):
         """compute the uncertainty on the fitted function
@@ -94,6 +181,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
             popt (np.ndarray): optimized model parameter values
             pcov (np.ndarray): Covariance matrix of the fit result
         """
+
         def jac(x, pars):
             """Jacobian vector of model function
             evaluated at parameter values pars
@@ -103,43 +191,42 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
             #     [derivative(,)]
             # )
             if N_PARS == 3:
-                a,b,c = pars
-                return np.array(
-                    [x**b,
-                    a*np.log(x)*(x**b),
-                    np.ones(x.shape)]
-                )
+                a, b, c = pars
+                return np.array([x**b, a * np.log(x) * (x**b), np.ones(x.shape)])
             elif N_PARS == 2:
-                a,b = pars
-                return np.array(
-                    [x**b,
-                    a*np.log(x)*(x**b)]
-                )
+                a, b = pars
+                return np.array([x**b, a * np.log(x) * (x**b)])
             elif N_PARS == 1:
-                a,b = pars
-                return np.array(
-                    [x,
-                     np.ones(x.shape)]
-                )
+                a, b = pars
+                return np.array([x, np.ones(x.shape)])
             else:
-                return NotImplementedError("No Jacobian vector implemented for model with N_PARS={}".format(N_PARS))
+                return NotImplementedError(
+                    "No Jacobian vector implemented for model with N_PARS={}".format(
+                        N_PARS
+                    )
+                )
 
         # print("jac: ", jac(xVal,popt).shape, jac(xVal,popt))
         # print("cov: ", pcov.shape, pcov)
 
         return np.sqrt(
-            np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
+            np.einsum(
+                "j..., j... -> ...",
+                np.einsum("i..., ij -> j...", jac(xVal, popt), pcov),
+                jac(xVal, popt),
+            )
         )
-
 
     # minimize function and take resulting azimuth
     # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    if method in ['Nelder-Mead','trust-exact','BFGS']:
+    if method in ["Nelder-Mead", "trust-exact", "BFGS"]:
         method = method
     else:
-        raise NotImplementedError("Fitting with optimizer {} not implemented!".format(method))
-    
-    if any(method == m for m in ['BFGS','Nelder-Mead']):
+        raise NotImplementedError(
+            "Fitting with optimizer {} not implemented!".format(method)
+        )
+
+    if any(method == m for m in ["BFGS", "Nelder-Mead"]):
         _jac = None
         _hess = None
         options = dict(maxiter=1e6)
@@ -149,14 +236,43 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
         options = dict(maxiter=1e4, gtol=1e-3)
 
     def _fit(N_PARS=3, sign=1):
-        if N_PARS==3:
-            result = opt.minimize(objective, x0=(sign*1,-1,1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
-        elif N_PARS==2:
-            result = opt.minimize(objective, x0=(sign*1,-1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
-        elif N_PARS==1:
-            result = opt.minimize(objective, x0=(sign*1,1), bounds=None, tol=1e-6, method=method, jac=_jac, hess=_hess, options=options)
+        if N_PARS == 3:
+            result = opt.minimize(
+                objective,
+                x0=(sign * 1, -1, 1),
+                bounds=None,
+                tol=1e-6,
+                method=method,
+                jac=_jac,
+                hess=_hess,
+                options=options,
+            )
+        elif N_PARS == 2:
+            result = opt.minimize(
+                objective,
+                x0=(sign * 1, -1),
+                bounds=None,
+                tol=1e-6,
+                method=method,
+                jac=_jac,
+                hess=_hess,
+                options=options,
+            )
+        elif N_PARS == 1:
+            result = opt.minimize(
+                objective,
+                x0=(sign * 1, 1),
+                bounds=None,
+                tol=1e-6,
+                method=method,
+                jac=_jac,
+                hess=_hess,
+                options=options,
+            )
         else:
-            raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
+            raise NotImplementedError(
+                "No optimization implemented for N_PARS={}".format(N_PARS)
+            )
         return result
 
     result = _fit(N_PARS)
@@ -166,7 +282,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
         result = _fit(N_PARS, -1)
 
     # repeat fit with less complex model
-    while (not result.success):
+    while not result.success:
         print(result)
         print("\n\tRetry fitting with less complex model!\n")
         N_PARS -= 1
@@ -177,7 +293,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
 
     # print(result)
 
-    if method == 'BFGS':
+    if method == "BFGS":
         covm = result.hess_inv
     else:
         try:
@@ -187,17 +303,19 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
             covm = np.linalg.pinv(hess(result.x))
 
     def get_model_str(N_PARS, pars):
-        if N_PARS==3:
-            a,b,c = pars
+        if N_PARS == 3:
+            a, b, c = pars
             model = "${a:5.3f}x^{b:5.3f}+{c:5.3f}$".format(a=a, b=b, c=c)
-        elif N_PARS==2:
-            a,b = pars
+        elif N_PARS == 2:
+            a, b = pars
             model = "${a:5.3f}x^{b:5.3f}+1$".format(a=a, b=b)
-        elif N_PARS==1:
-            a,b = pars
+        elif N_PARS == 1:
+            a, b = pars
             model = "${a:5.3f}x+{b:5.3f}$".format(a=a, b=b)
         else:
-            raise NotImplementedError("No optimization implemented for N_PARS={}".format(N_PARS))
+            raise NotImplementedError(
+                "No optimization implemented for N_PARS={}".format(N_PARS)
+            )
         return model
 
     return dict(
@@ -208,8 +326,9 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
         fitfunc=get_model_str(N_PARS, result.x),
         ys=model(xVal, result.x),
         yerrs=fit_error(xVal, result.x, covm),
-        chi2ndf=result.fun/(len(xVal)-N_PARS),
-        chi2=result.fun, ndf=(len(xVal)-N_PARS)
+        chi2ndf=result.fun / (len(xVal) - N_PARS),
+        chi2=result.fun,
+        ndf=(len(xVal) - N_PARS),
     )
 
 
@@ -230,7 +349,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
 
 #     def model(x, a=0, b=-1, c=1):
 #         return a*x**(b) + c
-    
+
 #     fit = kafe2.Fit(data, model, minimizer="scipy")
 #     # fit.limit_parameter("a", lower=None, upper=None)
 #     fit.limit_parameter("b", lower=None, upper=0)
@@ -255,7 +374,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
 
 #     def model(x, a, b):
 #         return a*np.power(x,b)+1
-    
+
 #     def least_squares(a,b):
 #         _res = (model(xVal, a,b) - yVal) / yErr
 #         return np.sum(_res**2)
@@ -293,7 +412,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
 #         return np.sqrt(
 #             np.einsum("j..., j... -> ...", np.einsum("i..., ij -> j...", jac(xVal,popt), pcov), jac(xVal,popt))
 #         )
-    
+
 #     return dict(
 #         result=m,
 #         pars=m.values,
@@ -303,5 +422,3 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
 #         chi2ndf=m.fmin.reduced_chi2,
 #         chi2=m.fval, ndf=m.ndof
 #     )
-
-

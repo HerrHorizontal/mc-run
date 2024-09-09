@@ -1,23 +1,20 @@
-import luigi
-import law
-from luigi.util import inherits
-import os
 import json
+import os
 
+import law
+import luigi
+from generation.framework.config import BINS, JETS, MCCHAIN_SCENARIO_LABELS
+from generation.framework.tasks import GenerationScenarioConfig, PostprocessingTask
 from generation.framework.utils import (
-    run_command,
-    set_environment_variables,
     check_outdir,
     localize_input,
+    run_command,
+    set_environment_variables,
 )
-from generation.framework.config import MCCHAIN_SCENARIO_LABELS, BINS, JETS
-
-from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
+from law.logger import get_logger
+from luigi.util import inherits
 
 from .RivetMerge import RivetMergeExtensions
-
-from law.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -52,11 +49,11 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     )
     match = luigi.ListParameter(
         default=[],
-        description='Additional filters to match for reducing the analysis objects in the YODA file'
+        description="Additional filters to match for reducing the analysis objects in the YODA file",
     )
     unmatch = luigi.ListParameter(
         default=[],
-        description='Additional filters to unmatch for reducing the analysis objects in the YODA file'
+        description="Additional filters to unmatch for reducing the analysis objects in the YODA file",
     )
     yrange = luigi.TupleParameter(
         default=[0.0, 10],
@@ -131,7 +128,11 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
     def run(self):
         check_outdir(self.output())
         print("=======================================================")
-        print("Starting summary plotting for quantity {} with YODA".format(self.branch_data["match"]))
+        print(
+            "Starting summary plotting for quantity {} with YODA".format(
+                self.branch_data["match"]
+            )
+        )
         print("=======================================================")
 
         inputs = dict()
@@ -155,35 +156,45 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
                 )
 
         # plot also summary plots
-        executable = [
-            "python",
-            os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotSplittedQuantity.py"),
-            "--in",
-            "{}".format(inputs["Rivet"]),
-            "--plot-dir",
-            "{}".format(plot_dir),
-            "--yrange",
-            "{}".format(self.yrange[0]),
-            "{}".format(self.yrange[1]),
-            "--splittings",
-            "{}".format(json.dumps(splittings_summary)),
-            "--add-splittings-labels",
-        ] + [
-            label.split("_")[0] for label in splittings_summary.keys()
-        ] + [
-            "--jets",
-            "{}".format(json.dumps({key: JETS[key] for key in ["AK4"]})),
-            "--generator",
-            "{}".format(str(self.mc_generator).lower()),
-            "--match",
-            "{}".format(json.dumps(list((self.branch_data["match"],))+list(self.match))),
-            "--unmatch",
-            "{}".format(json.dumps(list((self.branch_data["unmatch"],))+list(self.unmatch))),
-            "--xlabel",
-            "{}".format(self.branch_data["xlabel"]),
-            "--ylabel",
-            "{}".format(self.branch_data["ylabel"]),
-        ]
+        executable = (
+            [
+                "python",
+                os.path.expandvars(
+                    "$ANALYSIS_PATH/scripts/yodaPlotSplittedQuantity.py"
+                ),
+                "--in",
+                "{}".format(inputs["Rivet"]),
+                "--plot-dir",
+                "{}".format(plot_dir),
+                "--yrange",
+                "{}".format(self.yrange[0]),
+                "{}".format(self.yrange[1]),
+                "--splittings",
+                "{}".format(json.dumps(splittings_summary)),
+                "--add-splittings-labels",
+            ]
+            + [label.split("_")[0] for label in splittings_summary.keys()]
+            + [
+                "--jets",
+                "{}".format(json.dumps({key: JETS[key] for key in ["AK4"]})),
+                "--generator",
+                "{}".format(str(self.mc_generator).lower()),
+                "--match",
+                "{}".format(
+                    json.dumps(list((self.branch_data["match"],)) + list(self.match))
+                ),
+                "--unmatch",
+                "{}".format(
+                    json.dumps(
+                        list((self.branch_data["unmatch"],)) + list(self.unmatch)
+                    )
+                ),
+                "--xlabel",
+                "{}".format(self.branch_data["xlabel"]),
+                "--ylabel",
+                "{}".format(self.branch_data["ylabel"]),
+            ]
+        )
 
         logger.info("Executable: {}".format(" ".join(executable)))
 

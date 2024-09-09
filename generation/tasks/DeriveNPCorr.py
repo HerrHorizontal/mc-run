@@ -1,15 +1,12 @@
-
-import luigi
-from luigi.util import inherits
 import os
 
+import luigi
+from generation.framework.tasks import GenerationScenarioConfig, PostprocessingTask
 from generation.framework.utils import run_command, set_environment_variables
-from generation.framework.tasks import PostprocessingTask, GenerationScenarioConfig
+from law.logger import get_logger
+from luigi.util import inherits
 
 from .RivetMerge import RivetMergeExtensions
-
-from law.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -27,27 +24,27 @@ class DeriveNPCorr(PostprocessingTask):
     mc_setting_full = luigi.Parameter(
         default="withNP",
         description="Scenario identifier for the full MC production, typically `withNP`. \
-                Used to identify the output-paths for the full generation scenario."
+                Used to identify the output-paths for the full generation scenario.",
     )
     mc_setting_partial = luigi.Parameter(
         default="NPoff",
         description="Scenario identifier for the partial MC production, typically `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to identify the output-paths for the partial generation scenario, \
-                where parts of the generation chain are turned off."
+                where parts of the generation chain are turned off.",
     )
     mc_generator = luigi.Parameter(
         default="herwig",
-        description="Name of the MC generator used for event generation."
+        description="Name of the MC generator used for event generation.",
     )
     match = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Include analysis objects which name matches these regexes."
+        description="Include analysis objects which name matches these regexes.",
     )
     unmatch = luigi.ListParameter(
         # significant=False,
         default=None,
-        description="Exclude analysis objects which name matches these regexes."
+        description="Exclude analysis objects which name matches these regexes.",
     )
 
     exclude_params_req = {
@@ -55,7 +52,7 @@ class DeriveNPCorr(PostprocessingTask):
         "mc_setting_full",
         "mc_setting_partial",
         "match",
-        "unmatch"
+        "unmatch",
     }
     exclude_params_req_get = {
         "htcondor_remote_job",
@@ -67,35 +64,32 @@ class DeriveNPCorr(PostprocessingTask):
         "local_scheduler",
         "tolerance",
         "acceptance",
-        "only_missing"
+        "only_missing",
     }
-
 
     def requires(self):
         req = dict()
-        req["full"] = RivetMergeExtensions.req(
-            self, 
-            mc_setting = self.mc_setting_full
-        )
+        req["full"] = RivetMergeExtensions.req(self, mc_setting=self.mc_setting_full)
         req["partial"] = RivetMergeExtensions.req(
-            self,
-            mc_setting = self.mc_setting_partial
+            self, mc_setting=self.mc_setting_partial
         )
         return req
 
-
     def remote_path(self, *path):
-        parts = (self.__class__.__name__,str(self.mc_generator).lower(),self.campaign,) + path
+        parts = (
+            self.__class__.__name__,
+            str(self.mc_generator).lower(),
+            self.campaign,
+        ) + path
         return os.path.join(*parts)
-
 
     def output(self):
         output = self.remote_target(
             "w-{match}-wo-{unmatch}/{full}-{partial}-Ratio.yoda".format(
-                match = "-".join(list(self.match)),
-                unmatch = "-".join(list(self.unmatch)),
-                full = self.mc_setting_full,
-                partial = self.mc_setting_partial,
+                match="-".join(list(self.match)),
+                unmatch="-".join(list(self.unmatch)),
+                full=self.mc_setting_full,
+                partial=self.mc_setting_partial,
             )
         )
         return output
@@ -115,24 +109,31 @@ class DeriveNPCorr(PostprocessingTask):
 
         # localize the separate YODA files on grid storage
         logger.info("Inputs:")
-        with self.input()["full"].localize('r') as _file:
-            logger.info("\tfull: {} cached at {}".format(self.input()["full"], _file.path))
+        with self.input()["full"].localize("r") as _file:
+            logger.info(
+                "\tfull: {} cached at {}".format(self.input()["full"], _file.path)
+            )
             input_yoda_file_full = _file.path
-        with self.input()["partial"].localize('r') as _file:
-            logger.info("\tpartial: {} cached at {}".format(self.input()["partial"], _file.path))
+        with self.input()["partial"].localize("r") as _file:
+            logger.info(
+                "\tpartial: {} cached at {}".format(self.input()["partial"], _file.path)
+            )
             input_yoda_file_partial = _file.path
 
         # assign paths for output YODA file and plots
         output_yoda = "{full}-{partial}-Ratio.yoda".format(
-            full = self.mc_setting_full,
-            partial = self.mc_setting_partial
+            full=self.mc_setting_full, partial=self.mc_setting_partial
         )
         # execute the script deriving the NP correction plots and files
         executable = [
-            "python", os.path.expandvars("$ANALYSIS_PATH/scripts/yodaDeriveNPCorr.py"),
-            "--full", "{}".format(input_yoda_file_full),
-            "--partial", "{}".format(input_yoda_file_partial),
-            "--output-file", "{}".format(output_yoda)
+            "python",
+            os.path.expandvars("$ANALYSIS_PATH/scripts/yodaDeriveNPCorr.py"),
+            "--full",
+            "{}".format(input_yoda_file_full),
+            "--partial",
+            "{}".format(input_yoda_file_partial),
+            "--output-file",
+            "{}".format(output_yoda),
         ]
         if self.match:
             executable += ["--match"] + [matchstr for matchstr in list(self.match)]
@@ -145,7 +146,9 @@ class DeriveNPCorr(PostprocessingTask):
             os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
         )
         try:
-            run_command(executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH"))
+            run_command(
+                executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH")
+            )
             output_yoda = os.path.abspath(output_yoda)
             if not os.path.exists(output_yoda):
                 raise IOError("Could not find output file {}!".format(output_yoda))

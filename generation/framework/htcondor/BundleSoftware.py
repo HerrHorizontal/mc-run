@@ -1,4 +1,5 @@
 import os
+
 import law
 import luigi
 
@@ -11,10 +12,19 @@ class BundleRepo(law.git.BundleGitRepository, law.tasks.TransferLocalFile):
         description="number of replicas to generate; default: 10",
     )
 
-    exclude_files = ["tmp", "*~", "*.pyc", ".vscode/", "*.db*", "*.tex", "*.dat", "logs", "plots"]
+    exclude_files = [
+        "tmp",
+        "*~",
+        "*.pyc",
+        ".vscode/",
+        "*.db*",
+        "*.tex",
+        "*.dat",
+        "logs",
+        "plots",
+    ]
 
     include_files = ["inputfiles/*/*/Run.dat"]
-
 
     version = None
     task_namespace = None

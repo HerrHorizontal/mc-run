@@ -1,17 +1,12 @@
+import os
+from subprocess import PIPE
+
 import law
 import luigi
-import os
-
-from subprocess import PIPE
-from generation.framework.utils import (
-    run_command,
-    set_environment_variables,
-)
-from generation.framework.tasks import BaseTask
 from generation.framework.htcondor import HTCondorWorkflow
-
+from generation.framework.tasks import BaseTask
+from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -36,10 +31,7 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
     )
     rivet_os_version = rivet_env["RIVET_OS_DISTRO"]
 
-
-    exclude_params_req = {
-        "compiler_flags"
-    }
+    exclude_params_req = {"compiler_flags"}
     exclude_params_req_get = {
         "htcondor_remote_job",
         "htcondor_accounting_group",
@@ -50,9 +42,8 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
         "local_scheduler",
         "tolerance",
         "acceptance",
-        "only_missing"
+        "only_missing",
     }
-
 
     def create_branch_map(self):
         # check whether configured analyses are built-in, only build missing
