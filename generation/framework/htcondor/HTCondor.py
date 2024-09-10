@@ -69,7 +69,6 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         description="HTcondor universe to run jobs in.",
     )
     htcondor_docker_image = luigi.Parameter(
-        default="mschnepf/slc7-condocker",
         significant=False,
         description="Docker image to use for running docker jobs.",
     )
@@ -113,16 +112,17 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.stdout = os.path.join("Output.txt")
         config.stderr = os.path.join("Error.txt")
         config.custom_content = []
-        config.custom_content.append(
-            ("accounting_group", self.htcondor_accounting_group)
-        )
+        # config.custom_content.append(
+        #     ("accounting_group", self.htcondor_accounting_group)
+        # )
         config.custom_content.append(("stream_error", "True"))
         config.custom_content.append(("stream_output", "True"))
         config.custom_content.append(("Requirements", self.htcondor_requirements))
-        config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
+        # config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
         config.custom_content.append(("universe", self.htcondor_universe))
         config.custom_content.append(("docker_image", self.htcondor_docker_image))
-        config.custom_content.append(("+RequestWalltime", self.htcondor_walltime))
+        # config.custom_content.append(("+RequestWalltime", self.htcondor_walltime))
+        config.custom_content.append(("+MaxRuntime", self.htcondor_walltime))
         config.custom_content.append(("x509userproxy", law.wlcg.get_vomsproxy_file()))
         config.custom_content.append(("request_cpus", self.htcondor_request_cpus))
         config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
