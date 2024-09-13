@@ -4,31 +4,10 @@ import re
 import law
 import luigi
 from generation.framework.htcondor.BundleSoftware import BundleRepo
+from law.contrib.htcondor.job import HTCondorJobManager
 from law.util import merge_dicts
 
 law.contrib.load("tasks", "wlcg", "git", "htcondor")
-
-
-class HTCondorJobManager(law.htcondor.HTCondorJobManager):
-    status_line_cre = re.compile(
-        r"^(\d+\.\d+)" + 4 * r"\s+[^\s]+" + r"\s+([UIRXSCHE<>])\s+.*$"
-    )
-
-    def get_htcondor_version(cls):
-        return (8, 6, 5)
-
-    @classmethod
-    def map_status(cls, status_flag):
-        if status_flag in ("0", "1", "U", "I"):
-            return cls.PENDING
-        elif status_flag in ("2", "7", "R", "<", ">", "S"):
-            return cls.RUNNING
-        elif status_flag in ("4", "C"):
-            return cls.FINISHED
-        elif status_flag in ("5", "6", "H", "E"):
-            return cls.FAILED
-        else:
-            return cls.FAILED
 
 
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
@@ -97,10 +76,12 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
     def htcondor_output_directory(self):
         job_dir = law.config.get_expanded("job", "job_file_dir")
-        return law.LocalDirectoryTarget(f"{job_dir}/{self.task_id}")
+        return law.LocalDirectoryTarget(f"{job_dir}/{self.task_id}/")
 
     def htcondor_create_job_file_factory(self):
-        factory = super(HTCondorWorkflow, self).htcondor_create_job_file_factory()
+        factory = super(HTCondorWorkflow, self).htcondor_create_job_file_factory(
+            dir=self.htcondor_output_directory().abspath
+        )
         factory.is_tmp = False
         return factory
 
