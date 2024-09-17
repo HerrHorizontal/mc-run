@@ -19,7 +19,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     htcondor_accounting_group = luigi.Parameter(
         default=ConfigParser.get("HTCondorDefaults", "htcondor_accounting_group"),
         # default=ConfigParser.get_expanded("luigi_HTCondor","htcondor_accounting_group"),
-        significant=True,
+        significant=False,
         description="HTCondor accounting group jobs are submitted.",
     )
     htcondor_requirements = luigi.Parameter(

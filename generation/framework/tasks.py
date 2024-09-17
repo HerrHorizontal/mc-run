@@ -19,7 +19,11 @@ logger = get_logger(__name__)
 
 
 class CommonConfig(luigi.Config):
-    pass
+    from ast import literal_eval
+    from luigi.configuration import add_config_path
+    Config = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
+    for add_config in literal_eval(Config.get("AddConfigFiles", "add_configs")):
+        add_config_path(os.path.abspath(add_config))
 
 
 @inherits(CommonConfig)
