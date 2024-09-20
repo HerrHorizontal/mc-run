@@ -1,47 +1,34 @@
 import os
-import re
+import socket
+from enum import Enum
 
 import law
+import law.config
 import luigi
 from generation.framework.htcondor.BundleSoftware import BundleRepo
+from law.contrib.htcondor.job import HTCondorJobManager
 from law.util import merge_dicts
 
 law.contrib.load("tasks", "wlcg", "git", "htcondor")
 
 
-class HTCondorJobManager(law.htcondor.HTCondorJobManager):
-    status_line_cre = re.compile(
-        r"^(\d+\.\d+)" + 4 * r"\s+[^\s]+" + r"\s+([UIRXSCHE<>])\s+.*$"
-    )
-
-    def get_htcondor_version(cls):
-        return (8, 6, 5)
-
-    @classmethod
-    def map_status(cls, status_flag):
-        if status_flag in ("0", "1", "U", "I"):
-            return cls.PENDING
-        elif status_flag in ("2", "7", "R", "<", ">", "S"):
-            return cls.RUNNING
-        elif status_flag in ("4", "C"):
-            return cls.FINISHED
-        elif status_flag in ("5", "6", "H", "E"):
-            return cls.FAILED
-        else:
-            return cls.FAILED
-
-
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
+    ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
+    # ConfigParser = law.config.Config.instance()
+
     htcondor_accounting_group = luigi.Parameter(
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_accounting_group"),
+        # default=ConfigParser.get_expanded("luigi_HTCondor","htcondor_accounting_group"),
         significant=False,
         description="HTCondor accounting group jobs are submitted.",
     )
     htcondor_requirements = luigi.Parameter(
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_requirements"),
         significant=False,
         description="Additional requirements on e.g. the target machines to run the jobs.",
     )
     htcondor_remote_job = luigi.Parameter(
-        default="True",
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_remote_job"),
         significant=False,
         description="ETP HTCondor specific flag to allow jobs to run on remote resources.",
     )
@@ -50,12 +37,11 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         description="Requested walltime for the jobs.",
     )
     htcondor_request_cpus = luigi.Parameter(
-        default="1",
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_request_cpus"),
         significant=False,
         description="Number of CPU cores to request for each job.",
     )
     htcondor_request_memory = luigi.Parameter(
-        default="2500",
         significant=False,
         description="Amount of memory to request for each job.",
     )
@@ -64,19 +50,37 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         description="Amount of disk scratch space to request for each job.",
     )
     htcondor_universe = luigi.Parameter(
-        default="docker",
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_universe"),
         significant=False,
         description="HTcondor universe to run jobs in.",
     )
     htcondor_docker_image = luigi.Parameter(
-        default="mschnepf/slc7-condocker",
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_docker_image"),
         significant=False,
         description="Docker image to use for running docker jobs.",
     )
     bootstrap_file = luigi.Parameter(
         default="bootstrap.sh",
+        significant=False,
         description="Path to the source script providing the software environment to source at job start.",
     )
+
+    # identify the domain on which HTCondor scheduler is running for job classad adjustments
+    class Domain(Enum):
+        CERN = 1
+        ETP = 2
+        OTHERS = -1
+
+    domain = socket.getfqdn()
+    if str(domain).endswith("cern.ch"):
+        domain = Domain.CERN
+    elif str(domain).endswith(("etp.kit.edu", "ekp.kit.edu")):
+        domain = Domain.ETP
+    else:
+        raise RuntimeError(
+            f"HTCondor batch settings not implemented for domain {domain}!"
+        )
+        domain = Domain.OTHERS
 
     # set Law options
     output_collection_cls = law.SiblingFileCollection
@@ -98,10 +102,12 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
     def htcondor_output_directory(self):
         job_dir = law.config.get_expanded("job", "job_file_dir")
-        return law.LocalDirectoryTarget(f"{job_dir}/{self.task_id}")
+        return law.LocalDirectoryTarget(f"{job_dir}/{self.task_id}/")
 
     def htcondor_create_job_file_factory(self):
-        factory = super(HTCondorWorkflow, self).htcondor_create_job_file_factory()
+        factory = super(HTCondorWorkflow, self).htcondor_create_job_file_factory(
+            dir=self.htcondor_output_directory().abspath
+        )
         factory.is_tmp = False
         return factory
 
@@ -113,16 +119,20 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.stdout = os.path.join("Output.txt")
         config.stderr = os.path.join("Error.txt")
         config.custom_content = []
-        config.custom_content.append(
-            ("accounting_group", self.htcondor_accounting_group)
-        )
+        if self.domain == self.Domain.ETP:
+            config.custom_content.append(
+                ("accounting_group", self.htcondor_accounting_group)
+            )
+            config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
         config.custom_content.append(("stream_error", "True"))
         config.custom_content.append(("stream_output", "True"))
         config.custom_content.append(("Requirements", self.htcondor_requirements))
-        config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
         config.custom_content.append(("universe", self.htcondor_universe))
         config.custom_content.append(("docker_image", self.htcondor_docker_image))
-        config.custom_content.append(("+RequestWalltime", self.htcondor_walltime))
+        if self.domain == self.Domain.CERN:
+            config.custom_content.append(("+MaxRuntime", self.htcondor_walltime))
+        elif self.domain == self.Domain.ETP:
+            config.custom_content.append(("+RequestWalltime", self.htcondor_walltime))
         config.custom_content.append(("x509userproxy", law.wlcg.get_vomsproxy_file()))
         config.custom_content.append(("request_cpus", self.htcondor_request_cpus))
         config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
