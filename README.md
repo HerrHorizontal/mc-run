@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12721769.svg)](https://doi.org/10.5281/zenodo.12721769)
 # Scalable MC event generation and Rivet analysis
 
 
