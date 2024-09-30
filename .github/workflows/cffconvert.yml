@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: "validate"
+    name: "validate CITATION.cff"
     runs-on: ubuntu-latest
     steps:
       - name: Check out a copy of the repository
