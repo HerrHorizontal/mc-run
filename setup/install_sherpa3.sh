@@ -38,7 +38,7 @@ install_sherpa() {
     source_lcg_stack
     INSTALL_DIR="$this_dir/../software/sherpa3.0"
     mkdir -p "$INSTALL_DIR"
-    BUILD_DIR="$this_dir/build/"
+    BUILD_DIR="$this_dir/../src/"
     mkdir -p "$BUILD_DIR"
 
     if [ ! -d "$BUILD_DIR/sherpa" ]; then
