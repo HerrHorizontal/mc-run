@@ -76,15 +76,6 @@ action() {
     _addpy "$this_dir/luigi"
     _addbin "$this_dir/luigi/bin"
 
-    # six
-    _addpy "$this_dir/six"
-
-    # scinum
-    _addpy "$this_dir/scinum"
-
-    # order
-    _addpy "$this_dir/order"
-
     # law
     _addpy "$this_dir/law"
     _addbin "$this_dir/law/bin"
