@@ -197,10 +197,10 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
 
         # check whether explicit defnition for splittings exists
         if self.splittings_all:
-            splittings_all = self.splittings_all
+            splittings_all = luigi.DictParameter().serialize(self.splittings_all)
         else:
             if self.splittings_conf_all:
-                splittings_all = BINS[self.splittings_conf_all]
+                splittings_all = json.dumps(BINS[self.splittings_conf_all])
             else:
                 raise TypeError(
                     "Splittings undefined (None), configuration for --splittings-all or --splittings-conf-all needed!"
@@ -222,7 +222,7 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
             "{}".format(self.yrange[0]),
             "{}".format(self.yrange[1]),
             "--splittings",
-            "{}".format(json.dumps(splittings_all)),
+            "{}".format(splittings_all),
             "--jets",
             "{}".format(json.dumps(JETS)),
             "--full-label",
