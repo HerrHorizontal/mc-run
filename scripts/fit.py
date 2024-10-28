@@ -276,20 +276,24 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
         return result
 
     result = _fit(N_PARS)
-    if not result.success:
+    chi2ndf = result.fun / (len(xVal) - N_PARS)
+    if not result.success or chi2ndf > 10:
         print(result)
         print("\n\tRetry fitting with new start point!\n")
         result = _fit(N_PARS, -1)
+        chi2ndf = result.fun / (len(xVal) - N_PARS)
 
     # repeat fit with less complex model
-    while not result.success:
+    while not result.success or chi2ndf > 10:
         print(result)
         print("\n\tRetry fitting with less complex model!\n")
         N_PARS -= 1
         result = _fit(N_PARS)
-        if not result.success:
+        chi2ndf = result.fun / (len(xVal) - N_PARS)
+        if not result.success or chi2ndf > 10:
             print("\n\tRetry fitting with new start point!\n")
             result = _fit(N_PARS, -1)
+            chi2ndf = result.fun / (len(xVal) - N_PARS)
 
     # print(result)
 
@@ -298,7 +302,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
     else:
         try:
             covm = np.linalg.inv(hess(result.x))
-        except:
+        except np.linalg.LinAlgError:
             print("Singular matrix {}, try pseudo inverse".format(hess(result.x)))
             covm = np.linalg.pinv(hess(result.x))
 
