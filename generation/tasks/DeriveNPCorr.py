@@ -5,6 +5,7 @@ from generation.framework.tasks import GenerationScenarioConfig, PostprocessingT
 from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 from luigi.util import inherits
+from law.decorator import localize
 
 from .RivetMerge import RivetMergeExtensions
 
@@ -94,6 +95,7 @@ class DeriveNPCorr(PostprocessingTask):
         )
         return output
 
+    @localize(input=True, output=False)
     def run(self):
         # ensure that the output directory exists
         output = self.output()
@@ -107,18 +109,16 @@ class DeriveNPCorr(PostprocessingTask):
         print("Starting NP-factor calculation with YODA")
         print("=======================================================")
 
-        # localize the separate YODA files on grid storage
+        # localize the separate YODA files on grid storage (done via decorator)
         logger.info("Inputs:")
-        with self.input()["full"].localize("r") as _file:
-            logger.info(
-                "\tfull: {} cached at {}".format(self.input()["full"], _file.path)
-            )
-            input_yoda_file_full = _file.path
-        with self.input()["partial"].localize("r") as _file:
-            logger.info(
-                "\tpartial: {} cached at {}".format(self.input()["partial"], _file.path)
-            )
-            input_yoda_file_partial = _file.path
+        input_yoda_file_full = self.input()["full"].abspath
+        logger.info(
+            "\tfull: {} cached at {}".format(self.input()["full"], input_yoda_file_full)
+        )
+        input_yoda_file_partial = self.input()["partial"].abspath
+        logger.info(
+            "\tpartial: {} cached at {}".format(self.input()["partial"], input_yoda_file_partial)
+        )
 
         # assign paths for output YODA file and plots
         output_yoda = "{full}-{partial}-Ratio.yoda".format(
