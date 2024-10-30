@@ -73,8 +73,8 @@ read Matchbox/MadGraph-NJet.in
 ## See the documentation for more options
 ##################################################
 cd /Herwig/Cuts/
-set /Herwig/Cuts/FirstJet:PtMin 18.*GeV
-set /Herwig/Cuts/SecondJet:PtMin 18.*GeV
+set /Herwig/Cuts/FirstJet:PtMin 25.*GeV
+set /Herwig/Cuts/SecondJet:PtMin 20.*GeV
 #set ChargedLeptonPairMassCut:MinMass 60*GeV
 #set ChargedLeptonPairMassCut:MaxMass 120*GeV
 
