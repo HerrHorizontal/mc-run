@@ -74,7 +74,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     domain = socket.getfqdn()
     if str(domain).endswith("cern.ch"):
         domain = Domain.CERN
-    elif str(domain).endswith(("etp.kit.edu", "ekp.kit.edu")):
+    elif str(domain).endswith(("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")):
         domain = Domain.ETP
     else:
         raise RuntimeError(
