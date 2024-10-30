@@ -2,7 +2,7 @@ import numpy as np
 import scipy.optimize as opt
 
 
-def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
+def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
     """Fit function to data points.
 
     Args:
@@ -275,27 +275,37 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
             )
         return result
 
+    def get_chi2ndf(result, xVal):
+        return result.fun / (len(xVal) - len(result.x))
+
     result = _fit(N_PARS)
-    chi2ndf = result.fun / (len(xVal) - N_PARS)
-    if not result.success or chi2ndf > 10:
-        print(result)
+    chi2ndf = get_chi2ndf(result, xVal)
+    best_result = result
+    if not result.success or chi2ndf > max_chi2ndf:
         print("\n\tRetry fitting with new start point!\n")
         result = _fit(N_PARS, -1)
-        chi2ndf = result.fun / (len(xVal) - N_PARS)
+        chi2ndf = get_chi2ndf(result, xVal)
+        if chi2ndf < get_chi2ndf(best_result, xVal):
+            best_result = result
 
     # repeat fit with less complex model
-    while not result.success or chi2ndf > 10:
-        print(result)
+    while not result.success or chi2ndf > max_chi2ndf:
         print("\n\tRetry fitting with less complex model!\n")
         N_PARS -= 1
+        if N_PARS == 0:
+            print("\n\tNo good fit found, using best result\n{}".format(best_result))
+            result = best_result
+            N_PARS = len(best_result.x)
+            break
         result = _fit(N_PARS)
-        chi2ndf = result.fun / (len(xVal) - N_PARS)
-        if not result.success or chi2ndf > 10:
-            print("\n\tRetry fitting with new start point!\n")
+        if chi2ndf < get_chi2ndf(best_result, xVal):
+            best_result = result
+        chi2ndf = get_chi2ndf(result, xVal)
+        if not result.success or chi2ndf > max_chi2ndf:
             result = _fit(N_PARS, -1)
-            chi2ndf = result.fun / (len(xVal) - N_PARS)
-
-    # print(result)
+            chi2ndf = get_chi2ndf(result, xVal)
+            if chi2ndf < get_chi2ndf(best_result, xVal):
+                best_result = result
 
     if method == "BFGS":
         covm = result.hess_inv
@@ -330,7 +340,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead"):
         fitfunc=get_model_str(N_PARS, result.x),
         ys=model(xVal, result.x),
         yerrs=fit_error(xVal, result.x, covm),
-        chi2ndf=result.fun / (len(xVal) - N_PARS),
+        chi2ndf=get_chi2ndf(result, xVal),
         chi2=result.fun,
         ndf=(len(xVal) - N_PARS),
     )
