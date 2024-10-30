@@ -93,6 +93,12 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         default=None,
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None.",
     )
+    threads = luigi.IntParameter(
+        default=15, description="Number of threads to use for the fits."
+    )
+    max_chi2ndf = luigi.FloatParameter(
+        default=10, description="Maximum chi2/ndf value for the fits."
+    )
 
     exclude_params_req = {
         "source_script",
@@ -233,6 +239,10 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
             ),
             "--fit-method",
             "{}".format(self.fit_method),
+            "--threads",
+            "{}".format(self.threads),
+            "--max-chi2ndf",
+            "{}".format(self.max_chi2ndf),
         ]
         executable += (
             [
