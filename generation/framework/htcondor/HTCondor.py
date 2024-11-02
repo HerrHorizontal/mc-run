@@ -39,18 +39,22 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         significant=False,
         description="Maximum runtime for jobs. Default unit is hours. Defaults to 1h.",
     )
-    htcondor_request_cpus = luigi.Parameter(
+    htcondor_request_cpus = luigi.IntParameter(
         default=ConfigParser.get("HTCondorDefaults", "htcondor_request_cpus"),
         significant=False,
         description="Number of CPU cores to request for each job.",
     )
-    htcondor_request_memory = luigi.Parameter(
+    htcondor_request_memory = law.BytesParameter(
+        default=law.NO_FLOAT,
+        unit="MB",
         significant=False,
-        description="Amount of memory to request for each job.",
+        description="Requested memory in MB. Default is empty, which uses the cluster default.",
     )
-    htcondor_request_disk = luigi.Parameter(
+    htcondor_request_disk = law.BytesParameter(
+        default=law.NO_FLOAT,
         significant=False,
-        description="Amount of disk scratch space to request for each job.",
+        unit="kB",
+        description="Disk scratch space to request for each job in kB.",
     )
     htcondor_universe = luigi.Parameter(
         default=ConfigParser.get("HTCondorDefaults", "htcondor_universe"),
@@ -110,28 +114,40 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         return law.JobInputFile(bootstrap_file, share=True, render_job=True)
 
     def htcondor_job_config(self, config, job_num, branches):
+        # setup logging
+        config.log = "job.log"
+        config.stdout = "stdout.log"
+        config.stderr = "stderr.log"
+        config.custom_content.append(("stream_error", True))
+        config.custom_content.append(("stream_output", True))
+        # set unique batch name for bettter identification
+        config.custom_content.append(("JobBatchName", self.task_id))
+        # set htcondor universe to docker
         config.universe = self.htcondor_universe
-        config.custom_content = []
-        config.custom_content.append(("x509userproxy", law.wlcg.get_vomsproxy_file()))
-        config.custom_content.append(("stream_error", "True"))
-        config.custom_content.append(("stream_output", "True"))
         config.custom_content.append(("docker_image", self.htcondor_docker_image))
-        # max runtime
-        max_runtime = int(math.floor(self.htcondor_walltime * 3600)) - 1
-        config.custom_content.append(("+MaxRuntime", max_runtime))
-        config.custom_content.append(("+RequestRuntime", max_runtime))
+        config.custom_content.append(("x509userproxy", law.wlcg.get_vomsproxy_file()))
+        # request runtime
+        if self.htcondor_walltime is not None and self.htcondor_walltime > 0:
+            max_runtime = int(math.floor(self.htcondor_walltime * 3600)) - 1
+            config.custom_content.append(("+MaxRuntime", max_runtime))
+            config.custom_content.append(("+RequestRuntime", max_runtime))
+        # request cpus
+        config.custom_content.append(("RequestCpus", self.htcondor_request_cpus))
+        # request memory
+        if self.htcondor_request_memory is not None and self.htcondor_request_memory > 0:
+            config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
+        # request disk space
+        if self.htcondor_request_disk is not None and self.htcondor_request_disk > 0:
+            config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
+        # furhter custom htcondor requirements
+        config.custom_content.append(("Requirements", self.htcondor_requirements))
+        # custom ETP stuff
         if self.domain == self.Domain.ETP:
             config.custom_content.append(
                 ("accounting_group", self.htcondor_accounting_group)
             )
             config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
-            config.custom_content.append(("+RequestWalltime", max_runtime))
-        config.custom_content.append(("request_cpus", self.htcondor_request_cpus))
-        config.custom_content.append(("RequestCpus", self.htcondor_request_cpus))
-        config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
-        config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
-        config.custom_content.append(("JobBatchName", self.task_id))
-        config.custom_content.append(("Requirements", self.htcondor_requirements))
+            # config.custom_content.append(("+RequestWalltime", max_runtime))
 
         # include the wlcg specific tools script in the input sandbox
         tools_file = law.util.law_src_path("contrib/wlcg/scripts/law_wlcg_tools.sh")
