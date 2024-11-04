@@ -140,8 +140,9 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # request runtime
         if self.htcondor_walltime is not None and self.htcondor_walltime > 0:
             max_runtime = int(math.floor(self.htcondor_walltime * 3600)) - 1
-            config.custom_content.append(("+MaxRuntime", max_runtime))
-            config.custom_content.append(("+RequestRuntime", max_runtime))
+            config.custom_content.append(("+MaxRuntime", max_runtime))  # CERN
+            config.custom_content.append(("+RequestRuntime", max_runtime))  # NAF?
+            config.custom_content.append(("+RequestWalltime", max_runtime))  # ETP
         # request cpus
         config.custom_content.append(("RequestCpus", self.htcondor_request_cpus))
         # request memory
