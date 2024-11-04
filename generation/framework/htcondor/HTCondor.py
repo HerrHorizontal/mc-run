@@ -16,7 +16,17 @@ law.contrib.load("tasks", "wlcg", "git", "htcondor")
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
     # ConfigParser = law.config.Config.instance()
-
+    transfer_logs = luigi.BoolParameter(
+        default=True,
+        significant=False,
+        description="transfer job logs to the output directory; default: True",
+    )
+    htcondor_logs = luigi.BoolParameter(
+        default=False,
+        significant=False,
+        description="transfer htcondor internal submission logs to the output directory; "
+        "default: False",
+    )
     htcondor_accounting_group = luigi.Parameter(
         default=ConfigParser.get("HTCondorDefaults", "htcondor_accounting_group"),
         # default=ConfigParser.get_expanded("luigi_HTCondor","htcondor_accounting_group"),
@@ -115,9 +125,12 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
     def htcondor_job_config(self, config, job_num, branches):
         # setup logging
-        config.log = "job.log"
-        config.stdout = "stdout.log"
-        config.stderr = "stderr.log"
+        # some htcondor setups require a "log" config, but we can safely use /dev/null by default
+        config.log = "/dev/null"
+        if self.htcondor_logs:
+            config.log = "job.log"
+            config.stdout = "stdout.log"
+            config.stderr = "stderr.log"
         # set unique batch name for bettter identification
         config.custom_content.append(("JobBatchName", self.task_id))
         # set htcondor universe to docker
