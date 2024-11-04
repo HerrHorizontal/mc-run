@@ -150,12 +150,10 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # request disk space
         if self.htcondor_request_disk is not None and self.htcondor_request_disk > 0:
             config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
-        # furhter custom htcondor requirements
+        # further custom htcondor requirements
         config.custom_content.append(("Requirements", self.htcondor_requirements))
         # custom ETP stuff
         if self.domain == self.Domain.ETP:
-            config.custom_content.append(("stream_error", True))
-            config.custom_content.append(("stream_output", True))
             config.custom_content.append(
                 ("accounting_group", self.htcondor_accounting_group)
             )
@@ -167,14 +165,13 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.input_files["wlcg_tools"] = law.JobInputFile(
             tools_file, share=True, render=False
         )
-
+        
+        # load software bundles from grid storage
         reqs = self.htcondor_workflow_requires()
-
         def get_bundle_info(task):
             uris = task.output().dir.uri(return_all=True)
             pattern = os.path.basename(task.get_file_pattern())
             return ",".join(uris), pattern
-
         # add repo bundle variables
         uris, pattern = get_bundle_info(reqs["repo"])
         config.render_variables["repo_uris"] = uris
