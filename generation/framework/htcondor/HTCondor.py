@@ -118,8 +118,6 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.log = "job.log"
         config.stdout = "stdout.log"
         config.stderr = "stderr.log"
-        config.custom_content.append(("stream_error", True))
-        config.custom_content.append(("stream_output", True))
         # set unique batch name for bettter identification
         config.custom_content.append(("JobBatchName", self.task_id))
         # set htcondor universe to docker
@@ -143,6 +141,8 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.custom_content.append(("Requirements", self.htcondor_requirements))
         # custom ETP stuff
         if self.domain == self.Domain.ETP:
+            config.custom_content.append(("stream_error", True))
+            config.custom_content.append(("stream_output", True))
             config.custom_content.append(
                 ("accounting_group", self.htcondor_accounting_group)
             )
