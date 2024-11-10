@@ -113,6 +113,10 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         job_dir = law.config.get_expanded("job", "job_file_dir")
         return law.LocalDirectoryTarget(f"{job_dir}/{self.task_id}/")
 
+    def htcondor_log_directory(self):
+        log_dir = law.config.get_expanded("job", "job_log_dir")
+        return law.LocalDirectoryTarget(f"{log_dir}/{self.task_id}/")
+
     def htcondor_create_job_file_factory(self):
         factory = super().htcondor_create_job_file_factory(
             dir=self.htcondor_output_directory().abspath
@@ -138,11 +142,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.custom_content.append(("docker_image", self.htcondor_docker_image))
         config.custom_content.append(("x509userproxy", law.wlcg.get_vomsproxy_file()))
         # request runtime
-        if self.htcondor_walltime is not None and self.htcondor_walltime > 0:
-            max_runtime = int(math.floor(self.htcondor_walltime * 3600)) - 1
-            config.custom_content.append(("+MaxRuntime", max_runtime))  # CERN
-            config.custom_content.append(("+RequestRuntime", max_runtime))  # NAF?
-            config.custom_content.append(("+RequestWalltime", max_runtime))  # ETP
+        max_runtime = int(math.floor(self.htcondor_walltime * 3600)) - 1
         # request cpus
         config.custom_content.append(("RequestCpus", self.htcondor_request_cpus))
         # request memory
@@ -153,8 +153,11 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
             config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
         # further custom htcondor requirements
         config.custom_content.append(("Requirements", self.htcondor_requirements))
-        # custom ETP stuff
+        # custom stuff
+        if self.domain == self.Domain.CERN:
+            config.custom_content.append(("+MaxRuntime", max_runtime))
         if self.domain == self.Domain.ETP:
+            config.custom_content.append(("+RequestWalltime", max_runtime))
             config.custom_content.append(
                 ("accounting_group", self.htcondor_accounting_group)
             )
