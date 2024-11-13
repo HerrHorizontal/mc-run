@@ -1,5 +1,7 @@
 import os
 
+import yoda
+
 import luigi
 from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
 from generation.framework.utils import run_command, set_environment_variables
@@ -34,6 +36,10 @@ class RivetMerge(GenRivetTask):
     mc_generator = luigi.Parameter(
         default="herwig",
         description="Name of the MC generator used for event generation.",
+    )
+    skip_max_uncertainty = luigi.FloatParameter(
+        default=0.25,
+        description="Skip files when the uncertainty on the sum of weights is above this value. Default 0.25",
     )
 
     # dummy parameter for run step
@@ -78,23 +84,32 @@ class RivetMerge(GenRivetTask):
         )
 
     def mergeSingleYodaChunk(self, inputfile_list, inputfile_chunk=None):
-
         print("-------------------------------------------------------")
         print("Starting merging of chunk {}".format(inputfile_chunk))
         print("-------------------------------------------------------")
+
+        # Check for excessive weights in the YODA files
+        skip_files = set()
+        for _yoda_file in inputfile_list:
+            histos = yoda.read(_yoda_file, asdict=True, patterns=["/RAW/_EVTCOUNT"])
+            evt_count = histos.get("/RAW/_EVTCOUNT", None)
+            if evt_count is None:
+                logger.warning(f"No event count histogram found in {_yoda_file}! Using it anyways...")
+                continue
+            if evt_count.relErr() > self.skip_max_uncertainty:
+                logger.warning(
+                    f"Excessive weight uncertainty {evt_count.relErr()*100:.2f}%! Skipping: {_yoda_file}"
+                )
+                skip_files.add(_yoda_file)
+        for skip_file in skip_files:
+            inputfile_list.remove(skip_file)
 
         # data
         _my_input_file_name = str(self.campaign)
 
         # merge the YODA files
-        if inputfile_chunk == None:
-            output_file = "{OUTPUT_FILE_NAME}.yoda".format(
-                OUTPUT_FILE_NAME=_my_input_file_name
-            )
-        else:
-            output_file = "{OUTPUT_FILE_NAME}_Chunk{BUNCH}.yoda".format(
-                OUTPUT_FILE_NAME=_my_input_file_name, BUNCH=inputfile_chunk
-            )
+        chunk_ext = f"_Chunk{inputfile_chunk}" if inputfile_chunk is not None else ""
+        output_file = f"{_my_input_file_name}{chunk_ext}.yoda"
 
         _rivet_exec = ["rivet-merge"]
         _rivet_args = ["--output={OUTPUT_FILE}".format(OUTPUT_FILE=output_file)]
@@ -128,7 +143,6 @@ class RivetMerge(GenRivetTask):
         return output_file
 
     def mergeChunkwise(self, full_inputfile_list, chunk_size):
-
         print("-------------------------------------------------------")
         print(
             "Starting splitting of {} files into chunks of {}".format(
@@ -155,7 +169,6 @@ class RivetMerge(GenRivetTask):
         return final_input_files
 
     def run(self):
-
         # ensure that the output directory exists
         output = self.output()
         try:
@@ -180,21 +193,18 @@ class RivetMerge(GenRivetTask):
                 self.input()["analyses"]["collection"].targets.values()
             )
         )
+        # Rivet requires the so files to be named correctly, so we can't just use localize
         local_so_files = []
-        for target in self.input()["analyses"]["collection"].targets.values():
-            with target.localize("r") as so_file:
-                local_path = os.path.join(
-                    dirname, str(os.path.basename(so_file.path)).split("_", 1)[1]
-                )
-                so_file.copy_to_local(local_path)
-                local_so_files.append(local_path)
+        for so_file in self.input()["analyses"]["collection"].iter_existing():
+            local_path = os.path.join(dirname, so_file.basename)
+            so_file.copy_to_local(local_path)
+            local_so_files.append(local_path)
 
         # localize the separate YODA files on grid storage
         inputfile_list = []
-        for branch, target in self.input()["RunRivet"]["collection"].targets.items():
-            if target.exists():
-                with target.localize("r") as _file:
-                    inputfile_list.append(_file.path)
+        for target in self.input()["RunRivet"]["collection"].iter_existing():
+            with target.localize("r") as _file:
+                inputfile_list.append(_file.path)
 
         # merge in chunks
         chunk_size = self.chunk_size
@@ -205,13 +215,11 @@ class RivetMerge(GenRivetTask):
                 final_input_files = self.mergeChunkwise(
                     full_inputfile_list=final_input_files, chunk_size=chunk_size
                 )
-
             _output_file = self.mergeSingleYodaChunk(inputfile_list=final_input_files)
             _output_file = os.path.abspath(_output_file)
 
             if os.path.exists(_output_file):
-                output.copy_from_local(_output_file)
-                os.remove(_output_file)
+                output.move_from_local(_output_file)
                 for _outfile in final_input_files:
                     os.remove(_outfile)
             else:
@@ -286,14 +294,12 @@ class RivetMergeExtensions(RivetMerge):
                 self.input()["analyses"]["collection"].targets.values()
             )
         )
+        # Rivet requires the so files to be named correctly, so we can't just use localize
         local_so_files = []
-        for target in self.input()["analyses"]["collection"].targets.values():
-            with target.localize("r") as so_file:
-                local_path = os.path.join(
-                    dirname, str(os.path.basename(so_file.path)).split("_", 1)[1]
-                )
-                so_file.copy_to_local(local_path)
-                local_so_files.append(local_path)
+        for so_file in self.input()["analyses"]["collection"].iter_existing():
+            local_path = os.path.join(dirname, so_file.basename)
+            so_file.copy_to_local(local_path)
+            local_so_files.append(local_path)
 
         # localize the separate YODA files on grid storage
         inputfile_list = []
