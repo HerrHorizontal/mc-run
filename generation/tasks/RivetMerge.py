@@ -236,6 +236,14 @@ class RivetMergeExtensions(RivetMerge):
     exclude_params_req = RivetMerge.exclude_params_req
     exclude_params_req.add("extensions")
 
+    def output(self):
+        return self.remote_target(
+            "{INPUT_FILE_NAME}{extensions}.yoda".format(
+                INPUT_FILE_NAME=str(self.campaign),
+                extensions="".join(self.extensions.keys()),
+            )
+        )
+
     def requires(self):
         reqs = {"RivetMerge": RivetMerge.req(self)}
         reqs["analyses"] = super(RivetMergeExtensions, self).requires()["analyses"]

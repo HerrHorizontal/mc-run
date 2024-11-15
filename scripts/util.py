@@ -8,19 +8,12 @@ import numpy as np
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
-        # If input object is a ndarray it will be converted into a dict holding
-        # dtype, shape and the data base64 encoded
+        # convert np array to standard list
+        # let the default encoder handle everything else
         if isinstance(obj, np.ndarray):
-            data_b64 = base64.b64encode(obj.data)
-            ret = dict(
-                __ndarray__=data_b64.decode("ascii"),
-                dtype=str(obj.dtype),
-                shape=obj.shape,
-            )
+            ret = dict(ndarray=obj.tolist())
             return ret
-        else:
-            # Let the base class default method raise the TypeError
-            return super(NumpyEncoder, self).default(obj)
+        return super().default(obj)
 
 
 def json_numpy_obj_hook(dct):
@@ -33,6 +26,8 @@ def json_numpy_obj_hook(dct):
     if isinstance(dct, dict) and "__ndarray__" in dct:
         data = base64.b64decode(dct["__ndarray__"])
         return np.frombuffer(data, dct["dtype"]).reshape(dct["shape"])
+    elif isinstance(dct, dict) and "ndarray" in dct:
+        return np.array(dct["ndarray"])
     return dct
 
 

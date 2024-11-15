@@ -7,10 +7,10 @@ from generation.framework.config import BINS, JETS, MCCHAIN_SCENARIO_LABELS
 from generation.framework.tasks import GenerationScenarioConfig, PostprocessingTask
 from generation.framework.utils import (
     check_outdir,
-    localize_input,
     run_command,
     set_environment_variables,
 )
+from law.decorator import localize
 from law.logger import get_logger
 from luigi.util import inherits
 
@@ -93,6 +93,12 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         default=None,
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None.",
     )
+    threads = luigi.IntParameter(
+        default=15, description="Number of threads to use for the fits."
+    )
+    max_chi2ndf = luigi.FloatParameter(
+        default=10, description="Maximum chi2/ndf value for the fits."
+    )
 
     exclude_params_req = {
         "source_script",
@@ -172,6 +178,7 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         )
         return out
 
+    @localize(input=True, output=False)
     def run(self):
         check_outdir(self.output())
 
@@ -186,11 +193,6 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         print("=======================================================")
         print("Starting NP-factor plotting with YODA")
         print("=======================================================")
-
-        inputs = dict()
-        inputs["full"] = localize_input(self.input()["full"])
-        inputs["partial"] = localize_input(self.input()["partial"])
-        inputs["ratio"] = localize_input(self.input()["ratio"])
 
         # assign paths for output YODA file and plots
         plot_dir_single = self.output()["single"].parent.path
@@ -211,11 +213,11 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
             "python",
             os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorr.py"),
             "--full",
-            "{}".format(inputs["full"]),
+            "{}".format(self.input()["full"].abspath),
             "--partial",
-            "{}".format(inputs["partial"]),
+            "{}".format(self.input()["partial"].abspath),
             "--ratio",
-            "{}".format(inputs["ratio"]),
+            "{}".format(self.input()["ratio"].abspath),
             "--plot-dir",
             "{}".format(plot_dir_single),
             "--yrange",
@@ -237,6 +239,10 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
             ),
             "--fit-method",
             "{}".format(self.fit_method),
+            "--threads",
+            "{}".format(self.threads),
+            "--max-chi2ndf",
+            "{}".format(self.max_chi2ndf),
         ]
         executable += (
             [
@@ -351,15 +357,12 @@ class PlotNPCorrSummary(PlotNPCorr):
         )
         return out
 
+    @localize(input=True, output=False)
     def run(self):
         check_outdir(self.output())
         print("=======================================================")
         print("Starting NP-factor summary plotting with YODA")
         print("=======================================================")
-
-        inputs = dict()
-        inputs["ratio"] = localize_input(self.input()["ratio"])
-        inputs["Fits"] = localize_input(self.input()["Fits"]["single"])
 
         # assign paths for output YODA file and plots
         plot_dir_summary = self.output()["summary"].parent.path
@@ -382,7 +385,7 @@ class PlotNPCorrSummary(PlotNPCorr):
             "python",
             os.path.expandvars("$ANALYSIS_PATH/scripts/yodaPlotNPCorrSummary.py"),
             "--ratio",
-            "{}".format(inputs["ratio"]),
+            self.input()["ratio"].abspath,
             "--plot-dir",
             "{}".format(plot_dir_summary),
             "--yrange",
@@ -412,7 +415,7 @@ class PlotNPCorrSummary(PlotNPCorr):
                     json.dumps(
                         dict(
                             {
-                                os.path.join(inputs["Fits"], k): v
+                                os.path.join(self.input()["Fits"].abspath, k): v
                                 for k, v in self.fits.items()
                             }
                         )

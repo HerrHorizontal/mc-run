@@ -7,11 +7,11 @@ from generation.framework.config import BINS, JETS, MCCHAIN_SCENARIO_LABELS
 from generation.framework.tasks import GenerationScenarioConfig, PostprocessingTask
 from generation.framework.utils import (
     check_outdir,
-    localize_input,
     run_command,
     set_environment_variables,
 )
 from law.logger import get_logger
+from law.decorator import localize
 from luigi.util import inherits
 
 from .RivetMerge import RivetMergeExtensions
@@ -125,6 +125,7 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
         )
         return out
 
+    @localize(input=True, output=False)
     def run(self):
         check_outdir(self.output())
         print("=======================================================")
@@ -134,9 +135,6 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
             )
         )
         print("=======================================================")
-
-        inputs = dict()
-        inputs["Rivet"] = localize_input(self.input()["Rivet"])
 
         # assign paths for output YODA file and plots
         plot_dir = self.output()["summary"].parent.path
@@ -163,7 +161,7 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
                     "$ANALYSIS_PATH/scripts/yodaPlotSplittedQuantity.py"
                 ),
                 "--in",
-                "{}".format(inputs["Rivet"]),
+                "{}".format(self.input()["Rivet"].abspath),
                 "--plot-dir",
                 "{}".format(plot_dir),
                 "--yrange",
