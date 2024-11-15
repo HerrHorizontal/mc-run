@@ -2,8 +2,8 @@ import os
 
 import yoda
 
-import luigi
 import law
+import luigi
 from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
 from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
@@ -81,10 +81,12 @@ class RivetMerge(GenRivetTask):
 
     def output(self):
         return self.remote_target(
-            "{INPUT_FILE_NAME}.yoda".format(INPUT_FILE_NAME=str(self.campaign))
+            "_".join(sorted(self.rivet_analyses)) + ".yoda",
         )
 
-    def mergeSingleYodaChunk(self, inputfile_list, inputfile_chunk=None, workdir=None):
+    def mergeSingleYodaChunk(
+        self, inputfile_list, inputfile_chunk=None, workdir=None, equiv=False
+    ):
         print("-------------------------------------------------------")
         print("Starting merging of chunk {}".format(inputfile_chunk))
         print("-------------------------------------------------------")
@@ -95,7 +97,9 @@ class RivetMerge(GenRivetTask):
             histos = yoda.read(_yoda_file, asdict=True, patterns=["/RAW/_EVTCOUNT"])
             evt_count = histos.get("/RAW/_EVTCOUNT", None)
             if evt_count is None:
-                logger.warning(f"No event count histogram found in {_yoda_file}! Using it anyways...")
+                logger.warning(
+                    f"No event count histogram found in {_yoda_file}! Using it anyways..."
+                )
                 continue
             if evt_count.relErr() > self.skip_max_uncertainty:
                 logger.warning(
@@ -110,8 +114,10 @@ class RivetMerge(GenRivetTask):
         output_file = f"{workdir.abspath}/{self.task_id}{chunk_name}.yoda"
 
         _rivet_exec = ["rivet-merge"]
+        if equiv:
+            _rivet_exec.append("-e")
         _rivet_args = ["--output={OUTPUT_FILE}".format(OUTPUT_FILE=output_file)]
-        _rivet_in = ["-e"] + [
+        _rivet_in = [
             "{YODA_FILES}".format(YODA_FILES=_yoda_file)
             for _yoda_file in inputfile_list
         ]
@@ -132,7 +138,11 @@ class RivetMerge(GenRivetTask):
                 "Executable: {}".format(" ".join(_rivet_exec + _rivet_args + _rivet_in))
             )
 
-        run_command(_rivet_exec + _rivet_args + _rivet_in, env=self.rivet_env, cwd=workdir.abspath)
+        run_command(
+            _rivet_exec + _rivet_args + _rivet_in,
+            env=self.rivet_env,
+            cwd=workdir.abspath,
+        )
         if not os.path.exists(output_file):
             raise IOError("Could not find output file {}!".format(output_file))
 
@@ -140,7 +150,9 @@ class RivetMerge(GenRivetTask):
 
         return output_file
 
-    def mergeChunkwise(self, full_inputfile_list, chunk_size, workdir=None):
+    def mergeChunkwise(
+        self, full_inputfile_list, chunk_size, workdir=None, equiv=False
+    ):
         print("-------------------------------------------------------")
         print(
             "Starting splitting of {} files into chunks of {}".format(
@@ -158,7 +170,10 @@ class RivetMerge(GenRivetTask):
 
         for chunk, inlist in inputfile_dict.items():
             _outfile = self.mergeSingleYodaChunk(
-                inputfile_list=inlist, inputfile_chunk=chunk, workdir=workdir
+                inputfile_list=inlist,
+                inputfile_chunk=chunk,
+                workdir=workdir,
+                equiv=equiv,
             )
             final_input_files.append(_outfile)
 
@@ -212,9 +227,14 @@ class RivetMerge(GenRivetTask):
         try:
             while len(final_input_files) > chunk_size:
                 final_input_files = self.mergeChunkwise(
-                    full_inputfile_list=final_input_files, chunk_size=chunk_size, workdir=tmp_dir
+                    full_inputfile_list=final_input_files,
+                    chunk_size=chunk_size,
+                    workdir=tmp_dir,
+                    equiv=True,
                 )
-            _output_file = self.mergeSingleYodaChunk(inputfile_list=final_input_files, workdir=tmp_dir)
+            _output_file = self.mergeSingleYodaChunk(
+                inputfile_list=final_input_files, workdir=tmp_dir, equiv=True,
+            )
             _output_file = os.path.abspath(_output_file)
 
             if os.path.exists(_output_file):
@@ -236,31 +256,55 @@ class RivetMergeExtensions(RivetMerge):
         default=dict(),
         description="Campaign extensions (e.g. dedicated MC campaigns enhancing statistics in parts of phase space) identified by a list of suffices to the campaign name with a corresponding number of generation jobs to be expected.",
     )
+    equivalent = luigi.BoolParameter(
+        default=False,
+        description="Use the -e flag in rivet merge. This should be used if the extensions covers the same final state, phase space and cross section as the main campaign.",
+    )
 
     exclude_params_req = RivetMerge.exclude_params_req
     exclude_params_req.add("extensions")
 
     def output(self):
         return self.remote_target(
-            "{INPUT_FILE_NAME}{extensions}.yoda".format(
-                INPUT_FILE_NAME=str(self.campaign),
-                extensions="".join(self.extensions.keys()),
-            )
+            str(self.campaign) + "".join(self.extensions.keys()),
+            "_".join(sorted(self.rivet_analyses)) + ".yoda",
         )
 
     def requires(self):
-        reqs = {"RivetMerge": RivetMerge.req(self)}
+        _map = {
+            "default": {
+                "Dijet_3": "Dijet_3_highpt",
+            },
+            "_lowpt": {
+                "Dijet_3": "Dijet_3_lowpt",
+            },
+        }
+        _mapped_analyses = [
+            _map["default"].get(analysis, analysis)
+            for analysis in list(self.rivet_analyses)
+        ]
+        # dont't do mapping if nothing is merged
+        if len(self.extensions) == 0:
+            _mapped_analyses = list(self.rivet_analyses)
+        reqs = {"RivetMerge": RivetMerge.req(self, rivet_analyses=_mapped_analyses)}
         reqs["analyses"] = super(RivetMergeExtensions, self).requires()["analyses"]
         for extension, nJobs in self.extensions.items():
+            _mapped_analyses = [
+                _map.get(extension, _map["default"]).get(analysis, analysis)
+                for analysis in list(self.rivet_analyses)
+            ]
             if nJobs and nJobs > 0:
                 reqs[f"RivetMerge{extension}"] = RivetMerge.req(
                     self,
                     campaign=f"{self.campaign}{extension}",
+                    rivet_analyses=_mapped_analyses,
                     number_of_gen_jobs=nJobs,
                 )
             else:
                 reqs[f"RivetMerge{extension}"] = RivetMerge.req(
-                    self, campaign=f"{self.campaign}{extension}"
+                    self,
+                    campaign=f"{self.campaign}{extension}",
+                    rivet_analyses=_mapped_analyses,
                 )
         return reqs
 
@@ -320,11 +364,16 @@ class RivetMergeExtensions(RivetMerge):
             if len(final_input_files) > 1:
                 while len(final_input_files) > chunk_size:
                     final_input_files = self.mergeChunkwise(
-                        full_inputfile_list=final_input_files, chunk_size=chunk_size, workdir=tmp_dir
+                        full_inputfile_list=final_input_files,
+                        chunk_size=chunk_size,
+                        workdir=tmp_dir,
+                        equiv=self.equivalent,
                     )
 
                 _output_file = self.mergeSingleYodaChunk(
-                    inputfile_list=final_input_files, workdir=tmp_dir
+                    inputfile_list=final_input_files,
+                    workdir=tmp_dir,
+                    equiv=self.equivalent,
                 )
             else:
                 logger.info(
