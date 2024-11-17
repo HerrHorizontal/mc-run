@@ -23,7 +23,7 @@ class CommonConfig(luigi.Config):
     from luigi.configuration import add_config_path
     Config = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
     for add_config in literal_eval(Config.get("AddConfigFiles", "add_configs")):
-        add_config_path(os.path.abspath(add_config))
+        add_config_path(os.path.expandvars(add_config))
 
 
 @inherits(CommonConfig)
