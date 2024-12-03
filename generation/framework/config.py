@@ -10,7 +10,7 @@ MCCHAIN_SCENARIO_LABELS = {
 
 CAMPAIGN_MODS = {
     "herwigLHC-LO-ZplusJet": dict(
-        order="LO", label=r"Herwig7 LO", lightencolor=1.0, linestyle="solid"
+        order="LO", label=r"Herwig7 LO", lightencolor=1.0, linestyle="dotted"
     ),
     "herwigLHC-NLO-ZplusJet": dict(
         order="NLO", label=r"Herwig7 NLO", lightencolor=0.7, linestyle="solid"
@@ -26,13 +26,13 @@ CAMPAIGN_MODS = {
     ),
     "herwigDijets_LO": dict(
         order="LO",
-        label=r"MG@LO $\oplus$ Herwig7",
+        label=r"Herwig7 LO",
         lightencolor=1.0,
         linestyle="dotted",
     ),
     "herwigDijets_NLO": dict(
         order="NLO",
-        label=r"MG@NLO $\oplus$ Herwig7",
+        label=r"Herwig7 NLO",
         lightencolor=0.7,
         linestyle="solid",
     ),
