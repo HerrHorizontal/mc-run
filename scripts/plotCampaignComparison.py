@@ -189,6 +189,7 @@ for sname, splits in splittings.items():
         linestyles = []
         lnames = []
         aos = []
+        orig_colors = []
         print("splits: {}".format(len(splits)))
         for i, (k, v) in enumerate(reversed(sorted(splits.items()))):
             print("aos: {}".format(len(aos_dicts)))
@@ -207,6 +208,7 @@ for sname, splits in splittings.items():
                                     v["color"], CAMPAIGN_MODS[campaign]["lightencolor"]
                                 )
                             )
+                            orig_colors.append(v["color"])
                             markers.append(v["marker"])
                             linestyles.append(CAMPAIGN_MODS[campaign]["linestyle"])
                             lnames.append(name.replace(v["ident"], k))
@@ -292,10 +294,11 @@ for sname, splits in splittings.items():
             handles, labels = axmain.get_legend_handles_labels()
             campaign_handles = []
             # adjust legend handles for plotted analysis objects
-            for handle in handles:
-                campaign_handle = mpl.lines.Line2D([0], [0], color="black")
+            for i, handle in enumerate(handles):
+                campaign_handle = mpl.lines.Line2D([0], [0])
                 campaign_handle.update_from(handle)
                 campaign_handle.set_linestyle("solid")
+                campaign_handle.set_color(orig_colors[-(1 + i * len(args.campaign))])
                 campaign_handles.append(campaign_handle)
             # add legend handles and labels to distinguish campaigns
             for campaign in args.campaign:
