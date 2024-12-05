@@ -119,7 +119,7 @@ BINS = {
             ),
             "YB_05_10_YS_15_20": dict(
                 ident="Ys1.500000Yb0.500000",
-                label="$1.5y^*\\leq 2.0$,\n$0.5<y_b\\leq 1.0$",
+                label="$1.5<y^*\\leq 2.0$,\n$0.5<y_b\\leq 1.0$",
                 ylim=[0.75, 1.3],
                 color="#ffa500",
                 marker="v",
