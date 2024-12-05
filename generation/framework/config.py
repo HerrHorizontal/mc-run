@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from copy import copy
 
 MCCHAIN_SCENARIO_LABELS = {
     "withNP": "ME+PS+Had+MPI",
@@ -222,10 +223,17 @@ for region in ["Towards", "Transverse", "Away"]:
         k: v for k, v in BINS[f"zjet_RFUE_{region}"].items() if "YS_00_05" in k
     }
 
-BINS["YB0_zjet"] = {k: v for k, v in BINS["zjet"].items() if "YB_00_05" in k}
-BINS["YS0_zjet"] = {k: v for k, v in BINS["zjet"].items() if "YS_00_05" in k}
+BINS["YB0_zjet"] = {k: copy(v) for k, v in BINS["zjet"].items() if "YB_00_05" in k}
+BINS["YS0_zjet"] = {k: copy(v) for k, v in BINS["zjet"].items() if "YS_00_05" in k}
 
-BINS["YB0_dijets"] = {k: v for k, v in BINS["dijets"].items() if "YB_00_05" in k}
-BINS["YS0_dijets"] = {k: v for k, v in BINS["dijets"].items() if "YS_00_05" in k}
+BINS["YB0_dijets"] = {k: copy(v) for k, v in BINS["dijets"].items() if "YB_00_05" in k}
+BINS["YS0_dijets"] = {k: copy(v) for k, v in BINS["dijets"].items() if "YS_00_05" in k}
+
+for setting in ("YB0_zjet", "YB0_dijets"):
+    for _d in BINS[setting].values():
+        _d["label"] = _d["label"].replace("$0.0<y_b\\leq 0.5$", "$y_b\\leq 0.5$")
+for setting in ("YS0_zjet", "YS0_dijets"):
+    for _d in BINS[setting].values():
+        _d["label"] = _d["label"].replace("$0.0<y^*\\leq 0.5$", "$y^*\\leq 0.5$")
 
 BINS["test"] = {k: v for k, v in BINS["zjet"].items() if "YB_05_10_YS_10_15" in k}
