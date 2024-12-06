@@ -305,8 +305,6 @@ class PlotScenarioComparison(PostprocessingTask, law.LocalWorkflow):
             else []
         )
 
-        logger.info("Executable: {}".format(" ".join(executable)))
-
         rivet_env = set_environment_variables(
             os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
         )

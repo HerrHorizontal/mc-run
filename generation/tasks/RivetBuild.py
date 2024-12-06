@@ -1,5 +1,6 @@
 import os
-from subprocess import PIPE
+from copy import copy
+from functools import cache
 
 import law
 import luigi
@@ -9,6 +10,20 @@ from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 
 logger = get_logger(__name__)
+rivet_env = set_environment_variables(
+    os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
+)
+
+
+@cache
+def get_default_rivet_analyses():
+    utils_logger = get_logger("generation.framework.utils")
+    default_rivet_env = copy(rivet_env).update({"RIVET_ANALYSIS_PATH": ""})
+    old_level = utils_logger.getEffectiveLevel()
+    utils_logger.setLevel("WARNING")
+    rivet_list = run_command(["rivet", "--list"], env=default_rivet_env)[1]
+    utils_logger.setLevel(old_level)
+    return set([line.split(" ")[0] for line in rivet_list.split("\n")])
 
 
 class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
@@ -26,9 +41,6 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
         description="List of compiler flags to add to the build command.",
     )
 
-    rivet_env = set_environment_variables(
-        os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
-    )
     rivet_os_version = rivet_env["RIVET_OS_DISTRO"]
 
     exclude_params_req = {"compiler_flags"}
@@ -47,12 +59,8 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
 
     def create_branch_map(self):
         # check whether configured analyses are built-in, only build missing
-        missing_anas = []
-        for ana in self.rivet_analyses:
-            if os.popen(f"rivet --list {ana} | grep {ana}").read() != "":
-                logger.info(f"Built-in Rivet analysis {ana}. Skip building...")
-            else:
-                missing_anas.append(ana)
+        rivet_default_anas = get_default_rivet_analyses()
+        missing_anas = set(self.rivet_analyses) - rivet_default_anas
         return {branch: str(ana) for branch, ana in enumerate(missing_anas)}
 
     def remote_path(self, *path):
@@ -70,15 +78,16 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
         analysis = self.branch_data
 
         # ensure that the output directory exists
-        output = self.output()
-        output.parent.touch()
+        self.output().parent.touch()
 
         # actual payload:
         print("=======================================================")
         print(f"Building missing Rivet analysis {analysis}")
         print("=======================================================")
 
-        so_path = os.path.abspath(os.path.join(f"Rivet{analysis}.so"))
+        cwd = law.LocalDirectoryTarget(is_tmp=True)
+        cwd.touch()
+        so_path = os.path.join(cwd.abspath, f"Rivet{analysis}.so")
         code_path = os.path.abspath(
             os.path.join(
                 os.path.expandvars("$ANALYSIS_PATH"), "analyses", f"{analysis}.cc"
@@ -91,27 +100,11 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
             )
 
         _rivet_exec = (
-            [
-                "rivet-build",
-            ]
+            ["rivet-build"]
             + [str(flag) for flag in self.compiler_flags]
             + [so_path, code_path]
         )
-
-        print("Executable: {}".format(" ".join(_rivet_exec)))
-
-        try:
-            code, out, error = run_command(_rivet_exec, env=self.rivet_env)
-        except RuntimeError as e:
-            logger.error(f"Building of Rivet analysis {analysis} failed!")
-            raise e
-
-        if os.path.exists(so_path):
-            output.copy_from_local(so_path)
-
-        try:
-            os.remove(so_path)
-        except:
-            logger.error(f"Shared object file {so_path} not created!")
+        run_command(_rivet_exec, env=rivet_env)
+        self.output().move_from_local(so_path)
 
         print("=======================================================")

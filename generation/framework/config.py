@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from copy import copy
 
 MCCHAIN_SCENARIO_LABELS = {
     "withNP": "ME+PS+Had+MPI",
@@ -10,7 +11,7 @@ MCCHAIN_SCENARIO_LABELS = {
 
 CAMPAIGN_MODS = {
     "herwigLHC-LO-ZplusJet": dict(
-        order="LO", label=r"Herwig7 LO", lightencolor=1.0, linestyle="solid"
+        order="LO", label=r"Herwig7 LO", lightencolor=1.0, linestyle="dotted"
     ),
     "herwigLHC-NLO-ZplusJet": dict(
         order="NLO", label=r"Herwig7 NLO", lightencolor=0.7, linestyle="solid"
@@ -26,13 +27,13 @@ CAMPAIGN_MODS = {
     ),
     "herwigDijets_LO": dict(
         order="LO",
-        label=r"MG@LO $\oplus$ Herwig7",
+        label=r"Herwig7 LO",
         lightencolor=1.0,
         linestyle="dotted",
     ),
     "herwigDijets_NLO": dict(
         order="NLO",
-        label=r"MG@NLO $\oplus$ Herwig7",
+        label=r"Herwig7 NLO",
         lightencolor=0.7,
         linestyle="solid",
     ),
@@ -119,7 +120,7 @@ BINS = {
             ),
             "YB_05_10_YS_15_20": dict(
                 ident="Ys1.500000Yb0.500000",
-                label="$1.5y^*\\leq 2.0$,\n$0.5<y_b\\leq 1.0$",
+                label="$1.5<y^*\\leq 2.0$,\n$0.5<y_b\\leq 1.0$",
                 ylim=[0.75, 1.3],
                 color="#ffa500",
                 marker="v",
@@ -222,10 +223,17 @@ for region in ["Towards", "Transverse", "Away"]:
         k: v for k, v in BINS[f"zjet_RFUE_{region}"].items() if "YS_00_05" in k
     }
 
-BINS["YB0_zjet"] = {k: v for k, v in BINS["zjet"].items() if "YB_00_05" in k}
-BINS["YS0_zjet"] = {k: v for k, v in BINS["zjet"].items() if "YS_00_05" in k}
+BINS["YB0_zjet"] = {k: copy(v) for k, v in BINS["zjet"].items() if "YB_00_05" in k}
+BINS["YS0_zjet"] = {k: copy(v) for k, v in BINS["zjet"].items() if "YS_00_05" in k}
 
-BINS["YB0_dijets"] = {k: v for k, v in BINS["dijets"].items() if "YB_00_05" in k}
-BINS["YS0_dijets"] = {k: v for k, v in BINS["dijets"].items() if "YS_00_05" in k}
+BINS["YB0_dijets"] = {k: copy(v) for k, v in BINS["dijets"].items() if "YB_00_05" in k}
+BINS["YS0_dijets"] = {k: copy(v) for k, v in BINS["dijets"].items() if "YS_00_05" in k}
+
+for setting in ("YB0_zjet", "YB0_dijets"):
+    for _d in BINS[setting].values():
+        _d["label"] = _d["label"].replace("$0.0<y_b\\leq 0.5$", "$y_b\\leq 0.5$")
+for setting in ("YS0_zjet", "YS0_dijets"):
+    for _d in BINS[setting].values():
+        _d["label"] = _d["label"].replace("$0.0<y^*\\leq 0.5$", "$y^*\\leq 0.5$")
 
 BINS["test"] = {k: v for k, v in BINS["zjet"].items() if "YB_05_10_YS_10_15" in k}

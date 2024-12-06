@@ -160,6 +160,7 @@ namespace Rivet {
         double ystar = 0.5 * std::abs(jets[0].rap() - jets[1].rap());
         double yboost = 0.5 * std::abs(jets[0].rap() + jets[1].rap());
         double ptavg = 0.5 * (jets[0].pT() + jets[1].pT());
+	      if (ptavg > 147) return;
         double mass = FourMomentum(jets[0].momentum() + jets[1].momentum()).mass();
 
         // compute index of histogram to be filled from (yb, ys): yb0ys0 --> 0, yb1ys0 --> 1 ...

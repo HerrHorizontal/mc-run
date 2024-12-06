@@ -3,15 +3,17 @@
 import argparse
 import json
 import os
+import pprint
 
 import matplotlib as mpl
-
-mpl.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import yoda
 from fit import scipy_fit as fit
 from util import NumpyEncoder, json_numpy_obj_hook, valid_yoda_file
+
+mpl.use("Agg")
+
 
 COLORS = [
     "#e41a1c",
@@ -154,8 +156,6 @@ aos_ratios = yoda.readYODA(
     yoda_file_ratio, asdict=True, patterns=args.MATCH, unpatterns=args.UNMATCH
 )
 
-import pprint
-
 pp = pprint.PrettyPrinter(depth=2)
 print("ratios:")
 pp.pprint(aos_ratios)
@@ -189,7 +189,7 @@ if args.FIT:
 for sname, splits in splittings.items():
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6, 2 * 0.5 * len(splits))
+        fig.set_size_inches(6, 2 + 0.8 * len(splits))
         axmain = fig.add_subplot(1, 1, 1)
 
         axmain.set_xlabel(
@@ -230,7 +230,7 @@ for sname, splits in splittings.items():
                     aos.append(ao)
                 else:
                     continue
-            axmain.set_ylim([yminmain, (ymaxmain - 1) + (i + 1)])
+            axmain.set_ylim([yminmain, ymaxmain + 0.9 * i])
             axmain.axhline(
                 1.0 * (0.5 * i + 1),
                 color="gray",

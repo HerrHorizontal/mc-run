@@ -2,7 +2,9 @@ import numpy as np
 import scipy.optimize as opt
 
 
-def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
+def scipy_fit(
+    xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25, xrange=None
+):
     """Fit function to data points.
 
     Args:
@@ -218,15 +220,12 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
         )
 
     # minimize function and take resulting azimuth
-    # bounds = ((-np.inf,np.inf),(-np.inf,0),(-10,10))
-    if method in ["Nelder-Mead", "trust-exact", "BFGS"]:
-        method = method
-    else:
+    if method not in ("Nelder-Mead", "trust-exact", "BFGS"):
         raise NotImplementedError(
             "Fitting with optimizer {} not implemented!".format(method)
         )
 
-    if any(method == m for m in ["BFGS", "Nelder-Mead"]):
+    if method in ("BFGS", "Nelder-Mead"):
         _jac = None
         _hess = None
         options = dict(maxiter=1e6)
@@ -240,7 +239,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
             result = opt.minimize(
                 objective,
                 x0=(sign * 1, -1, 1),
-                bounds=None,
+                bounds=((-1e9, 1e9), (-1e9, 0), (-10, 10)),
                 tol=1e-6,
                 method=method,
                 jac=_jac,
@@ -251,7 +250,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
             result = opt.minimize(
                 objective,
                 x0=(sign * 1, -1),
-                bounds=None,
+                bounds=((-1e9, 1e9), (-1e9, 0)),
                 tol=1e-6,
                 method=method,
                 jac=_jac,
@@ -262,7 +261,7 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
             result = opt.minimize(
                 objective,
                 x0=(sign * 1, 1),
-                bounds=None,
+                bounds=((-1e9, 1e9), (-10, 10)),
                 tol=1e-6,
                 method=method,
                 jac=_jac,
@@ -332,14 +331,21 @@ def scipy_fit(xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25):
             )
         return model
 
+    # interpolate the fit to 100 points for better plots
+    x_line = np.logspace(np.log10(xVal.min()), np.log10(xVal.max()), 100)
+    if xrange:
+        x_line = np.logspace(np.log10(xrange[0]), np.log10(xrange[1]), 100)
+    y_line = model(x_line, result.x)
+    y_line_errs = fit_error(x_line, result.x, covm)
+
     return dict(
         # result=result,
-        xs=xVal,
+        xs=x_line,
         pars=result.x,
         cov=covm,
         fitfunc=get_model_str(N_PARS, result.x),
-        ys=model(xVal, result.x),
-        yerrs=fit_error(xVal, result.x, covm),
+        ys=y_line,
+        yerrs=y_line_errs,
         chi2ndf=get_chi2ndf(result, xVal),
         chi2=result.fun,
         ndf=(len(xVal) - N_PARS),

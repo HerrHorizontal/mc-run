@@ -146,11 +146,11 @@ def run_command(executable, env, *args, **kwargs):
         tuple[int | Any, Any | str, Any | str]: execution code, output string and error string
     """
     command_str = " ".join(executable)
-    logger.info('Running command: "{}"'.format(command_str))
+    logger.info(f"Running: {executable[0]}")
+    logger.debug(f'Full command:\n"{command_str}"')
     code, out, error = interruptable_popen(
         executable, *args, stdout=PIPE, stderr=PIPE, env=env, **kwargs
     )
-    # if successful return merged YODA file and plots
     if code != 0:
         import pprint
 
@@ -163,10 +163,9 @@ def run_command(executable, env, *args, **kwargs):
                 command=executable, code=code
             )
         )
-    else:
-        logger.info("Output:\n{}".format(out))
-        if error:
-            logger.info("Error:\n{}".format(error))
+    logger.info("Output:\n{}".format(out))
+    if error:
+        logger.warning(f"Error:\n{error}")
     return code, out, error
 
 

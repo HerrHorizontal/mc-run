@@ -1,8 +1,5 @@
 import glob
 import os
-import random
-import shutil
-from subprocess import PIPE
 
 import law
 import luigi
@@ -145,6 +142,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         #
         dir_number = int(self.branch) / 1000
         return self.remote_target(
+            "_".join(sorted(self.rivet_analyses)),
             "{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
                 DIR_NUMBER=int(dir_number),
                 INPUT_FILE_NAME=str(self.campaign),
@@ -154,14 +152,12 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     def run(self):
         # branch data
+        _map = {
+            "Dijet_3_lowpt": "Dijet_3",
+            "Dijet_3_highpt": "Dijet_3",
+        }
         _rivet_analyses = list(self.rivet_analyses)
-
-        # ensure that the output directory exists
-        output = self.output()
-        try:
-            output.parent.touch()
-        except IOError:
-            logger.error("Output target doesn't exist!")
+        _mapped_analyses = [_map.get(analysis, analysis) for analysis in _rivet_analyses]
 
         # actual payload:
         print("=======================================================")
@@ -169,10 +165,10 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         print("=======================================================")
 
         # set environment variables
+        tmp_dir = law.LocalDirectoryTarget(is_tmp=True)
         my_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
-        dirname = os.path.expandvars("$ANALYSIS_PATH")
         my_env["RIVET_ANALYSIS_PATH"] = ":".join(
-            (dirname, my_env.get("RIVET_ANALYSIS_PATH", ""))
+            (tmp_dir.abspath, my_env.get("RIVET_ANALYSIS_PATH", ""))
         )
 
         # identify and get the compiled Rivet analyses
@@ -181,46 +177,35 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 self.input()["analyses"]["collection"].targets.values()
             )
         )
-        for target in self.input()["analyses"]["collection"].targets.values():
-            with target.localize("r") as so_file:
-                so_file.copy_to_local(
-                    os.path.join(
-                        dirname, str(os.path.basename(so_file.path)).split("_", 1)[1]
-                    )
-                )
+        local_so_files = []
+        for so_file in self.input()["analyses"]["collection"].iter_existing():
+            local_path = os.path.join(tmp_dir.abspath, so_file.basename)
+            so_file.copy_to_local(local_path)
+            local_so_files.append(local_path)
 
         # identify and get the HEPMC files for analyzing
         logger.info("Input events: {}".format(self.input()["MCRun"]))
         for target in self.input()["MCRun"]:
             with target.localize("r") as input_file:
-                os.system("tar -xvjf {}".format(input_file.path))
+                os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
 
-        input_files = glob.glob("*.hepmc")
-        output_file = "Rivet.yoda"
+        input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
+        output_file = law.LocalFileTarget(is_tmp="yoda")
 
         # run Rivet analysis
         _rivet_exec = ["rivet"]
         _rivet_args = (
             [
                 "--analysis={RIVET_ANALYSIS}".format(RIVET_ANALYSIS=_rivet_analysis)
-                for _rivet_analysis in _rivet_analyses
+                for _rivet_analysis in _mapped_analyses
             ]
-            + ["--histo-file={OUTPUT_NAME}".format(OUTPUT_NAME=output_file)]
+            + [f"--histo-file={output_file.abspath}"]
             + input_files
         )
 
         logger.info("Executable: {}".format(" ".join(_rivet_exec + _rivet_args)))
-        try:
-            run_command(_rivet_exec + _rivet_args, env=my_env)
-        except RuntimeError as e:
-            output.remove()
-            raise e
+        run_command(_rivet_exec + _rivet_args, env=my_env, cwd=tmp_dir.abspath)
 
-        _output_file = os.path.abspath(output_file)
-
-        if os.path.exists(_output_file):
-            output.copy_from_local(_output_file)
-        else:
-            raise IOError("Could not find output file {}!".format(_output_file))
+        self.output().move_from_local(output_file)
 
         print("=======================================================")
