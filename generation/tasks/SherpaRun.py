@@ -37,17 +37,12 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         default=10000, description="Number of events generated in each job."
     )
 
-    exclude_params_req = {
+    exclude_params_req = HTCondorWorkflow.exclude_params_req | {
         "setupfile",
         # "number_of_jobs",
         "events_per_job",
         "start_seed",
-        "htcondor_walltime",
-        "htcondor_request_memory",
-        "htcondor_requirements",
-        "htcondor_request_disk",
     }
-    exclude_params_req_get = {"bootstrap_file"}
 
     def workflow_requires(self):
         # Each job requires the sherpa setup to be present

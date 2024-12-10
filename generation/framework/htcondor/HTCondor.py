@@ -1,13 +1,13 @@
+import math
 import os
 import socket
-import math
 from enum import Enum
 
 import law
 import law.config
-from law.logger import get_logger
 import luigi
 from generation.framework.htcondor.BundleSoftware import BundleRepo
+from law.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -83,6 +83,15 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         description="Path to the source script providing the software environment to source at job start.",
     )
 
+    exclude_params_req = {
+        "htcondor_requirements",
+        "htcondor_remote_job",
+        "htcondor_walltime",
+        "htcondor_request_cpus",
+        "htcondor_request_memory",
+        "htcondor_request_disk",
+    }
+
     # identify the domain on which HTCondor scheduler is running for job classad adjustments
     class Domain(Enum):
         CERN = 1
@@ -92,7 +101,9 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     domain = socket.getfqdn()
     if str(domain).endswith("cern.ch"):
         domain = Domain.CERN
-    elif str(domain).endswith(("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")):
+    elif str(domain).endswith(
+        ("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")
+    ):
         domain = Domain.ETP
     else:
         raise RuntimeError(
@@ -141,9 +152,13 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # set htcondor universe to docker
         config.universe = self.htcondor_universe
         if config.universe == "docker":
-            config.custom_content.append(("docker_image", self.htcondor_container_image))
+            config.custom_content.append(
+                ("docker_image", self.htcondor_container_image)
+            )
         elif config.universe == "container":
-            config.custom_content.append(("container_image", self.htcondor_container_image))
+            config.custom_content.append(
+                ("container_image", self.htcondor_container_image)
+            )
         else:
             logger.warning(
                 f"HTCondor universe {config.universe} not supported for containerization."
@@ -154,8 +169,13 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # request cpus
         config.custom_content.append(("RequestCpus", self.htcondor_request_cpus))
         # request memory
-        if self.htcondor_request_memory is not None and self.htcondor_request_memory > 0:
-            config.custom_content.append(("RequestMemory", self.htcondor_request_memory))
+        if (
+            self.htcondor_request_memory is not None
+            and self.htcondor_request_memory > 0
+        ):
+            config.custom_content.append(
+                ("RequestMemory", self.htcondor_request_memory)
+            )
         # request disk space
         if self.htcondor_request_disk is not None and self.htcondor_request_disk > 0:
             config.custom_content.append(("RequestDisk", self.htcondor_request_disk))
@@ -180,10 +200,12 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
         # load software bundles from grid storage
         reqs = self.htcondor_workflow_requires()
+
         def get_bundle_info(task):
             uris = task.output().dir.uri(return_all=True)
             pattern = os.path.basename(task.get_file_pattern())
             return ",".join(uris), pattern
+
         # add repo bundle variables
         uris, pattern = get_bundle_info(reqs["repo"])
         config.render_variables["repo_uris"] = uris

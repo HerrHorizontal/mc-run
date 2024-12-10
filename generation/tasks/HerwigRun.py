@@ -48,15 +48,9 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 Setupfiles have to be stored in `inputfiles/setupfiles/`.",
     )
 
-    exclude_params_req = {
-        # "setupfile",
-        # "number_of_jobs",
+    exclude_params_req = HTCondorWorkflow.exclude_params_req | {
         "events_per_job",
         "start_seed",
-        "htcondor_walltime",
-        "htcondor_request_memory",
-        "htcondor_requirements",
-        "htcondor_request_disk",
     }
     exclude_params_req_get = {"bootstrap_file"}
 
@@ -107,7 +101,6 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     def run(self):
         # branch data
-        _job_num = str(self.branch)
         _my_config = str(self.campaign)
         _num_events = str(self.events_per_job)
         seed = int(self.branch_data)

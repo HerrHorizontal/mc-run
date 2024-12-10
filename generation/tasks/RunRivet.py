@@ -44,13 +44,8 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     # dummy parameter for run step
     number_of_gen_jobs = luigi.IntParameter()
 
-    exclude_params_req = {
+    exclude_params_req = HTCondorWorkflow.exclude_params_req | {
         "files_per_job",
-        "bootstrap_file",
-        "htcondor_walltime",
-        "htcondor_request_memory",
-        "htcondor_requirements",
-        "htcondor_request_disk",
     }
 
     def workflow_requires(self):

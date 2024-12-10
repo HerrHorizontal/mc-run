@@ -3,9 +3,9 @@ import os
 import luigi
 from generation.framework.tasks import GenerationScenarioConfig, PostprocessingTask
 from generation.framework.utils import run_command, set_environment_variables
+from law.decorator import localize
 from law.logger import get_logger
 from luigi.util import inherits
-from law.decorator import localize
 
 from .RivetMerge import RivetMergeExtensions
 
@@ -49,7 +49,6 @@ class DeriveNPCorr(PostprocessingTask):
     )
 
     exclude_params_req = {
-        "source_script",
         "mc_setting_full",
         "mc_setting_partial",
         "match",
@@ -117,7 +116,9 @@ class DeriveNPCorr(PostprocessingTask):
         )
         input_yoda_file_partial = self.input()["partial"].abspath
         logger.info(
-            "\tpartial: {} cached at {}".format(self.input()["partial"], input_yoda_file_partial)
+            "\tpartial: {} cached at {}".format(
+                self.input()["partial"], input_yoda_file_partial
+            )
         )
 
         # assign paths for output YODA file and plots
