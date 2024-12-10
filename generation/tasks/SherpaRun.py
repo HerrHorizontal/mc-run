@@ -9,7 +9,6 @@ from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 from luigi.util import inherits
 
-from .SherpaBuild import SherpaConfig
 from .SherpaIntegrate import SherpaIntegrate
 
 logger = get_logger(__name__)
@@ -53,11 +52,8 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     def workflow_requires(self):
         # Each job requires the sherpa setup to be present
         return {
-            "SherpaIntegrate": SherpaIntegrate.req(self),
+            "SherpaIntegrate": SherpaIntegrate.req(self, _exclude={"branch"}),
         }
-
-    def requires(self):
-        return self.workflow_requires()
 
     def create_branch_map(self):
         # create list of seeds
@@ -86,8 +82,6 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         )
 
     def run(self):
-        # branch data
-        _job_num = str(self.branch)
         _my_config = str(self.campaign)
         _num_events = str(self.events_per_job)
         seed = int(self.branch_data)
@@ -106,8 +100,8 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
             os.path.expandvars("$ANALYSIS_PATH/setup/setup_sherpa.sh")
         )
         work_dir = os.getcwd()
-        # get the prepared HSherpack and runfiles and unpack them
-        with self.input()["SherpaIntegrate"].localize("r") as _file:
+        # get the prepared Sherpack and runfiles and unpack them
+        with self.workflow_input()["SherpaIntegrate"].localize("r") as _file:
             os.system("tar -xzf {}".format(_file.path))
 
         # run Sherpa event generation
