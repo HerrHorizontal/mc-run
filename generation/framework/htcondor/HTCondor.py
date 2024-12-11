@@ -96,6 +96,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     class Domain(Enum):
         CERN = 1
         ETP = 2
+        NAF = 3
         OTHERS = -1
 
     domain = socket.getfqdn()
@@ -105,6 +106,8 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         ("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")
     ):
         domain = Domain.ETP
+    elif str(domain).endswith("desy.de"):
+        domain = Domain.NAF
     else:
         raise RuntimeError(
             f"HTCondor batch settings not implemented for domain {domain}!"
@@ -191,6 +194,18 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
             )
             config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
             # config.custom_content.append(("+RequestWalltime", max_runtime))
+        if self.domain == self.Domain.NAF:
+            config.custom_content.append(("+RequestRuntime", max_runtime))  # NAF
+            # NAF has some custom stuff for containers...
+            if self.htcondor_universe == "docker":
+                raise NotImplementedError("Docker via HTCondor is not supported on NAF!")
+            if self.htcondor_universe == "container":
+                for i in range(len(config.custom_content)):
+                    if config.custom_content[i][0] == "container_image":
+                        del config.custom_content[i]
+                        break
+                config.universe = "vanilla"
+                config.custom_content.append(("+MySingularityImage", f'"{self.htcondor_container_image}"'))
 
         # include the wlcg specific tools script in the input sandbox
         tools_file = law.util.law_src_path("contrib/wlcg/scripts/law_wlcg_tools.sh")

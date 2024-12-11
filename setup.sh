@@ -24,7 +24,7 @@ source_lcg_stack() {
             echo "CentOS7 is not supported anymore! Use an updated OS."
             return 1
             prefix=x86_64-centos7
-            grid_ui="/cvmfs/grid.cern.ch/centos7-ui-200122/etc/profile.d/setup-c7-ui-python3-example.sh"
+            grid_ui="/cvmfs/grid.cern.ch/centos7-ui-160522/etc/profile.d/setup-c7-ui-python3-example.sh"
             platform=${prefix}-gcc11-opt
         fi
     elif [[ "$distro" == "RedHatEnterprise" || "$distro" == "Alma" || "$distro" == "Rocky" ]]; then
@@ -50,6 +50,10 @@ source_lcg_stack() {
     # echo "Applying updates ontop of LCG stack from $lcg_path_updates"
     # local lcg_path_updates=$view_base/$LCG1/$platform/setup.sh
     # source "$lcg_path_updates"
+    if [[ $(hostname -d) == "desy.de" && -z "$MCRUN_REMOTE" ]]; then
+       echo "Running at DESY, using DESY grid-ui..."
+       grid_ui="/cvmfs/grid.desy.de/etc/profile.d/grid-ui-env.sh"
+    fi
     echo "Sourcing grid-ui from $grid_ui"
     # shellcheck disable=SC1090
     source "$grid_ui"
