@@ -3,16 +3,13 @@
 import argparse
 import json
 import os.path
-import sys
-from os import mkdir
 
 import matplotlib as mpl
-
-mpl.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from util import adjust_lightness, json_numpy_obj_hook
 
+mpl.use("Agg")
 COLORS = [
     "#e41a1c",
     "#377eb8",
@@ -159,7 +156,7 @@ xticks = [x for x in XTICKS if x <= xmax and x >= xmin]
 for sname, splits in splittings.items():
     for jet in jets.values():
         fig = plt.figure()
-        fig.set_size_inches(6, 2 * 0.5 * len(splits) + 0.5 * len(args.campaign))
+        fig.set_size_inches(6, 2 + 0.8 * len(splits))
         axmain = fig.add_subplot(1, 1, 1)
 
         axmain.set_xlabel(
@@ -192,6 +189,7 @@ for sname, splits in splittings.items():
         linestyles = []
         lnames = []
         aos = []
+        orig_colors = []
         print("splits: {}".format(len(splits)))
         for i, (k, v) in enumerate(reversed(sorted(splits.items()))):
             print("aos: {}".format(len(aos_dicts)))
@@ -210,11 +208,12 @@ for sname, splits in splittings.items():
                                     v["color"], CAMPAIGN_MODS[campaign]["lightencolor"]
                                 )
                             )
+                            orig_colors.append(v["color"])
                             markers.append(v["marker"])
                             linestyles.append(CAMPAIGN_MODS[campaign]["linestyle"])
                             lnames.append(name.replace(v["ident"], k))
                             aos.append(ao)
-            axmain.set_ylim([yminmain, (ymaxmain - 1) + (i + 1)])
+            axmain.set_ylim([yminmain, ymaxmain + 0.95 * i])
             axmain.axhline(
                 1.0 * (0.5 * i + 1),
                 color="gray",
@@ -295,10 +294,11 @@ for sname, splits in splittings.items():
             handles, labels = axmain.get_legend_handles_labels()
             campaign_handles = []
             # adjust legend handles for plotted analysis objects
-            for handle in handles:
-                campaign_handle = mpl.lines.Line2D([0], [0], color="black")
+            for i, handle in enumerate(handles):
+                campaign_handle = mpl.lines.Line2D([0], [0])
                 campaign_handle.update_from(handle)
                 campaign_handle.set_linestyle("solid")
+                campaign_handle.set_color(orig_colors[-(1 + i * len(args.campaign))])
                 campaign_handles.append(campaign_handle)
             # add legend handles and labels to distinguish campaigns
             for campaign in args.campaign:
@@ -330,7 +330,6 @@ for sname, splits in splittings.items():
             transform=axmain.transAxes,
         )
         # axmain.set_title(label=CAMPAIGN_MODS["LHC-LO-ZplusJet"]["label"], loc='left')
-
         name = "{}_{}_summary".format(jet["ident"], sname)
         print("name: {}".format(name))
 

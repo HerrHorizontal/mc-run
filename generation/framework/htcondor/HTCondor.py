@@ -5,10 +5,11 @@ from enum import Enum
 
 import law
 import law.config
+from law.logger import get_logger
 import luigi
 from generation.framework.htcondor.BundleSoftware import BundleRepo
-from law.contrib.htcondor.job import HTCondorJobManager
-from law.util import merge_dicts
+
+logger = get_logger(__name__)
 
 law.contrib.load("tasks", "wlcg", "git", "htcondor")
 
@@ -71,10 +72,10 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         significant=False,
         description="HTcondor universe to run jobs in.",
     )
-    htcondor_docker_image = luigi.Parameter(
-        default=ConfigParser.get("HTCondorDefaults", "htcondor_docker_image"),
+    htcondor_container_image = luigi.Parameter(
+        default=ConfigParser.get("HTCondorDefaults", "htcondor_container_image"),
         significant=False,
-        description="Docker image to use for running docker jobs.",
+        description="Container/Docker image to use for running docker jobs. Depending on the chosen universe.",
     )
     bootstrap_file = luigi.Parameter(
         default="bootstrap.sh",
@@ -139,7 +140,14 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.custom_content.append(("JobBatchName", self.task_id))
         # set htcondor universe to docker
         config.universe = self.htcondor_universe
-        config.custom_content.append(("docker_image", self.htcondor_docker_image))
+        if config.universe == "docker":
+            config.custom_content.append(("docker_image", self.htcondor_container_image))
+        elif config.universe == "container":
+            config.custom_content.append(("container_image", self.htcondor_container_image))
+        else:
+            logger.warning(
+                f"HTCondor universe {config.universe} not supported for containerization."
+            )
         config.custom_content.append(("x509userproxy", law.wlcg.get_vomsproxy_file()))
         # request runtime
         max_runtime = int(math.floor(self.htcondor_walltime * 3600)) - 1
@@ -169,7 +177,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         config.input_files["wlcg_tools"] = law.JobInputFile(
             tools_file, share=True, render=False
         )
-        
+
         # load software bundles from grid storage
         reqs = self.htcondor_workflow_requires()
         def get_bundle_info(task):
@@ -180,5 +188,6 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         uris, pattern = get_bundle_info(reqs["repo"])
         config.render_variables["repo_uris"] = uris
         config.render_variables["repo_pattern"] = pattern
+        logger.debug(f"HTCondor config:\n{config}")
 
         return config

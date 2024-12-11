@@ -315,11 +315,20 @@ if __name__ == "__main__":
     # prepare data for mulithreaded fits
     fit_data = []
     for name, ao in aos_ratios.items():
+        x_range = ao.xMin(), ao.xMax()
         yErrs = np.array(ao.yErrs())
         xVals = np.array(ao.xVals())
         yVals = np.array(ao.yVals())
         fit_data.append(
-            (xVals, yVals, np.amax(yErrs, axis=1), 3, args.METHOD, args.max_chi2ndf)
+            (
+                xVals,
+                yVals,
+                np.amax(yErrs, axis=1),
+                3,
+                args.METHOD,
+                args.max_chi2ndf,
+                x_range,
+            )
         )
 
     def multithreaded_fits(fit_data):
@@ -402,9 +411,15 @@ if __name__ == "__main__":
 
         fit_result = fit_results[i]
 
-        axmain.plot(xVals, fit_result["ys"], color="black", linestyle="-", label="fit")
+        axmain.plot(
+            fit_result["xs"],
+            fit_result["ys"],
+            color="black",
+            linestyle="-",
+            label="fit",
+        )
         axmain.fill_between(
-            xVals,
+            fit_result["xs"],
             fit_result["ys"] + fit_result["yerrs"],
             fit_result["ys"] - fit_result["yerrs"],
             facecolor="black",
