@@ -198,7 +198,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
             config.custom_content.append(("+RequestRuntime", max_runtime))  # NAF
             # NAF has some custom stuff for containers...
             if self.htcondor_universe == "docker":
-                raise NotImplementedError("Docker via HTCondor is not supported on NAF!")
+                raise NotImplementedError("Docker via HTCondor is not supported on NAF! Use 'container' universe instead.")
             if self.htcondor_universe == "container":
                 for i in range(len(config.custom_content)):
                     if config.custom_content[i][0] == "container_image":
