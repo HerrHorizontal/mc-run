@@ -121,10 +121,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
         # set environment variables
         tmp_dir = law.LocalDirectoryTarget(is_tmp=True)
-        my_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
-        my_env["RIVET_ANALYSIS_PATH"] = ":".join(
-            (tmp_dir.abspath, my_env.get("RIVET_ANALYSIS_PATH", ""))
-        )
+        rivet_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
 
         # identify and get the compiled Rivet analyses
         logger.info(
@@ -132,34 +129,34 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 self.workflow_input()["analyses"]["collection"].targets.values()
             )
         )
-        local_so_files = []
         for so_file in self.workflow_input()["analyses"]["collection"].iter_existing():
             local_path = os.path.join(tmp_dir.abspath, so_file.basename)
             so_file.copy_to_local(local_path)
-            local_so_files.append(local_path)
 
         # identify and get the HEPMC files for analyzing
         logger.info("Input events: {}".format(self.input()["collection"]))
+        out_files = []
         for target in self.input()["collection"].iter_existing():
             with target.localize("r") as input_file:
                 os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
+                input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
+                yoda_out = tmp_dir.child(f"{input_file.basename}.yoda", type="f")
+                out_files.append(yoda_out)
+                # run rivet
+                cmd = ["rivet", "--pwd", f"--histo-file={yoda_out.abspath}"]
+                cmd += [
+                    f"--analysis={_rivet_analysis}"
+                    for _rivet_analysis in _mapped_analyses
+                ]
+                cmd += input_files
+                run_command(cmd, env=rivet_env, cwd=tmp_dir.abspath)
+                for input_file in input_files:
+                    os.remove(input_file)
 
-        input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
         output_file = law.LocalFileTarget(is_tmp="yoda")
-
-        # run Rivet analysis
-        _rivet_exec = ["rivet"]
-        _rivet_args = (
-            [
-                "--analysis={RIVET_ANALYSIS}".format(RIVET_ANALYSIS=_rivet_analysis)
-                for _rivet_analysis in _mapped_analyses
-            ]
-            + [f"--histo-file={output_file.abspath}"]
-            + input_files
-        )
-
-        logger.info("Executable: {}".format(" ".join(_rivet_exec + _rivet_args)))
-        run_command(_rivet_exec + _rivet_args, env=my_env, cwd=tmp_dir.abspath)
+        merge_cmd = ["rivet-merge", "--pwd", "--equiv", "-o", output_file.abspath]
+        merge_cmd += [out_file.abspath for out_file in out_files]
+        run_command(merge_cmd, env=rivet_env, cwd=tmp_dir.abspath)
 
         self.output().move_from_local(output_file)
 
