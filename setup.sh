@@ -72,6 +72,14 @@ action() {
     export ANALYSIS_PATH="$this_dir"
     export ANALYSIS_DATA_PATH="$this_dir/data"
 
+    # Enable WLCG cache only when running locally.
+    # Just wasted disk space on worker nodes.
+    if [[ "$MCRUN_REMOTE" == "1" ]]; then
+        export ENABLE_WLCG_CACHE=0
+    else
+        export ENABLE_WLCG_CACHE=1
+    fi
+
     # luigi
     _addpy "$this_dir/luigi"
     _addbin "$this_dir/luigi/bin"
