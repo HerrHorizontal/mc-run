@@ -104,7 +104,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         domain = Domain.CERN
     elif str(domain).endswith(
         ("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")
-    ):
+    ) or "nemo" in str(domain):
         domain = Domain.ETP
     elif str(domain).endswith("desy.de"):
         domain = Domain.NAF
@@ -198,14 +198,18 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
             config.custom_content.append(("+RequestRuntime", max_runtime))  # NAF
             # NAF has some custom stuff for containers...
             if self.htcondor_universe == "docker":
-                raise NotImplementedError("Docker via HTCondor is not supported on NAF! Use 'container' universe instead.")
+                raise NotImplementedError(
+                    "Docker via HTCondor is not supported on NAF! Use 'container' universe instead."
+                )
             if self.htcondor_universe == "container":
                 for i in range(len(config.custom_content)):
                     if config.custom_content[i][0] == "container_image":
                         del config.custom_content[i]
                         break
                 config.universe = "vanilla"
-                config.custom_content.append(("+MySingularityImage", f'"{self.htcondor_container_image}"'))
+                config.custom_content.append(
+                    ("+MySingularityImage", f'"{self.htcondor_container_image}"')
+                )
 
         # include the wlcg specific tools script in the input sandbox
         tools_file = law.util.law_src_path("contrib/wlcg/scripts/law_wlcg_tools.sh")
