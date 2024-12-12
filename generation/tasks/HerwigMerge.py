@@ -22,8 +22,6 @@ class HerwigMerge(GenRivetTask):
     setupfile = luigi.Parameter(default=None)
     mc_setting = luigi.Parameter(default=None)
 
-    exclude_params_req = {"source_script"}
-
     exclude_params_req_get = {
         "htcondor_remote_job",
         "htcondor_accounting_group",

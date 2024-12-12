@@ -100,9 +100,6 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         default=10, description="Maximum chi2/ndf value for the fits."
     )
 
-    exclude_params_req = {
-        "source_script",
-    }
     exclude_params_req_get = {
         "htcondor_remote_job",
         "htcondor_accounting_group",

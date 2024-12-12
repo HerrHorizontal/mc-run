@@ -44,90 +44,43 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     # dummy parameter for run step
     number_of_gen_jobs = luigi.IntParameter()
 
-    exclude_params_req = {
+    exclude_params_req = HTCondorWorkflow.exclude_params_req | {
         "files_per_job",
-        "bootstrap_file",
-        "htcondor_walltime",
-        "htcondor_request_memory",
-        "htcondor_requirements",
-        "htcondor_request_disk",
     }
 
     def workflow_requires(self):
-        reqs = super(RunRivet, self).workflow_requires()
-        # analyzing requires successfully generated events
-        # require the parent workflow and inform it about the branches to produce by passing
-        # the "branches" parameter and simultaneously preventing {start,end}_branch being used
-        branches = sum(self.branch_map.values(), [])
-        if str(self.mc_generator).lower() == "herwig":
-            reqs["MCRun"] = HerwigRun.req(
-                self,
-                number_of_jobs=self.number_of_gen_jobs,
-                branches=branches,
-                _exclude=[
-                    "start_branch",
-                    "end_branch",
-                    "bootstrap_file",
-                    "htcondor_walltime",
-                    "htcondor_request_memory",
-                    "htcondor_requirements",
-                    "htcondor_request_disk",
-                ],
-            )
-        elif str(self.mc_generator).lower() == "sherpa":
-            reqs["MCRun"] = SherpaRun.req(
-                self,
-                number_of_jobs=self.number_of_gen_jobs,
-                branches=branches,
-                _exclude=[
-                    "start_branch",
-                    "end_branch",
-                    "bootstrap_file",
-                    "htcondor_walltime",
-                    "htcondor_request_memory",
-                    "htcondor_requirements",
-                    "htcondor_request_disk",
-                ],
-            )
-        else:
-            raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
-        # also make sure the Rivet analyses exist
-        reqs["analyses"] = RivetBuild.req(self)
-        return reqs
+        # Every task requires the Rivet analyses to be compiled
+        return {"analyses": RivetBuild.req(self, _exclude={"branch"})}
 
     def create_branch_map(self):
         # each analysis job analyzes a chunk of HepMC files
         if str(self.mc_generator).lower() == "herwig":
-            branch_chunks = HerwigRun.req(
+            return HerwigRun.req(
                 self, number_of_jobs=self.number_of_gen_jobs
             ).get_all_branch_chunks(self.files_per_job)
         elif str(self.mc_generator).lower() == "sherpa":
-            branch_chunks = SherpaRun.req(
+            return SherpaRun.req(
                 self, number_of_jobs=self.number_of_gen_jobs
             ).get_all_branch_chunks(self.files_per_job)
-        else:
-            raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
-        # one by one job to inputfile matching
-        return {
-            jobnum: branch_chunk for jobnum, branch_chunk in enumerate(branch_chunks)
-        }
+        raise ValueError("Unknown MC generator: {}".format(self.mc_generator))
 
     def requires(self):
         # each branch task requires existent HEPMC files to analyze
-        req = dict()
         if str(self.mc_generator).lower() == "herwig":
-            req["MCRun"] = [
-                HerwigRun.req(self, number_of_jobs=self.number_of_gen_jobs, branch=b)
-                for b in self.branch_data
-            ]
+            return HerwigRun.req(
+                self,
+                number_of_jobs=self.number_of_gen_jobs,
+                branch=-1,
+                branches=self.branch_data,
+            )
         elif str(self.mc_generator).lower() == "sherpa":
-            req["MCRun"] = [
-                SherpaRun.req(self, number_of_jobs=self.number_of_gen_jobs, branch=b)
-                for b in self.branch_data
-            ]
-        # and all the Rivet analyses to be built
-        req["analyses"] = RivetBuild.req(self, branch=-1)
-        return req
+            return SherpaRun.req(
+                self,
+                number_of_jobs=self.number_of_gen_jobs,
+                branch=-1,
+                branches=self.branch_data,
+            )
+        raise NotImplementedError("Unknown MC generator: {}".format(self.mc_generator))
 
     def remote_path(self, *path):
         parts = (
@@ -147,7 +100,7 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 DIR_NUMBER=int(dir_number),
                 INPUT_FILE_NAME=str(self.campaign),
                 JOB_NUMBER=str(self.branch),
-            )
+            ),
         )
 
     def run(self):
@@ -157,7 +110,9 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
             "Dijet_3_highpt": "Dijet_3",
         }
         _rivet_analyses = list(self.rivet_analyses)
-        _mapped_analyses = [_map.get(analysis, analysis) for analysis in _rivet_analyses]
+        _mapped_analyses = [
+            _map.get(analysis, analysis) for analysis in _rivet_analyses
+        ]
 
         # actual payload:
         print("=======================================================")
@@ -166,45 +121,42 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
         # set environment variables
         tmp_dir = law.LocalDirectoryTarget(is_tmp=True)
-        my_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
-        my_env["RIVET_ANALYSIS_PATH"] = ":".join(
-            (tmp_dir.abspath, my_env.get("RIVET_ANALYSIS_PATH", ""))
-        )
+        rivet_env = set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
 
         # identify and get the compiled Rivet analyses
         logger.info(
             "Shared object Rivet files: {}".format(
-                self.input()["analyses"]["collection"].targets.values()
+                self.workflow_input()["analyses"]["collection"].targets.values()
             )
         )
-        local_so_files = []
-        for so_file in self.input()["analyses"]["collection"].iter_existing():
+        for so_file in self.workflow_input()["analyses"]["collection"].iter_existing():
             local_path = os.path.join(tmp_dir.abspath, so_file.basename)
             so_file.copy_to_local(local_path)
-            local_so_files.append(local_path)
 
         # identify and get the HEPMC files for analyzing
-        logger.info("Input events: {}".format(self.input()["MCRun"]))
-        for target in self.input()["MCRun"]:
+        logger.info("Input events: {}".format(self.input()["collection"]))
+        out_files = []
+        for target in self.input()["collection"].iter_existing():
             with target.localize("r") as input_file:
                 os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
+                input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
+                yoda_out = tmp_dir.child(f"{input_file.basename}.yoda", type="f")
+                out_files.append(yoda_out)
+                # run rivet
+                cmd = ["rivet", "--pwd", f"--histo-file={yoda_out.abspath}"]
+                cmd += [
+                    f"--analysis={_rivet_analysis}"
+                    for _rivet_analysis in _mapped_analyses
+                ]
+                cmd += input_files
+                run_command(cmd, env=rivet_env, cwd=tmp_dir.abspath)
+                for input_file in input_files:
+                    os.remove(input_file)
 
-        input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
         output_file = law.LocalFileTarget(is_tmp="yoda")
-
-        # run Rivet analysis
-        _rivet_exec = ["rivet"]
-        _rivet_args = (
-            [
-                "--analysis={RIVET_ANALYSIS}".format(RIVET_ANALYSIS=_rivet_analysis)
-                for _rivet_analysis in _mapped_analyses
-            ]
-            + [f"--histo-file={output_file.abspath}"]
-            + input_files
-        )
-
-        logger.info("Executable: {}".format(" ".join(_rivet_exec + _rivet_args)))
-        run_command(_rivet_exec + _rivet_args, env=my_env, cwd=tmp_dir.abspath)
+        merge_cmd = ["rivet-merge", "--pwd", "--equiv", "-o", output_file.abspath]
+        merge_cmd += [out_file.abspath for out_file in out_files]
+        run_command(merge_cmd, env=rivet_env, cwd=tmp_dir.abspath)
 
         self.output().move_from_local(output_file)
 

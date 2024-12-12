@@ -6,7 +6,6 @@ import luigi
 from generation.framework import GenerationScenarioConfig, GenRivetTask
 from generation.framework.htcondor import HTCondorWorkflow
 from generation.framework.utils import run_command
-from law.contrib.htcondor.job import HTCondorJobManager
 from law.logger import get_logger
 from luigi.util import inherits
 
@@ -30,14 +29,6 @@ class HerwigIntegrate(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
 
     setupfile = luigi.Parameter(default=None)
     mc_setting = luigi.Parameter(default=None)
-
-    exclude_params_req = {
-        "bootstrap_file",
-        "htcondor_walltime",
-        "htcondor_request_memory",
-        "htcondor_requirements",
-        "htcondor_request_disk",
-    }
 
     def workflow_requires(self):
         # integration requires successful build step

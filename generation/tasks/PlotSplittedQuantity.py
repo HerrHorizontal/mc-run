@@ -10,8 +10,8 @@ from generation.framework.utils import (
     run_command,
     set_environment_variables,
 )
-from law.logger import get_logger
 from law.decorator import localize
+from law.logger import get_logger
 from luigi.util import inherits
 
 from .RivetMerge import RivetMergeExtensions
@@ -71,9 +71,6 @@ class PlotSplittedQuantity(PostprocessingTask, law.LocalWorkflow):
         description="Splittings plot settings for all bins. Set via --splittings-conf-all from config, if None.",
     )
 
-    exclude_params_req = {
-        "source_script",
-    }
     exclude_params_req_get = {
         "htcondor_remote_job",
         "htcondor_accounting_group",
