@@ -291,7 +291,9 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
         )
         try:
             run_command(
-                executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH")
+                executable,
+                env=os.environ,
+                cwd=os.path.expandvars("$ANALYSIS_PATH"),
             )
         except RuntimeError as e:
             logger.error("Individual bins' plots creation failed!")

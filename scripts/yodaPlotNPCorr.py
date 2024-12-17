@@ -9,6 +9,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import yoda
+from fit import kafe2_fit as k2fit
+from fit import kafe2_hist_fit as k2hfit
 from fit import scipy_fit as fit
 from util import NumpyEncoder, valid_yoda_file
 
@@ -312,27 +314,54 @@ if __name__ == "__main__":
     if args.FIT:
         fits_given = args.FIT
 
+    # # prepare data for mulithreaded fits
+    # fit_data = []
+    # for name, ao in aos_ratios.items():
+    #     x_range = ao.xMin(), ao.xMax()
+    #     yErrs = np.array(ao.yErrs())
+    #     xErrs = np.array(ao.xErrs())
+    #     xVals = np.array(ao.xVals())
+    #     yVals = np.array(ao.yVals())
+    #     fit_data.append(
+    #         (
+    #             xVals,
+    #             xErrs,
+    #             yVals,
+    #             np.amax(yErrs, axis=1),
+    #             3,
+    #             args.METHOD,
+    #             args.max_chi2ndf,
+    #             x_range,
+    #         )
+    #     )
     # prepare data for mulithreaded fits
     fit_data = []
     for name, ao in aos_ratios.items():
-        x_range = ao.xMin(), ao.xMax()
-        yErrs = np.array(ao.yErrs())
         xVals = np.array(ao.xVals())
         yVals = np.array(ao.yVals())
+        xErrs = np.array(ao.xErrs())
+        yErrs = np.array(ao.yErrs())
+        x_range = ao.xMin(), ao.xMax()
         fit_data.append(
             (
                 xVals,
                 yVals,
+                np.amax(xErrs, axis=1),
                 np.amax(yErrs, axis=1),
-                3,
-                args.METHOD,
-                args.max_chi2ndf,
                 x_range,
             )
         )
+    # for name, ao in aos_ratios.items():
+    #     bin_edges = np.zeros(len(ao.xVals()) + 1)
+    #     bin_edges[:-1] = ao.xVals() - ao.xErrs()[:, 0]
+    #     bin_edges[-1] = ao.xVals()[-1] + ao.xErrs()[-1, 1]
+    #     bin_values = ao.yVals()
+    #     bin_errors = np.amax(ao.yErrs(), axis=1)
+    #     x_range = ao.xMin(), ao.xMax()
+    #     fit_data.append((bin_edges, bin_values, bin_errors, x_range))
 
     def multithreaded_fits(fit_data):
-        return fit(*fit_data)
+        return k2fit(*fit_data)
 
     with Pool(args.threads) as pool:
         fit_results = pool.map(multithreaded_fits, fit_data)

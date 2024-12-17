@@ -1,9 +1,10 @@
 import numpy as np
 import scipy.optimize as opt
+from scipy import integrate
 
 
 def scipy_fit(
-    xVal, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25, xrange=None
+    xVal, xErr, yVal, yErr, N_PARS=3, method="Nelder-Mead", max_chi2ndf=25, xrange=None
 ):
     """Fit function to data points.
 
@@ -38,7 +39,15 @@ def scipy_fit(
             )
 
     def objective(pars):
-        _res = (model(xVal, pars) - yVal) / yErr
+        _int_val = np.zeros(xVal.shape)
+        # use integral instead of evaluating at bin center
+        # this is more accurate, especially in bins with a steep slope
+        for _i, (_a, _b) in enumerate(zip(xErr[:, 0], xErr[:, 1])):
+            _a = xVal[_i] - _a
+            _b = xVal[_i] + _b
+            _int_val[_i], _ = integrate.quad(lambda x: model(x, pars), _a, _b)
+            _int_val[_i] /= np.abs(_b - _a)  # normalize to bin width
+        _res = (_int_val - yVal) / yErr
         return np.sum(_res**2)
 
     def jac(pars):
@@ -238,8 +247,8 @@ def scipy_fit(
         if N_PARS == 3:
             result = opt.minimize(
                 objective,
-                x0=(sign * 1, -1, 1),
-                bounds=((-1e9, 1e9), (-1e9, 0), (-10, 10)),
+                x0=(sign * 10.0, -2.0, 1.0),
+                bounds=((-np.inf, np.inf), (-1e2, 0), (0.5, 1.5)),
                 tol=1e-6,
                 method=method,
                 jac=_jac,
@@ -249,8 +258,8 @@ def scipy_fit(
         elif N_PARS == 2:
             result = opt.minimize(
                 objective,
-                x0=(sign * 1, -1),
-                bounds=((-1e9, 1e9), (-1e9, 0)),
+                x0=(sign * 10.0, -2.0),
+                bounds=((-np.inf, np.inf), (-1e2, 0)),
                 tol=1e-6,
                 method=method,
                 jac=_jac,
@@ -261,7 +270,7 @@ def scipy_fit(
             result = opt.minimize(
                 objective,
                 x0=(sign * 1, 1),
-                bounds=((-1e9, 1e9), (-10, 10)),
+                bounds=((-np.inf, np.inf), (-np.inf, np.inf)),
                 tol=1e-6,
                 method=method,
                 jac=_jac,
@@ -352,42 +361,6 @@ def scipy_fit(
     )
 
 
-# def kafe_fit(xVal, yVal, yErr):
-#     """Alternative fit method with kafe2 for cross-checks
-
-#     Args:
-#         xVal (numpy.array): x-positions of data points to fit
-#         yVal (numpy.array): y-positions of data points to fit
-#         yErr (numpy.array): uncertainty estimate in y of data points to fit
-
-#     Returns:
-#         dict: dictionary containing fitted function values/uncertainties at data points and evaluation metrics
-#     """
-#     import kafe2
-#     data = kafe2.XYContainer(xVal, yVal)
-#     data.add_error(axis="y",err_val=yErr)
-
-#     def model(x, a=0, b=-1, c=1):
-#         return a*x**(b) + c
-
-#     fit = kafe2.Fit(data, model, minimizer="scipy")
-#     # fit.limit_parameter("a", lower=None, upper=None)
-#     fit.limit_parameter("b", lower=None, upper=0)
-#     fit.limit_parameter("c", lower=-10, upper=10)
-
-#     result = fit.do_fit()
-
-#     print(result)
-#     return dict(
-#         result=result,
-#         pars=[result["parameter_values"]["a"],result["parameter_values"]["b"],result["parameter_values"]["c"]],
-#         ys=fit.y_model,
-#         yerrs=fit.error_band(),
-#         chi2ndf=result["gof/ndf"],
-#         chi2=result["goodness_of_fit"], ndf=result["ndf"]
-#     )
-
-
 # EXPERIMENTAL: doesn't work, python3 required
 # def minuit_fit(xVal, yVal, yErr):
 #     from iminuit import Minuit
@@ -441,4 +414,135 @@ def scipy_fit(
 #         yerrs=fit_error(xVal, m.values, m.covariance),
 #         chi2ndf=m.fmin.reduced_chi2,
 #         chi2=m.fval, ndf=m.ndof
+#     )
+
+
+import kafe2
+
+
+def exp_model(x, a=10.0, b=-2.0, c=1.0):
+    ret = a * np.power(x, b, dtype=np.float128) + c
+    return np.asarray(ret, dtype=np.float64)
+
+
+def kafe2_fit(xVals, yVals, xErrs, yErrs, xrange=None):
+    data = kafe2.XYContainer(xVals, yVals, dtype=np.float64)
+    # Don't add x_errs, this is not the same as for a HistFit.
+    # data.add_error("x", xErrs, correlation=0, relative=False)
+    data.add_error("y", yErrs, correlation=0, relative=False)
+
+    fit = kafe2.XYFit(
+        data,
+        model_function=exp_model,
+    )
+    fit_res = fit.do_fit()
+
+    # interpolate the fit to 100 points for better plots
+    x_line = np.logspace(np.log10(xVals.min()), np.log10(xVals.max()), 100)
+    if xrange:
+        x_line = np.logspace(np.log10(xrange[0]), np.log10(xrange[1]), 100)
+
+    y_line = fit.eval_model_function(x_line)
+    y_line_errs = fit.error_band(x_line)
+    print(fit_res)
+
+    return dict(
+        xs=x_line,
+        pars=np.array(list(fit_res["parameter_values"].values())),
+        cov=fit_res["parameter_cov_mat"],
+        fitfunc=fit.model_function.formatter.get_formatted(
+            with_par_values=True, with_expression=True
+        ),
+        ys=y_line,
+        yerrs=y_line_errs,
+        chi2ndf=fit_res["gof/ndf"],
+        chi2=fit_res["goodness_of_fit"],
+        ndf=fit_res["ndf"],
+    )
+
+
+# from scipy.misc import derivative
+
+
+# def kafe2_hist_fit(bin_edges, bin_values, bin_errors, xrange=None):
+#     fit_func = exp_model
+#     data = kafe2.HistContainer(bin_edges=bin_edges, dtype=float)
+#     data.set_bins(bin_values)
+#     data.add_error(bin_errors, correlation=0, relative=False)
+#     # Don't add x_errs, this is not the same as for a HistFit.
+#     # data.add_error("x", xErrs, correlation=0, relative=False)
+
+#     fit = kafe2.HistFit(
+#         data,
+#         model_function=fit_func,
+#         density=False,
+#         cost_function="chi2",
+#     )
+#     fit.limit_parameter(
+#         "b",
+#         lower=-1e2,
+#         upper=0.0,
+#     )
+#     fit.limit_parameter(
+#         "c",
+#         lower=-10,
+#         upper=10,
+#     )
+#     fit_res = fit.do_fit()
+#     print(fit_res)
+
+#     # interpolate the fit to 100 points for better plots
+#     x_line = np.logspace(np.log10(bin_edges.min()), np.log10(bin_edges.max()), 100)
+#     if xrange:
+#         x_line = np.logspace(np.log10(xrange[0]), np.log10(xrange[1]), 100)
+
+#     y_line = fit.eval_model_function_density(x_line)
+#     print(fit.parameter_cov_mat)
+#     if np.isnan(fit.parameter_cov_mat).any():
+#         raise ValueError("Covariance matrix contains nan values")
+
+#     def eval_model_function_derivative_by_parameters(fit, x):
+#         _pars = np.asarray(fit.parameter_values).copy()
+#         _par_dxs = 1e-2 * np.asarray(fit.parameter_errors).copy()
+#         _ret = np.zeros((len(_pars), len(x)))
+#         for _par_idx, (_par_val, _par_dx) in enumerate(zip(_pars, _par_dxs)):
+
+#             def _chipped_func(par):
+#                 _chipped_pars = _pars.copy()
+#                 _chipped_pars[_par_idx] = par
+#                 return fit_func(x, *_chipped_pars)
+
+#             _der_val = np.array(derivative(_chipped_func, _par_val, dx=_par_dx))
+#             _ret[_par_idx] = _der_val
+#         return _ret
+
+#     def error_band(fit, x):
+#         _f_deriv_by_params = eval_model_function_derivative_by_parameters(fit, x)
+#         _f_deriv_by_params = _f_deriv_by_params.T
+#         # here: df/dp[par_idx]|x=x[x_idx] = _f_deriv_by_params[x_idx][par_idx]
+#         _band_y = np.zeros_like(x)
+
+#         # Cut out fixed parameters which have nan as derivative:
+#         _cov_mat = np.asarray(fit.parameter_cov_mat).copy()
+#         _cov_mat = np.diag(_cov_mat)
+#         for _x_idx, _x_val in enumerate(x):
+#             _p_res = _f_deriv_by_params[_x_idx]
+#             _band_y[_x_idx] = _p_res.dot(_cov_mat).dot(_p_res)
+
+#         return np.sqrt(_band_y)
+
+#     y_line_errs = error_band(fit, x_line)
+
+#     return dict(
+#         xs=x_line,
+#         pars=np.array(list(fit_res["parameter_values"].values())),
+#         cov=fit_res["parameter_cov_mat"],
+#         fitfunc=fit.model_function.formatter.get_formatted(
+#             with_par_values=True, with_expression=True
+#         ),
+#         ys=y_line,
+#         yerrs=y_line_errs,
+#         chi2ndf=fit_res["gof/ndf"],
+#         chi2=fit_res["goodness_of_fit"],
+#         ndf=fit_res["ndf"],
 #     )
