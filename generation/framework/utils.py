@@ -146,7 +146,7 @@ def run_command(executable, env, *args, **kwargs):
         tuple[int | Any, Any | str, Any | str]: execution code, output string and error string
     """
     command_str = " ".join(executable)
-    logger.info(f"Running: {executable[0]}")
+    logger.info(f"Running: {' '.join(executable[:3])}...")
     logger.debug(f'Full command:\n"{command_str}"')
     code, out, error = interruptable_popen(
         executable, *args, stdout=PIPE, stderr=PIPE, env=env, **kwargs

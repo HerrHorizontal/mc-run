@@ -79,8 +79,8 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
     )
 
     fit_method = luigi.Parameter(
-        default="Nelder-Mead",
-        description="Optimizer method for performing the smoothing fit. Choose between 'Nelder-Mead', 'trust-exact', 'BFGS'.",
+        default="kafe",
+        description="Optimizer method for performing the smoothing fit. Choose between 'kafe' for an iminuit fit or one of 'Nelder-Mead', 'trust-exact', 'BFGS'.",
     )
 
     splittings_conf_all = luigi.Parameter(
@@ -284,14 +284,11 @@ class PlotNPCorr(PostprocessingTask, law.LocalWorkflow):
             else []
         )
 
-        logger.info("Executable: {}".format(" ".join(executable)))
-
-        rivet_env = set_environment_variables(
-            os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
-        )
         try:
             run_command(
-                executable, env=rivet_env, cwd=os.path.expandvars("$ANALYSIS_PATH")
+                executable,
+                env=os.environ,
+                cwd=os.path.expandvars("$ANALYSIS_PATH"),
             )
         except RuntimeError as e:
             logger.error("Individual bins' plots creation failed!")
