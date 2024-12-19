@@ -84,6 +84,8 @@ action() {
         export ENABLE_WLCG_CACHE=1
     fi
 
+    _addpy "$this_dir/kafe2"
+
     # luigi
     _addpy "$this_dir/luigi"
     _addbin "$this_dir/luigi/bin"

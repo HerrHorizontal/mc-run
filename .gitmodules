@@ -4,3 +4,6 @@
 [submodule "luigi"]
 	path = luigi
 	url = https://github.com/spotify/luigi.git
+[submodule "kafe2"]
+	path = kafe2
+	url = https://github.com/PhiLFitters/kafe2.git
