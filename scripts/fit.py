@@ -364,7 +364,20 @@ def scipy_fit(
 
 
 def exp_model(x, a=10.0, b=-2.0, c=1.0):
+    x = np.asarray(x, dtype=np.float128)
+    a = np.asarray(a, dtype=np.float128)
+    b = np.asarray(b, dtype=np.float128)
+    c = np.asarray(c, dtype=np.float128)
     ret = a * np.power(x, b, dtype=np.float128) + c
+    return np.asarray(ret, dtype=np.float64)
+
+
+def exp_model_log(x, a=10.0, b=-2.0, c=1.0):
+    x = np.asarray(x, dtype=np.float128)
+    a = np.asarray(a, dtype=np.float128)
+    b = np.asarray(b, dtype=np.float128)
+    c = np.asarray(c, dtype=np.float128)
+    ret = a * np.power(np.log(x), b, dtype=np.float128) + c
     return np.asarray(ret, dtype=np.float64)
 
 
@@ -376,7 +389,8 @@ def kafe2_fit(xVals, yVals, xErrs, yErrs, xrange=None):
 
     fit = kafe2.XYFit(
         data,
-        model_function=exp_model,
+        model_function=exp_model_log,
+        minimizer_kwargs={'tolerance': 1e-4}
     )
     fit_res = fit.do_fit()
 
