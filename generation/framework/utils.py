@@ -20,7 +20,7 @@ for var in (
     try:
         source_env[var] = os.environ[var]
     except KeyError as e:
-        logger.warning(f"KeyError: {e}, variable undefined on local host!")
+        logger.debug(f"KeyError: {e}, variable undefined on local host!")
 
 
 def _convert_env_to_dict(env):
