@@ -1,5 +1,4 @@
 import math
-import os
 import socket
 from enum import Enum
 
@@ -118,12 +117,6 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     output_collection_cls = law.SiblingFileCollection
     create_branch_map_before_repr = True
 
-    def htcondor_workflow_requires(self):
-        reqs = super().htcondor_workflow_requires()
-        reqs["repo"] = BundleRepo.req(self, replicas=3)
-
-        return reqs
-
     def htcondor_output_directory(self):
         job_dir = law.config.get_expanded("job", "job_file_dir")
         return law.LocalDirectoryTarget(f"{job_dir}/{self.task_id}/")
@@ -211,24 +204,16 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
                     ("+MySingularityImage", f'"{self.htcondor_container_image}"')
                 )
 
-        # include the wlcg specific tools script in the input sandbox
-        tools_file = law.util.law_src_path("contrib/wlcg/scripts/law_wlcg_tools.sh")
-        config.input_files["wlcg_tools"] = law.JobInputFile(
-            tools_file, share=True, render=False
+        # the repository bundle is small and is therefore shipped via HTCondor with each job,
+        # share=True copies it only once into the submission directory instead of once per job;
+        # the bundle is created here instead of being a workflow requirement, as this method is only
+        # called on submission, while workflow requirements are also resolved inside of jobs
+        repo = BundleRepo.req(self)
+        if not repo.complete():
+            repo.run()
+        config.input_files["repo_bundle"] = law.JobInputFile(
+            repo.output().abspath, share=True, render=False
         )
-
-        # load software bundles from grid storage
-        reqs = self.htcondor_workflow_requires()
-
-        def get_bundle_info(task):
-            uris = task.output().dir.uri(return_all=True)
-            pattern = os.path.basename(task.get_file_pattern())
-            return ",".join(uris), pattern
-
-        # add repo bundle variables
-        uris, pattern = get_bundle_info(reqs["repo"])
-        config.render_variables["repo_uris"] = uris
-        config.render_variables["repo_pattern"] = pattern
         logger.debug(f"HTCondor config:\n{config}")
 
         return config
