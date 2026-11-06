@@ -47,7 +47,7 @@ class HepMCOutputMixin:
 
     ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
     hepmc_format = luigi.ChoiceParameter(
-        default=ConfigParser.get("HepMCOutput", "hepmc_format", "tar.bz2"),
+        default=ConfigParser.get("HepMCOutput", "hepmc_format", "root"),
         choices=list(HEPMC_FORMATS) + ["tar.bz2"],
         var_type=str,
         description="File format of the generated events: `root` (HepMC3 ROOT TTree), \

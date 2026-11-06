@@ -159,6 +159,10 @@ Set these to your desired values, to configure your personal generation of event
 - `integration_maxjobs`: With this you specify the splitting of the subprocesses and therefore the number of distinct integration jobs.
 - `number_of_jobs`: Set the number of jobs generating MC events with this parameter. Each job will be executed seperately as a statistically independent entity on the batch system.
 - `events_per_job`: Set the number of events generated with each generation job.
+- `hepmc_format`: File format of the generated events, set in the `[HepMCOutput]` section. `root` (default) stores the events as HepMC3 ROOT TTree. Other options:
+    - `hepmc3`: HepMC3 ascii
+    - `hepmc3.gz`: gzip-compressed HepMC3 ascii
+    - `tar.bz2`: legacy MC-Run format. Existing `tar.bz2` outputs are not found with another format and would be generated again, so convert them to `root` with the `ConvertHepMC` task first.
 <!-- - `start_seed`: Currently not used. Purposed for the use of randomly generated seeds for generation jobs. -->
 
 #### Analysis specific parameters
@@ -202,7 +206,7 @@ To start the generation you can now simply run
 ```
 law run HerwigRun
 ```
-This will start all previous steps in the necessary order and produce `.hepmc` files according to your configuration.
+This will start all previous steps in the necessary order and produce HepMC event files (`.root` as default, see `hepmc_format`) according to your configuration.
 
 You can also start with the execution of the analysis of (not yet) generated events, simply execute
 ```
