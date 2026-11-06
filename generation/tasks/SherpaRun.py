@@ -4,6 +4,7 @@ import random
 import law
 import luigi
 from generation.framework.htcondor import HTCondorWorkflow
+from generation.framework.storage import store_verified
 from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
 from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
@@ -150,8 +151,8 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         output_file = os.path.abspath(output_file)
 
         if os.path.exists(output_file):
-            # copy the compressed outputs to save them
-            output.copy_from_local(output_file)
+            # store the compressed outputs, only complete and verified files get the output name
+            store_verified(output_file, output)
         else:
             os.system("ls -l")
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))

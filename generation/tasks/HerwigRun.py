@@ -6,6 +6,7 @@ from subprocess import PIPE
 import law
 import luigi
 from generation.framework.htcondor import HTCondorWorkflow
+from generation.framework.storage import store_verified
 from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
 from generation.framework.utils import identify_setupfile, run_command
 from law.logger import get_logger
@@ -206,8 +207,8 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         output_file = os.path.abspath(output_file)
 
         if os.path.exists(output_file):
-            # copy the compressed outputs to save them
-            output.copy_from_local(output_file)
+            # store the compressed outputs, only complete and verified files get the output name
+            store_verified(output_file, output)
         else:
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 
