@@ -91,7 +91,7 @@ action() {
     _addbin "$this_dir/luigi/bin"
 
     # law
-    _addpy "$this_dir/law"
+    _addpy "$this_dir/law/src"
     _addbin "$this_dir/law/bin"
 
     # this analysis
