@@ -4,7 +4,7 @@
 //   hepmc3     HepMC3 ascii (Asciiv3), uncompressed
 //   hepmc3.gz  HepMC3 ascii (Asciiv3), gzip-compressed (level 9)
 //
-// usage: hepmc_convert [-f <format>] [-c <compression>] [-b <basket size>] <output> <input.hepmc> [...]
+// usage: hepmc_convert [-f <format>] [-c <compression>] [-b <basket size>] [-n <events>] <output> <input.hepmc> [...]
 //
 // -c: ROOT compression setting (100 * algorithm + level), default 209 (LZMA 9)
 // -b: basket size of all branches in bytes, default 4 MiB (0: ROOT default)
@@ -13,6 +13,9 @@
 // as the HepMC readers cannot distinguish a parsing error from the end of the file, and the
 // number of events in the written file against the number of events read. Exits with a
 // non-zero code on any error. Inputs have to be uncompressed ascii files.
+//
+// Streaming mode (-n <events>): the single input is read only once, so it can be a named pipe
+// the generator writes into. The number of converted events is checked against <events>.
 #include "HepMC3/CompressedIO.h"
 #include "HepMC3/GenEvent.h"
 #include "HepMC3/ReaderFactory.h"
@@ -92,17 +95,19 @@ int main(int argc, char** argv) {
     std::string format = "root";
     int compression = 209;
     int basket_size = 4 * 1024 * 1024;
+    long expected_events = -1;
     std::vector<std::string> args;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-f" && i + 1 < argc) format = argv[++i];
         else if (arg == "-c" && i + 1 < argc) compression = std::atoi(argv[++i]);
         else if (arg == "-b" && i + 1 < argc) basket_size = std::atoi(argv[++i]);
+        else if (arg == "-n" && i + 1 < argc) expected_events = std::atol(argv[++i]);
         else args.push_back(arg);
     }
     if (args.size() < 2) {
         std::cerr << "usage: hepmc_convert [-f root|hepmc3|hepmc3.gz] [-c <compression>] [-b <basket size>] "
-                  << "<output> <input.hepmc> [...]" << std::endl;
+                  << "[-n <events>] <output> <input.hepmc> [...]" << std::endl;
         return 1;
     }
     if (format != "root" && format != "hepmc3" && format != "hepmc3.gz") {
@@ -117,11 +122,17 @@ int main(int argc, char** argv) {
         std::cerr << "Could not open output file " << output << std::endl;
         return 3;
     }
+    const bool streaming = expected_events >= 0;
+    if (streaming && inputs.size() != 1) {
+        std::cerr << "Streaming mode (-n) requires exactly one input" << std::endl;
+        return 1;
+    }
 
     std::shared_ptr<Writer> writer;
     long n_events = 0;
     for (const auto& input : inputs) {
-        const long n_records = count_event_records(input);
+        // in streaming mode, the input can only be read once
+        const long n_records = streaming ? expected_events : count_event_records(input);
         if (n_records < 0) {
             std::cerr << "Could not read " << input << std::endl;
             return 2;
@@ -155,8 +166,9 @@ int main(int argc, char** argv) {
         reader->close();
         std::cout << "Read " << n_file << " events from " << input << std::endl;
         if (n_file != n_records) {
-            std::cerr << "Read " << n_file << " events, but " << input << " contains " << n_records
-                      << " event records!" << std::endl;
+            std::cerr << "Read " << n_file << " events, but " << input
+                      << (streaming ? " should contain " : " contains ") << n_records << " event records!"
+                      << std::endl;
             // close the writer before exiting, destroying it at ROOT teardown crashes
             if (writer) writer->close();
             return 6;

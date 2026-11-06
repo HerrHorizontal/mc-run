@@ -3,7 +3,7 @@ import random
 
 import law
 import luigi
-from generation.framework.hepmc import convert_hepmc
+from generation.framework.hepmc import generate_into_converter
 from generation.framework.htcondor import HTCondorWorkflow
 from generation.framework.storage import store_verified
 from generation.framework.tasks import (
@@ -128,45 +128,52 @@ class SherpaRun(
         else:
             raise ValueError("Unknown mc_setting: {}".format(self.mc_setting))
 
-        try:
-            run_command(
-                _sherpa_exec + _sherpa_args + _gen_opts, env=sherpa_env, cwd=work_dir
-            )
-            logger.info("Seed: {}".format(seed))
-        except RuntimeError as e:
-            output.remove()
-            raise e
-
-        os.chdir(work_dir)
-        output_file_hepmc = os.path.abspath(
-            os.path.join(work_dir, "{}".format(out_name))
-        )
+        output_file_hepmc = os.path.join(work_dir, out_name)
         output_file = "{INPUT_FILE_NAME}.{EXTENSION}".format(
             INPUT_FILE_NAME=_my_config, EXTENSION=self.hepmc_format
         )
 
-        if os.path.exists(output_file_hepmc) and self.hepmc_format != "tar.bz2":
-            # convert the output HepMC file into the requested HepMC3 format
-            convert_hepmc(
-                [output_file_hepmc],
-                os.path.abspath(output_file),
-                hepmc_format=self.hepmc_format,
-                compression=self.root_compression,
-            )
-        elif os.path.exists(output_file_hepmc):
+        if self.hepmc_format != "tar.bz2":
+            # convert the HepMC output into the requested format while it is generated
+            try:
+                generate_into_converter(
+                    _sherpa_exec + _sherpa_args + _gen_opts,
+                    sherpa_env,
+                    output_file_hepmc,
+                    os.path.join(work_dir, output_file),
+                    self.events_per_job,
+                    hepmc_format=self.hepmc_format,
+                    compression=self.root_compression,
+                    cwd=work_dir,
+                )
+                logger.info("Seed: {}".format(seed))
+            except RuntimeError as e:
+                output.remove()
+                raise e
+        else:
+            try:
+                run_command(
+                    _sherpa_exec + _sherpa_args + _gen_opts, env=sherpa_env, cwd=work_dir
+                )
+                logger.info("Seed: {}".format(seed))
+            except RuntimeError as e:
+                output.remove()
+                raise e
+
+            os.chdir(work_dir)
+            if not os.path.exists(output_file_hepmc):
+                os.system("ls -l")
+                raise IOError(
+                    "HepMC file {} doesn't exist! Abort!".format(output_file_hepmc)
+                )
             os.system(
                 "tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}".format(
                     OUTPUT_FILE=output_file,
                     HEPMC_FILE=os.path.relpath(output_file_hepmc),
                 )
             )
-        else:
-            os.system("ls -l")
-            raise IOError(
-                "HepMC file {} doesn't exist! Abort!".format(output_file_hepmc)
-            )
 
-        output_file = os.path.abspath(output_file)
+        output_file = os.path.join(work_dir, output_file)
 
         if os.path.exists(output_file):
             # store the compressed outputs, only complete and verified files get the output name
