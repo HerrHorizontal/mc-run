@@ -1,3 +1,4 @@
+from .ConvertHepMC import *
 from .DeriveNPCorr import *
 from .HerwigBuild import *
 from .HerwigIntegrate import *

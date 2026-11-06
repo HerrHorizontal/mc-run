@@ -55,6 +55,23 @@ def remote_rename(src, dst):
     retry_remote(rename)
 
 
+def human_size(n_bytes):
+    """Format a file size with decimal SI units (1 MB = 1000^2 bytes), as reported by dCache.
+
+    Args:
+        n_bytes (int): Size in bytes
+
+    Returns:
+        str: Formatted size, e.g. "832.6 MB"
+    """
+    size = float(n_bytes)
+    for unit in ("B", "kB", "MB", "GB", "TB"):
+        if abs(size) < 1000 or unit == "TB":
+            break
+        size /= 1000
+    return "{} B".format(int(n_bytes)) if unit == "B" else "{:.1f} {}".format(size, unit)
+
+
 def adler32_checksum(file_path, block_size=16 * 1024 * 1024):
     """Compute the ADLER32 checksum of a local file, as used by dCache.
 
