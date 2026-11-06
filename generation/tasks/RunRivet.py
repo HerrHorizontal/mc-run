@@ -4,7 +4,11 @@ import os
 import law
 import luigi
 from generation.framework.htcondor import HTCondorWorkflow
-from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
+from generation.framework.tasks import (
+    GenerationScenarioConfig,
+    GenRivetTask,
+    HepMCOutputMixin,
+)
 from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 from luigi.util import inherits
@@ -17,7 +21,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
+class RunRivet(HepMCOutputMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     """
     Analyze generated HEPMC files with Rivet and create YODA files
     """
@@ -138,8 +142,14 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         out_files = []
         for target in self.input()["collection"].iter_existing():
             with target.localize("r") as input_file:
-                os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
-                input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
+                if not target.path.endswith(".tar.bz2"):
+                    # root, hepmc3 and hepmc3.gz files go to Rivet without unpacking
+                    input_files = [input_file.abspath]
+                    extracted_files = []
+                else:
+                    os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
+                    input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
+                    extracted_files = input_files
                 yoda_out = tmp_dir.child(f"{input_file.basename}.yoda", type="f")
                 out_files.append(yoda_out)
                 # run rivet
@@ -150,8 +160,8 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 ]
                 cmd += input_files
                 run_command(cmd, env=rivet_env, cwd=tmp_dir.abspath)
-                for input_file in input_files:
-                    os.remove(input_file)
+                for extracted_file in extracted_files:
+                    os.remove(extracted_file)
 
         output_file = law.LocalFileTarget(is_tmp="yoda")
         merge_cmd = ["rivet-merge", "--pwd", "--equiv", "-o", output_file.abspath]

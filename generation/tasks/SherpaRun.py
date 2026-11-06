@@ -3,9 +3,15 @@ import random
 
 import law
 import luigi
+from generation.framework.hepmc import convert_hepmc
 from generation.framework.htcondor import HTCondorWorkflow
 from generation.framework.storage import store_verified
-from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
+from generation.framework.tasks import (
+    GenerationScenarioConfig,
+    GenRivetTask,
+    HepMCConverterJobMixin,
+    HepMCOutputMixin,
+)
 from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 from luigi.util import inherits
@@ -16,7 +22,13 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
+class SherpaRun(
+    HepMCOutputMixin,
+    HepMCConverterJobMixin,
+    GenRivetTask,
+    HTCondorWorkflow,
+    law.LocalWorkflow,
+):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
     events
@@ -68,14 +80,7 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         return os.path.join(*parts)
 
     def output(self):
-        dir_number = int(self.branch) / 1000
-        return self.remote_target(
-            "{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
-                DIR_NUMBER=int(dir_number),
-                INPUT_FILE_NAME=str(self.campaign),
-                JOB_NUMBER=str(self.branch),
-            )
-        )
+        return self.hepmc_output_target()
 
     def run(self):
         _my_config = str(self.campaign)
@@ -133,9 +138,19 @@ class SherpaRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         output_file_hepmc = os.path.abspath(
             os.path.join(work_dir, "{}".format(out_name))
         )
-        output_file = "{INPUT_FILE_NAME}.tar.bz2".format(INPUT_FILE_NAME=_my_config)
+        output_file = "{INPUT_FILE_NAME}.{EXTENSION}".format(
+            INPUT_FILE_NAME=_my_config, EXTENSION=self.hepmc_format
+        )
 
-        if os.path.exists(output_file_hepmc):
+        if os.path.exists(output_file_hepmc) and self.hepmc_format != "tar.bz2":
+            # convert the output HepMC file into the requested HepMC3 format
+            convert_hepmc(
+                [output_file_hepmc],
+                os.path.abspath(output_file),
+                hepmc_format=self.hepmc_format,
+                compression=self.root_compression,
+            )
+        elif os.path.exists(output_file_hepmc):
             os.system(
                 "tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}".format(
                     OUTPUT_FILE=output_file,
