@@ -101,8 +101,11 @@ class HerwigRun(
         ) + path
         return os.path.join(*parts)
 
+    def branch_output(self, branch):
+        return self.hepmc_output_target(branch)
+
     def output(self):
-        return self.hepmc_output_target()
+        return self.branch_output(self.branch)
 
     def run(self):
         # branch data

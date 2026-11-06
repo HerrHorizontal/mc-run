@@ -8,13 +8,40 @@ import law.config
 import luigi
 from generation.framework.htcondor.BundleSoftware import BundleRepo
 from law.logger import get_logger
+from law.util import DotDict
+from law.contrib.htcondor.workflow import HTCondorWorkflowProxy as _HTCondorWorkflowProxy
+from law.workflow.base import BaseWorkflowProxy
 
 logger = get_logger(__name__)
 
 law.contrib.load("tasks", "wlcg", "git", "htcondor")
 
 
+class BranchOutputWorkflowProxy(BaseWorkflowProxy):
+    """
+    Build the output collection of the workflow from the `branch_output(branch)` method of the
+    task, if defined, which is much faster than creating all branch tasks.
+    """
+
+    def output(self):
+        task = self.task
+        if not hasattr(task, "branch_output"):
+            return super().output()
+        targets = {branch: task.branch_output(branch) for branch in task.get_branch_map()}
+        cls = law.TargetCollection
+        if task.output_collection_cls and targets:
+            cls = task.output_collection_cls
+        collection = cls(targets, threshold=self.threshold(len(targets)))
+        return DotDict([("collection", collection)])
+
+
+# the remote workflow proxy calls the output of the base proxy, which is replaced by the mixin
+class HTCondorWorkflowProxy(_HTCondorWorkflowProxy, BranchOutputWorkflowProxy):
+    pass
+
+
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
+    workflow_proxy_cls = HTCondorWorkflowProxy
     ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
     # ConfigParser = law.config.Config.instance()
     transfer_logs = luigi.BoolParameter(

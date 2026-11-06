@@ -79,8 +79,11 @@ class SherpaRun(
         parts = (self.__class__.__name__, self.campaign, self.mc_setting) + path
         return os.path.join(*parts)
 
+    def branch_output(self, branch):
+        return self.hepmc_output_target(branch)
+
     def output(self):
-        return self.hepmc_output_target()
+        return self.branch_output(self.branch)
 
     def run(self):
         _my_config = str(self.campaign)

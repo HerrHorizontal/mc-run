@@ -95,17 +95,19 @@ class RunRivet(HepMCOutputMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkfl
         ) + path
         return os.path.join(*parts)
 
-    def output(self):
-        #
-        dir_number = int(self.branch) / 1000
+    def branch_output(self, branch):
+        dir_number = int(branch) / 1000
         return self.remote_target(
             "_".join(sorted(self.rivet_analyses)),
             "{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
                 DIR_NUMBER=int(dir_number),
                 INPUT_FILE_NAME=str(self.campaign),
-                JOB_NUMBER=str(self.branch),
+                JOB_NUMBER=str(branch),
             ),
         )
+
+    def output(self):
+        return self.branch_output(self.branch)
 
     def run(self):
         # branch data
