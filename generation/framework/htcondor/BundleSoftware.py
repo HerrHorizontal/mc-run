@@ -22,6 +22,7 @@ class BundleRepo(law.git.BundleGitRepository, law.tasks.TransferLocalFile):
         "*.dat",
         "logs",
         "plots",
+        "docs",
     ]
 
     include_files = ["inputfiles/*/*/Run.dat"]

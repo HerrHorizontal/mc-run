@@ -83,7 +83,7 @@ The runnable (collections of) tasks and their parameters are presented in the fo
 
 #### Herwig7
 
-![Graphical representation of Herwig7 workflow management](plots/design/Law-Setup_Herwig.png "Herwig7 setup for automated generation with Law")
+![Graphical representation of Herwig7 workflow management](docs/figures/Law-Setup_Herwig.png "Herwig7 setup for automated generation with Law")
 
 Running Herwig7 automatically and distributed on a batch system involves four steps:
 - *HerwigBuild*: First, in a *build* step the necessary matrix elements (MEs) libraries for the hard scattering process are generated and compiled. Moreover the handling to the further generation steps is configured and further steps are prepared. This is run locally.
@@ -93,7 +93,7 @@ Running Herwig7 automatically and distributed on a batch system involves four st
 
 #### Sherpa
 
-![Graphical representation of Sherpa workflow management](plots/design/Law-Setup_Sherpa.png "Sherpa setup for automated generation with Law")
+![Graphical representation of Sherpa workflow management](docs/figures/Law-Setup_Sherpa.png "Sherpa setup for automated generation with Law")
 
 Alternatively, Sherpa can be automatically run on the batch system.
 Since Sherpa cannot run the generation for integration grids distributedly no merge step is needed.
@@ -105,7 +105,7 @@ Therefore, there exist only three steps:
 
 #### Rivet
 
-![Graphical representation of Rivet workflow management extending the generation](plots/design/Law-Setup_Rivet.png "Rivet setup for automated analysis of genereted events with Law")
+![Graphical representation of Rivet workflow management extending the generation](docs/figures/Law-Setup_Rivet.png "Rivet setup for automated analysis of genereted events with Law")
 
 The analysis of generated HepMC files by Herwig is executed distributedly on a batch system. This involves two steps:
 - *RunRivet*: First the specified Rivet plugins are run on the collection of generated HepMC files, which will produce the histograms, scatter objects and counters defined in the according plugin in the YODA format. This is done distributedly on the batch system. The amount of files to analyze per job can be specified in the steering file, with the aim to avoid very short jobs, which might bother the batch system.
@@ -115,7 +115,7 @@ The according code for these tasks and workflows is defined in `generation/tasks
 
 #### Post-Processing
 
-![Graphical representation of further processing workflow management extending the generation and analysis](plots/design/Law-Setup_Analysis.png "YODA and matplotlib setup for automated post-processing and plotting of genereted analysis objects with Law")
+![Graphical representation of further processing workflow management extending the generation and analysis](docs/figures/Law-Setup_Analysis.png "YODA and matplotlib setup for automated post-processing and plotting of genereted analysis objects with Law")
 
 Further processing of the produced YODA files is supported by the task:
 - *DeriveNPCorr*: It calculates the ratio of two separate MC productions, i.e. for the derivation of non-perturbative or EWK correction factors, using the functionality provided by the [`YODA` API](https://yoda.hepforge.org/). You can specify lists of match and unmatch regular expressions to filter the analysis objects to process. It will create a new `.yoda` file containing the created ratio analysis objects.
