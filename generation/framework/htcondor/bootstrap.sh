@@ -4,8 +4,8 @@
 # So-called render variables, denoted by "{{name}}", are replaced with variables
 # configured in the remote workflow tasks.
 
-# Bootstrap function for standalone htcondor jobs, i.e., each jobs fetches a software and repository
-# code bundle and unpacks them to have a standalone environment, independent of the submitting one.
+# Bootstrap function for standalone htcondor jobs, i.e., each job unpacks the repository bundle
+# shipped with its input sandbox to have a standalone environment, independent of the submitting one.
 # The setup script of the repository is sourced with a few environment variables being set before,
 # tailored for remote jobs.
 bootstrap_htcondor_standalone() {
@@ -17,23 +17,16 @@ bootstrap_htcondor_standalone() {
     local BASE_DIR="${PWD}"
     export HOME="${PWD}"
     export ANALYSIS_PATH="${BASE_DIR}/repo"
-    # source the law wlcg tools, mainly for law_wlcg_get_file
-    source "{{wlcg_tools}}" "" || return "$?"
 
     # when gfal-* executables are not available, source the lcg dir
-    if ! law_wlcg_check_executable "gfal-ls" "silent" && [ -n "${LCG_DIR}" ] && [ -d "${LCG_DIR}" ]; then
+    if ! command -v "gfal-ls" &> /dev/null && [ -n "${LCG_DIR}" ] && [ -d "${LCG_DIR}" ]; then
         source "$grid_ui"
     fi
 
-    # load the repo bundle
-    (
-        mkdir -p "${ANALYSIS_PATH}"
-        cd "${ANALYSIS_PATH}" || exit "$?"
-        law_wlcg_get_file "{{repo_uris}}" '{{repo_pattern}}' "${PWD}/repo.tgz" || return "$?"
-        tar -xzf "repo.tgz" || return "$?"
-        rm "repo.tgz"
-        echo "Analysis repo setup done."
-    )
+    # unpack the repo bundle shipped with the input sandbox of the job
+    mkdir -p "${ANALYSIS_PATH}" || return "$?"
+    tar -xzf "${BASE_DIR}/{{repo_bundle}}" -C "${ANALYSIS_PATH}" || return "$?"
+    echo "Analysis repo setup done."
 
     # source the repo setup
     source "${ANALYSIS_PATH}/setup.sh" "default" || return "$?"
