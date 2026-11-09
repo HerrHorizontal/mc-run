@@ -2,6 +2,7 @@ import math
 import os
 import socket
 from enum import Enum
+from functools import lru_cache
 
 import law
 import law.config
@@ -99,20 +100,24 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         NAF = 3
         OTHERS = -1
 
-    domain = socket.getfqdn()
-    if str(domain).endswith("cern.ch"):
-        domain = Domain.CERN
-    elif str(domain).endswith(
-        ("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")
-    ) or "nemo" in str(domain):
-        domain = Domain.ETP
-    elif str(domain).endswith("desy.de"):
-        domain = Domain.NAF
-    else:
-        raise RuntimeError(
-            f"HTCondor batch settings not implemented for domain {domain}!"
+    # only needed when submitting, so it is determined lazily: inside remote jobs, the host name
+    # is irrelevant and a failed DNS lookup must not let the import fail
+    @classmethod
+    @lru_cache(maxsize=None)
+    def get_domain(cls):
+        domain = socket.getfqdn()
+        if domain.endswith("cern.ch"):
+            return cls.Domain.CERN
+        if domain.endswith(
+            ("etp.kit.edu", "darwin.kit.edu", "gridka.de", "bwforcluster")
+        ) or "nemo" in domain:
+            return cls.Domain.ETP
+        if domain.endswith("desy.de"):
+            return cls.Domain.NAF
+        logger.warning(
+            f"No HTCondor batch settings implemented for domain {domain}, using generic defaults"
         )
-        domain = Domain.OTHERS
+        return cls.Domain.OTHERS
 
     # set Law options
     output_collection_cls = law.SiblingFileCollection
@@ -185,16 +190,17 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
         # further custom htcondor requirements
         config.custom_content.append(("Requirements", self.htcondor_requirements))
         # custom stuff
-        if self.domain == self.Domain.CERN:
+        domain = self.get_domain()
+        if domain == self.Domain.CERN:
             config.custom_content.append(("+MaxRuntime", max_runtime))
-        if self.domain == self.Domain.ETP:
+        if domain == self.Domain.ETP:
             config.custom_content.append(("+RequestWalltime", max_runtime))
             config.custom_content.append(
                 ("accounting_group", self.htcondor_accounting_group)
             )
             config.custom_content.append(("+RemoteJob", self.htcondor_remote_job))
             # config.custom_content.append(("+RequestWalltime", max_runtime))
-        if self.domain == self.Domain.NAF:
+        if domain == self.Domain.NAF:
             config.custom_content.append(("+RequestRuntime", max_runtime))  # NAF
             # NAF has some custom stuff for containers...
             if self.htcondor_universe == "docker":
@@ -210,6 +216,9 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
                 config.custom_content.append(
                     ("+MySingularityImage", f'"{self.htcondor_container_image}"')
                 )
+        if domain == self.Domain.OTHERS:
+            # standard submit command of HTCondor, jobs exceeding it go on hold
+            config.custom_content.append(("allowed_job_duration", max_runtime))
 
         # include the wlcg specific tools script in the input sandbox
         tools_file = law.util.law_src_path("contrib/wlcg/scripts/law_wlcg_tools.sh")
