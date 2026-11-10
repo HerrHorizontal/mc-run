@@ -10,15 +10,16 @@ from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 
 logger = get_logger(__name__)
-rivet_env = set_environment_variables(
-    os.path.expandvars("$ANALYSIS_PATH/setup/setup_rivet.sh")
-)
+
+
+def rivet_environment():
+    return set_environment_variables("$ANALYSIS_PATH/setup/setup_rivet.sh")
 
 
 @cache
 def get_default_rivet_analyses():
     utils_logger = get_logger("generation.framework.utils")
-    default_rivet_env = copy(rivet_env).update({"RIVET_ANALYSIS_PATH": ""})
+    default_rivet_env = copy(rivet_environment()).update({"RIVET_ANALYSIS_PATH": ""})
     old_level = utils_logger.getEffectiveLevel()
     utils_logger.setLevel("WARNING")
     rivet_list = run_command(["rivet", "--list"], env=default_rivet_env)[1]
@@ -41,7 +42,9 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
         description="List of compiler flags to add to the build command.",
     )
 
-    rivet_os_version = rivet_env["RIVET_OS_DISTRO"]
+    @property
+    def rivet_os_version(self):
+        return rivet_environment()["RIVET_OS_DISTRO"]
 
     exclude_params_req = {"compiler_flags"}
     exclude_params_req_get = {
@@ -104,7 +107,7 @@ class RivetBuild(HTCondorWorkflow, law.LocalWorkflow, BaseTask):
             + [str(flag) for flag in self.compiler_flags]
             + [so_path, code_path]
         )
-        run_command(_rivet_exec, env=rivet_env)
+        run_command(_rivet_exec, env=rivet_environment())
         self.output().move_from_local(so_path)
 
         print("=======================================================")
