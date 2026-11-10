@@ -1,5 +1,4 @@
 import os
-from copy import copy
 from functools import cache
 
 import law
@@ -19,7 +18,8 @@ def rivet_environment():
 @cache
 def get_default_rivet_analyses():
     utils_logger = get_logger("generation.framework.utils")
-    default_rivet_env = copy(rivet_environment()).update({"RIVET_ANALYSIS_PATH": ""})
+    default_rivet_env = rivet_environment()
+    default_rivet_env["RIVET_ANALYSIS_PATH"] = ""
     old_level = utils_logger.getEffectiveLevel()
     utils_logger.setLevel("WARNING")
     rivet_list = run_command(["rivet", "--list"], env=default_rivet_env)[1]
