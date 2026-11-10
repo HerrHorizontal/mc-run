@@ -162,7 +162,8 @@ Set these to your desired values, to configure your personal generation of event
 - `hepmc_format`: File format of the generated events, set in the `[HepMCOutput]` section. `root` (default) stores the events as HepMC3 ROOT TTree. Other options:
     - `hepmc3`: HepMC3 ascii
     - `hepmc3.gz`: gzip-compressed HepMC3 ascii
-    - `tar.bz2`: legacy MC-Run format. Existing `tar.bz2` outputs are not found with another format and would be generated again, so convert them to `root` with the `ConvertHepMC` task first.
+
+  Outputs of older MC-Run versions are stored as `tar.bz2`. They are not found anymore and would be generated again, so convert them to `root` with the `ConvertHepMC` task first.
 <!-- - `start_seed`: Currently not used. Purposed for the use of randomly generated seeds for generation jobs. -->
 
 #### Analysis specific parameters

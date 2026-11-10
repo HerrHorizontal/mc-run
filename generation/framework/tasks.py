@@ -48,11 +48,10 @@ class HepMCOutputMixin:
     ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
     hepmc_format = luigi.ChoiceParameter(
         default=ConfigParser.get("HepMCOutput", "hepmc_format", "root"),
-        choices=list(HEPMC_FORMATS) + ["tar.bz2"],
+        choices=HEPMC_FORMATS,
         var_type=str,
         description="File format of the generated events: `root` (HepMC3 ROOT TTree), \
-                `hepmc3` (HepMC3 ascii), `hepmc3.gz` (gzip-compressed HepMC3 ascii) or \
-                `tar.bz2` (legacy MC-Run format).",
+                `hepmc3` (HepMC3 ascii) or `hepmc3.gz` (gzip-compressed HepMC3 ascii).",
     )
     root_compression = luigi.IntParameter(
         default=ConfigParser.getint("HepMCOutput", "root_compression", 209),
@@ -80,13 +79,12 @@ class HepMCOutputMixin:
 class HepMCConverterJobMixin:
     """
     Ship the HepMC converter, built once at submission, with the HTCondor jobs of tasks that
-    convert HepMC files. Not needed for the `tar.bz2` format.
+    convert HepMC files.
     """
 
     def htcondor_job_config(self, config, job_num, branches):
         config = super().htcondor_job_config(config, job_num, branches)
-        if getattr(self, "hepmc_format", "root") in HEPMC_FORMATS:
-            config.input_files["hepmc_converter"] = hepmc_converter_job_input()
+        config.input_files["hepmc_converter"] = hepmc_converter_job_input()
         return config
 
 

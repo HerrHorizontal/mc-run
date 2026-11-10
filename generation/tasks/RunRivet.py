@@ -1,4 +1,3 @@
-import glob
 import os
 
 import law
@@ -144,14 +143,6 @@ class RunRivet(HepMCOutputMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkfl
         out_files = []
         for target in self.input()["collection"].iter_existing():
             with target.localize("r") as input_file:
-                if not target.path.endswith(".tar.bz2"):
-                    # root, hepmc3 and hepmc3.gz files go to Rivet without unpacking
-                    input_files = [input_file.abspath]
-                    extracted_files = []
-                else:
-                    os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
-                    input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
-                    extracted_files = input_files
                 yoda_out = tmp_dir.child(f"{input_file.basename}.yoda", type="f")
                 out_files.append(yoda_out)
                 # run rivet
@@ -160,10 +151,8 @@ class RunRivet(HepMCOutputMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkfl
                     f"--analysis={_rivet_analysis}"
                     for _rivet_analysis in _mapped_analyses
                 ]
-                cmd += input_files
+                cmd.append(input_file.abspath)
                 run_command(cmd, env=rivet_env, cwd=tmp_dir.abspath)
-                for extracted_file in extracted_files:
-                    os.remove(extracted_file)
 
         output_file = law.LocalFileTarget(is_tmp="yoda")
         merge_cmd = ["rivet-merge", "--pwd", "--equiv", "-o", output_file.abspath]

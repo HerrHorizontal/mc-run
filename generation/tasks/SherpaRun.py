@@ -12,7 +12,7 @@ from generation.framework.tasks import (
     HepMCConverterJobMixin,
     HepMCOutputMixin,
 )
-from generation.framework.utils import run_command, set_environment_variables
+from generation.framework.utils import set_environment_variables
 from law.logger import get_logger
 from luigi.util import inherits
 
@@ -133,45 +133,22 @@ class SherpaRun(
             INPUT_FILE_NAME=_my_config, EXTENSION=self.hepmc_format
         )
 
-        if self.hepmc_format != "tar.bz2":
-            # convert the HepMC output into the requested format while it is generated
-            try:
-                generate_into_converter(
-                    _sherpa_exec + _sherpa_args + _gen_opts,
-                    sherpa_env,
-                    output_file_hepmc,
-                    os.path.join(work_dir, output_file),
-                    self.events_per_job,
-                    hepmc_format=self.hepmc_format,
-                    compression=self.root_compression,
-                    cwd=work_dir,
-                )
-                logger.info("Seed: {}".format(seed))
-            except RuntimeError as e:
-                output.remove()
-                raise e
-        else:
-            try:
-                run_command(
-                    _sherpa_exec + _sherpa_args + _gen_opts, env=sherpa_env, cwd=work_dir
-                )
-                logger.info("Seed: {}".format(seed))
-            except RuntimeError as e:
-                output.remove()
-                raise e
-
-            os.chdir(work_dir)
-            if not os.path.exists(output_file_hepmc):
-                os.system("ls -l")
-                raise IOError(
-                    "HepMC file {} doesn't exist! Abort!".format(output_file_hepmc)
-                )
-            os.system(
-                "tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}".format(
-                    OUTPUT_FILE=output_file,
-                    HEPMC_FILE=os.path.relpath(output_file_hepmc),
-                )
+        # convert the HepMC output into the requested format while it is generated
+        try:
+            generate_into_converter(
+                _sherpa_exec + _sherpa_args + _gen_opts,
+                sherpa_env,
+                output_file_hepmc,
+                os.path.join(work_dir, output_file),
+                self.events_per_job,
+                hepmc_format=self.hepmc_format,
+                compression=self.root_compression,
+                cwd=work_dir,
             )
+            logger.info("Seed: {}".format(seed))
+        except RuntimeError as e:
+            output.remove()
+            raise e
 
         output_file = os.path.join(work_dir, output_file)
 

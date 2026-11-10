@@ -27,9 +27,9 @@ class ConvertHepMC(
     HepMCConverterJobMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkflow
 ):
     """
-    Convert existing `tar.bz2` outputs of HerwigRun/SherpaRun into HepMC3 ROOT files, stored \
-    where the generator task expects them with `--hepmc-format root`. The `tar.bz2` file is \
-    removed once the ROOT file is stored and verified.
+    Convert `tar.bz2` outputs of HerwigRun/SherpaRun from older MC-Run versions into HepMC3 \
+    ROOT files, stored where the generator task expects them with `--hepmc-format root`. The \
+    `tar.bz2` file is removed once the ROOT file is stored and verified.
     """
 
     # allow outputs in nested directory structure
