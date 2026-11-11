@@ -5,9 +5,16 @@ from subprocess import PIPE
 
 import law
 import luigi
+from generation.framework.hepmc import generate_into_converter
 from generation.framework.htcondor import HTCondorWorkflow
-from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
-from generation.framework.utils import identify_setupfile, run_command
+from generation.framework.storage import store_verified
+from generation.framework.tasks import (
+    GenerationScenarioConfig,
+    GenRivetTask,
+    HepMCConverterJobMixin,
+    HepMCOutputMixin,
+)
+from generation.framework.utils import identify_setupfile
 from law.logger import get_logger
 from luigi.util import inherits
 
@@ -17,7 +24,13 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
+class HerwigRun(
+    HepMCOutputMixin,
+    HepMCConverterJobMixin,
+    GenRivetTask,
+    HTCondorWorkflow,
+    law.LocalWorkflow,
+):
     """
     Use the prepared grids in Herwig-cache to generate HEP particle collision \
     events
@@ -88,16 +101,11 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         ) + path
         return os.path.join(*parts)
 
+    def branch_output(self, branch):
+        return self.hepmc_output_target(branch)
+
     def output(self):
-        #
-        dir_number = int(self.branch) / 1000
-        return self.remote_target(
-            "{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.tar.bz2".format(
-                DIR_NUMBER=int(dir_number),
-                INPUT_FILE_NAME=str(self.campaign),
-                JOB_NUMBER=str(self.branch),
-            )
-        )
+        return self.branch_output(self.branch)
 
     def run(self):
         # branch data
@@ -139,18 +147,17 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
             self.setupfile, self.mc_generator, self.mc_setting, work_dir
         )
         _setupfile_suffix = "-" + _setupfile_path
+        # write all events to the HepMC output, the run cards limit them with PrintEvent
+        with open(os.path.join(work_dir, _setupfile_path), "a") as setupfile:
+            setupfile.write("\nset /Herwig/Analysis/HepMC:PrintEvent {}\n".format(_num_events))
         _herwig_args.append("--setupfile={SETUPFILE}".format(SETUPFILE=_setupfile_path))
 
         logger.info("Executable: {}".format(" ".join(_herwig_exec + _herwig_args)))
 
-        try:
-            run_command(_herwig_exec + _herwig_args, env=my_env, cwd=work_dir)
-            logger.info("Seed: {}".format(seed))
-        except RuntimeError as e:
-            output.remove()
-            raise e
-
-        output_file = "{INPUT_FILE_NAME}.tar.bz2".format(INPUT_FILE_NAME=_my_config)
+        # file names of the Herwig outputs, which are fixed by the run name, seed and setupfile
+        output_file = "{INPUT_FILE_NAME}.{EXTENSION}".format(
+            INPUT_FILE_NAME=_my_config, EXTENSION=self.hepmc_format
+        )
         if int(seed) != 0:
             output_file_hepmc = (
                 "{INPUT_FILE_NAME}-S{SEED}{SETUPFILE_SUFFIX}.hepmc".format(
@@ -174,40 +181,33 @@ class HerwigRun(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                 INPUT_FILE_NAME=_my_config, SETUPFILE_SUFFIX=_setupfile_suffix
             )
 
-        output_file_hepmc = os.path.abspath(output_file_hepmc)
-        output_file_yoda = os.path.abspath(output_file_yoda)
+        output_file_hepmc = os.path.join(work_dir, output_file_hepmc)
+        output_file_yoda = os.path.join(work_dir, output_file_yoda)
 
-        os.chdir(work_dir)
-
-        if os.path.exists(output_file_hepmc):
-            # tar and compress the output HepMC files to save disk space
-            if os.path.exists(output_file_yoda):
-                # also add already existing YODA files if existant
-                os.system(
-                    "tar -cvjf {OUTPUT_FILE} {HEPMC_FILE} {YODA_FILE}".format(
-                        OUTPUT_FILE=output_file,
-                        HEPMC_FILE=os.path.relpath(output_file_hepmc),
-                        YODA_FILE=os.path.relpath(output_file_yoda),
-                    )
-                )
-            else:
-                os.system(
-                    "tar -cvjf {OUTPUT_FILE} {HEPMC_FILE}".format(
-                        OUTPUT_FILE=output_file,
-                        HEPMC_FILE=os.path.relpath(output_file_hepmc),
-                    )
-                )
-        else:
-            os.system("ls -l")
-            raise IOError(
-                "HepMC file {} doesn't exist! Abort!".format(output_file_hepmc)
+        # convert the HepMC output into the requested format while it is generated
+        try:
+            generate_into_converter(
+                _herwig_exec + _herwig_args,
+                my_env,
+                output_file_hepmc,
+                os.path.join(work_dir, output_file),
+                self.events_per_job,
+                hepmc_format=self.hepmc_format,
+                compression=self.root_compression,
+                cwd=work_dir,
             )
+            logger.info("Seed: {}".format(seed))
+        except RuntimeError as e:
+            output.remove()
+            raise e
+        if os.path.exists(output_file_yoda):
+            logger.warning("YODA file {} is not stored!".format(output_file_yoda))
 
-        output_file = os.path.abspath(output_file)
+        output_file = os.path.join(work_dir, output_file)
 
         if os.path.exists(output_file):
-            # copy the compressed outputs to save them
-            output.copy_from_local(output_file)
+            # store the compressed outputs, only complete and verified files get the output name
+            store_verified(output_file, output)
         else:
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))
 

@@ -1,10 +1,13 @@
-import glob
 import os
 
 import law
 import luigi
 from generation.framework.htcondor import HTCondorWorkflow
-from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
+from generation.framework.tasks import (
+    GenerationScenarioConfig,
+    GenRivetTask,
+    HepMCOutputMixin,
+)
 from generation.framework.utils import run_command, set_environment_variables
 from law.logger import get_logger
 from luigi.util import inherits
@@ -17,7 +20,7 @@ logger = get_logger(__name__)
 
 
 @inherits(GenerationScenarioConfig)
-class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
+class RunRivet(HepMCOutputMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
     """
     Analyze generated HEPMC files with Rivet and create YODA files
     """
@@ -91,17 +94,19 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         ) + path
         return os.path.join(*parts)
 
-    def output(self):
-        #
-        dir_number = int(self.branch) / 1000
+    def branch_output(self, branch):
+        dir_number = int(branch) / 1000
         return self.remote_target(
             "_".join(sorted(self.rivet_analyses)),
             "{DIR_NUMBER}/{INPUT_FILE_NAME}job{JOB_NUMBER}.yoda".format(
                 DIR_NUMBER=int(dir_number),
                 INPUT_FILE_NAME=str(self.campaign),
-                JOB_NUMBER=str(self.branch),
+                JOB_NUMBER=str(branch),
             ),
         )
+
+    def output(self):
+        return self.branch_output(self.branch)
 
     def run(self):
         # branch data
@@ -138,8 +143,6 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
         out_files = []
         for target in self.input()["collection"].iter_existing():
             with target.localize("r") as input_file:
-                os.system(f"tar -xjf {input_file.abspath} -C {tmp_dir.abspath}/")
-                input_files = glob.glob(f"{tmp_dir.abspath}/*.hepmc")
                 yoda_out = tmp_dir.child(f"{input_file.basename}.yoda", type="f")
                 out_files.append(yoda_out)
                 # run rivet
@@ -148,10 +151,8 @@ class RunRivet(GenRivetTask, HTCondorWorkflow, law.LocalWorkflow):
                     f"--analysis={_rivet_analysis}"
                     for _rivet_analysis in _mapped_analyses
                 ]
-                cmd += input_files
+                cmd.append(input_file.abspath)
                 run_command(cmd, env=rivet_env, cwd=tmp_dir.abspath)
-                for input_file in input_files:
-                    os.remove(input_file)
 
         output_file = law.LocalFileTarget(is_tmp="yoda")
         merge_cmd = ["rivet-merge", "--pwd", "--equiv", "-o", output_file.abspath]

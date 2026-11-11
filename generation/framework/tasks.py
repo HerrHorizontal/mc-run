@@ -6,6 +6,7 @@ from warnings import simplefilter
 import law
 import law.contrib
 import luigi
+from generation.framework.hepmc import HEPMC_FORMATS, hepmc_converter_job_input
 from law.logger import get_logger
 from luigi.parameter import UnconsumedParameterWarning
 from luigi.util import inherits
@@ -36,6 +37,55 @@ class GenerationScenarioConfig(luigi.Config):
         description="Scenario of the MC production. Typically one of the following: `withNP`, `PSoff`, `NPoff`, `MPIoff` or `Hadoff`. \
                 Used to differentiate between output-paths for different generation scenarios."
     )
+
+
+class HepMCOutputMixin:
+    """
+    Parameters steering the file format of the generated HepMC events. Defaults are read from
+    the [HepMCOutput] section of luigi.cfg, so that generator and analysis tasks agree on them.
+    """
+
+    ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
+    hepmc_format = luigi.ChoiceParameter(
+        default=ConfigParser.get("HepMCOutput", "hepmc_format", "root"),
+        choices=HEPMC_FORMATS,
+        var_type=str,
+        description="File format of the generated events: `root` (HepMC3 ROOT TTree), \
+                `hepmc3` (HepMC3 ascii) or `hepmc3.gz` (gzip-compressed HepMC3 ascii).",
+    )
+    root_compression = luigi.IntParameter(
+        default=ConfigParser.getint("HepMCOutput", "root_compression", 209),
+        significant=False,
+        description="ROOT compression setting (100 * algorithm + level) of `root` output, \
+                209 is LZMA 9.",
+    )
+
+    def hepmc_output_target(self, branch=None, hepmc_format=None):
+        """
+        Remote target of the generated events of a generator job, in sub-directories of 1000
+        jobs each. Defaults to the branch and file format of this task.
+        """
+        branch = self.branch if branch is None else branch
+        return self.remote_target(
+            str(int(branch) // 1000),
+            "{INPUT_FILE_NAME}job{JOB_NUMBER}.{EXTENSION}".format(
+                INPUT_FILE_NAME=str(self.campaign),
+                JOB_NUMBER=str(branch),
+                EXTENSION=hepmc_format or self.hepmc_format,
+            ),
+        )
+
+
+class HepMCConverterJobMixin:
+    """
+    Ship the HepMC converter, built once at submission, with the HTCondor jobs of tasks that
+    convert HepMC files.
+    """
+
+    def htcondor_job_config(self, config, job_num, branches):
+        config = super().htcondor_job_config(config, job_num, branches)
+        config.input_files["hepmc_converter"] = hepmc_converter_job_input()
+        return config
 
 
 @inherits(CommonConfig)
