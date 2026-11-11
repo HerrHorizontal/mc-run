@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import functools
 import os
 from subprocess import PIPE
 
@@ -35,18 +36,8 @@ def _convert_env_to_dict(env):
     return my_env
 
 
-def set_environment_variables(source_script_path):
-    """Creates a subprocess readable environment dict
-
-    Args:
-        source_script_path (str): Path to the file sourcing the environment
-
-    Raises:
-        RuntimeError: Raised when environment couldn't be sourced
-
-    Returns:
-        dict: Environment variables
-    """
+@functools.cache
+def _source_environment(source_script_path):
     code, out, error = interruptable_popen(
         "source {}; env".format(source_script_path),
         shell=True,
@@ -62,8 +53,24 @@ def set_environment_variables(source_script_path):
             + "Output:\n{}\n".format(out)
             + "Error:\n{}\n".format(error)
         )
-    my_env = _convert_env_to_dict(out)
-    return my_env
+    return _convert_env_to_dict(out)
+
+
+def set_environment_variables(source_script_path):
+    """Creates a subprocess readable environment dict
+
+    Each script is sourced once per process, later calls copy the cached environment.
+
+    Args:
+        source_script_path (str): Path to the file sourcing the environment
+
+    Raises:
+        RuntimeError: Raised when environment couldn't be sourced
+
+    Returns:
+        dict: Environment variables
+    """
+    return dict(_source_environment(os.path.expandvars(source_script_path)))
 
 
 def identify_inputfile(filename, config_path, generator):

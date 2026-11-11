@@ -6,7 +6,7 @@ import law
 import luigi
 from generation.framework.tasks import GenerationScenarioConfig, GenRivetTask
 from generation.framework.utils import run_command
-from generation.tasks.RivetBuild import RivetBuild, rivet_env
+from generation.tasks.RivetBuild import RivetBuild, rivet_environment
 from generation.tasks.RunRivet import RunRivet
 from law.contrib.tasks import ForestMerge
 from law.logger import get_logger
@@ -107,7 +107,7 @@ class RivetMerge(GenRivetTask, ForestMerge):
             command.append("--equiv")
         # add output file and input files
         command += ["-o", "merged.yoda"] + list(file_list)
-        run_command(command, env=rivet_env, cwd=tmp_dir.abspath)
+        run_command(command, env=rivet_environment(), cwd=tmp_dir.abspath)
         output.copy_from_local(tmp_dir.child("merged.yoda"))
 
 
