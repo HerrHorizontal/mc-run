@@ -5,7 +5,6 @@ import law
 import luigi
 from generation.framework.hepmc import generate_into_converter
 from generation.framework.htcondor import HTCondorWorkflow
-from generation.framework.storage import store_verified
 from generation.framework.tasks import (
     GenerationScenarioConfig,
     GenRivetTask,
@@ -153,8 +152,7 @@ class SherpaRun(
         output_file = os.path.join(work_dir, output_file)
 
         if os.path.exists(output_file):
-            # store the compressed outputs, only complete and verified files get the output name
-            store_verified(output_file, output)
+            output.copy_from_local(output_file)
         else:
             os.system("ls -l")
             raise IOError("Output file '{}' doesn't exist! Abort!".format(output_file))

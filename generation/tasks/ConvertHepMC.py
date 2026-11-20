@@ -6,7 +6,6 @@ import law
 import luigi
 from generation.framework.hepmc import convert_hepmc
 from generation.framework.htcondor import HTCondorWorkflow
-from generation.framework.storage import human_size, store_verified
 from generation.framework.tasks import (
     GenerationScenarioConfig,
     GenRivetTask,
@@ -14,6 +13,7 @@ from generation.framework.tasks import (
 )
 from generation.framework.utils import run_command
 from law.logger import get_logger
+from law.util import human_bytes
 from luigi.util import inherits
 
 from .HerwigRun import HerwigRun
@@ -29,7 +29,7 @@ class ConvertHepMC(
     """
     Convert `tar.bz2` outputs of HerwigRun/SherpaRun from older MC-Run versions into HepMC3 \
     ROOT files, stored where the generator task expects them with `--hepmc-format root`. The \
-    `tar.bz2` file is removed once the ROOT file is stored and verified.
+    `tar.bz2` file is removed once the ROOT file is stored.
     """
 
     # allow outputs in nested directory structure
@@ -52,7 +52,7 @@ class ConvertHepMC(
     remove_input = luigi.BoolParameter(
         default=True,
         significant=False,
-        description="Remove the original `tar.bz2` file after the ROOT file was stored and verified.",
+        description="Remove the original `tar.bz2` file after the ROOT file was stored.",
     )
 
     def generator_task(self, **kwargs):
@@ -148,7 +148,9 @@ class ConvertHepMC(
             compression=self.compression,
         )
         output_size = root_file.stat().st_size
-        store_verified(root_file.abspath, output)
+        output.copy_from_local(root_file.abspath)
+        if output.stat().st_size != output_size:
+            raise IOError("Stored file {} has an unexpected size! Abort!".format(output.uri()))
         if self.remove_input:
             logger.info("Removing original file {}".format(input_target.uri()))
             input_target.remove()
@@ -156,12 +158,12 @@ class ConvertHepMC(
         # summary of the storage savings
         size_change = input_size - output_size
         print("=======================================================")
-        print("Original file:  {:>12}  {}".format(human_size(input_size), input_target.basename))
-        print("Converted file: {:>12}  {}".format(human_size(output_size), output.basename))
+        print("Original file:  {:>12}  {}".format(human_bytes(input_size, fmt=True), input_target.basename))
+        print("Converted file: {:>12}  {}".format(human_bytes(output_size, fmt=True), output.basename))
         print(
             "File size {} by {} ({:.1%}){}".format(
                 "decreased" if size_change >= 0 else "increased",
-                human_size(abs(size_change)),
+                human_bytes(abs(size_change), fmt=True),
                 abs(size_change) / input_size,
                 "" if self.remove_input else ", original file kept",
             )
