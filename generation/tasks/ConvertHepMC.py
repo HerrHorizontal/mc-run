@@ -4,12 +4,12 @@ import re
 
 import law
 import luigi
-from generation.framework.hepmc import convert_hepmc
+from generation.framework.hepmc import HEPMC_CONVERTER, convert_hepmc
 from generation.framework.htcondor import HTCondorWorkflow
 from generation.framework.tasks import (
     GenerationScenarioConfig,
     GenRivetTask,
-    HepMCConverterJobMixin,
+    ShipExecutablesMixin,
 )
 from generation.framework.utils import run_command
 from law.logger import get_logger
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 @inherits(GenerationScenarioConfig)
 class ConvertHepMC(
-    HepMCConverterJobMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkflow
+    ShipExecutablesMixin, GenRivetTask, HTCondorWorkflow, law.LocalWorkflow
 ):
     """
     Convert `tar.bz2` outputs of HerwigRun/SherpaRun from older MC-Run versions into HepMC3 \
@@ -34,6 +34,7 @@ class ConvertHepMC(
 
     # allow outputs in nested directory structure
     output_collection_cls = law.NestedSiblingFileCollection
+    shipped_executables = (HEPMC_CONVERTER,)
 
     # configuration variables
     mc_generator = luigi.Parameter(

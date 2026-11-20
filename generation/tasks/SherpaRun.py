@@ -3,13 +3,13 @@ import random
 
 import law
 import luigi
-from generation.framework.hepmc import generate_into_converter
+from generation.framework.hepmc import HEPMC_CONVERTER, generate_into_converter
 from generation.framework.htcondor import HTCondorWorkflow
 from generation.framework.tasks import (
     GenerationScenarioConfig,
     GenRivetTask,
-    HepMCConverterJobMixin,
     HepMCOutputMixin,
+    ShipExecutablesMixin,
 )
 from generation.framework.utils import set_environment_variables
 from law.logger import get_logger
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 @inherits(GenerationScenarioConfig)
 class SherpaRun(
     HepMCOutputMixin,
-    HepMCConverterJobMixin,
+    ShipExecutablesMixin,
     GenRivetTask,
     HTCondorWorkflow,
     law.LocalWorkflow,
@@ -35,6 +35,7 @@ class SherpaRun(
 
     # allow outputs in nested directory structure
     output_collection_cls = law.NestedSiblingFileCollection
+    shipped_executables = (HEPMC_CONVERTER,)
 
     # configuration variables
     start_seed = luigi.IntParameter(

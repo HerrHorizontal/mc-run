@@ -6,7 +6,7 @@ from warnings import simplefilter
 import law
 import law.contrib
 import luigi
-from generation.framework.hepmc import HEPMC_FORMATS, hepmc_converter_job_input
+from generation.framework.hepmc import HEPMC_FORMATS
 from law.logger import get_logger
 from luigi.parameter import UnconsumedParameterWarning
 from luigi.util import inherits
@@ -76,15 +76,19 @@ class HepMCOutputMixin:
         )
 
 
-class HepMCConverterJobMixin:
+class ShipExecutablesMixin:
     """
-    Ship the HepMC converter, built once at submission, with the HTCondor jobs of tasks that
-    convert HepMC files.
+    Ship compiled executables (see `CompiledExecutable`), built once at submission, with the
+    HTCondor jobs. List it before the HTCondor workflow in the base classes of a task, so that
+    `super()` resolves to the workflow.
     """
+
+    shipped_executables = ()
 
     def htcondor_job_config(self, config, job_num, branches):
         config = super().htcondor_job_config(config, job_num, branches)
-        config.input_files["hepmc_converter"] = hepmc_converter_job_input()
+        for executable in self.shipped_executables:
+            config.input_files[executable.name] = executable.job_input()
         return config
 
 

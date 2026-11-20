@@ -5,13 +5,13 @@ from subprocess import PIPE
 
 import law
 import luigi
-from generation.framework.hepmc import generate_into_converter
+from generation.framework.hepmc import HEPMC_CONVERTER, generate_into_converter
 from generation.framework.htcondor import HTCondorWorkflow
 from generation.framework.tasks import (
     GenerationScenarioConfig,
     GenRivetTask,
-    HepMCConverterJobMixin,
     HepMCOutputMixin,
+    ShipExecutablesMixin,
 )
 from generation.framework.utils import identify_setupfile
 from law.logger import get_logger
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 @inherits(GenerationScenarioConfig)
 class HerwigRun(
     HepMCOutputMixin,
-    HepMCConverterJobMixin,
+    ShipExecutablesMixin,
     GenRivetTask,
     HTCondorWorkflow,
     law.LocalWorkflow,
@@ -37,6 +37,7 @@ class HerwigRun(
 
     # allow outputs in nested directory structure
     output_collection_cls = law.NestedSiblingFileCollection
+    shipped_executables = (HEPMC_CONVERTER,)
 
     # configuration variables
     mc_generator = "herwig"
