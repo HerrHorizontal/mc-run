@@ -142,7 +142,7 @@ class SherpaRun(
                 os.path.join(work_dir, output_file),
                 self.events_per_job,
                 hepmc_format=self.hepmc_format,
-                compression=self.root_compression,
+                compression=self.compression,
                 cwd=work_dir,
             )
             logger.info("Seed: {}".format(seed))

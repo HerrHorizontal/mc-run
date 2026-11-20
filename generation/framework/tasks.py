@@ -53,11 +53,11 @@ class HepMCOutputMixin:
         description="File format of the generated events: `root` (HepMC3 ROOT TTree), \
                 `hepmc3` (HepMC3 ascii) or `hepmc3.gz` (gzip-compressed HepMC3 ascii).",
     )
-    root_compression = luigi.IntParameter(
-        default=ConfigParser.getint("HepMCOutput", "root_compression", 209),
+    compression = luigi.IntParameter(
+        default=ConfigParser.getint("HepMCOutput", "compression", 209),
         significant=False,
-        description="ROOT compression setting (100 * algorithm + level) of `root` output, \
-                209 is LZMA 9.",
+        description="ROOT compression setting (100 * algorithm + level), 209 is LZMA 9. \
+                For `hepmc3.gz` output, the level is used as gzip level.",
     )
 
     def hepmc_output_target(self, branch=None, hepmc_format=None):

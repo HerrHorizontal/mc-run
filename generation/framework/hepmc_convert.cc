@@ -2,12 +2,13 @@
 // single HepMC3 file in one of the following formats, which can all be read by Rivet:
 //   root       HepMC3 ROOT TTree (WriterRootTree format), compressed with -c (default)
 //   hepmc3     HepMC3 ascii (Asciiv3), uncompressed
-//   hepmc3.gz  HepMC3 ascii (Asciiv3), gzip-compressed (level 9)
+//   hepmc3.gz  HepMC3 ascii (Asciiv3), gzip-compressed with the level of -c
 //
 // usage: hepmc_convert [-f <format>] [-c <compression>] [-b <basket size>] [-n <events>] <output> <input.hepmc> [...]
 //
 // -c: ROOT compression setting (100 * algorithm + level), default 209 (LZMA 9)
-// -b: basket size of all branches in bytes, default 4 MiB (0: ROOT default)
+// -b: basket size of all branches in bytes, default 4 MiB (0: ROOT default), ROOT enlarges a
+//     basket if a single event does not fit
 //
 // The number of events read from each input is checked against its event records ("E" lines),
 // as the HepMC readers cannot distinguish a parsing error from the end of the file, and the
@@ -25,6 +26,7 @@
 #include "TFile.h"
 #include "TObjArray.h"
 #include "TTree.h"
+#include <algorithm>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
@@ -37,7 +39,6 @@ using namespace HepMC3;
 
 static const char* tree_name = "hepmc3_tree";
 static const char* branch_name = "hepmc3_event";
-static const int gzip_level = 9;
 
 // count the event records of a HepMC2 or HepMC3 ascii stream, each event starts with an "E " line
 static long count_event_records(std::istream& stream) {
@@ -85,7 +86,7 @@ static std::shared_ptr<Writer> create_writer(const std::string& format, const st
     if (format == "hepmc3") return std::make_shared<WriterAscii>(output, run_info);
     if (format == "hepmc3.gz") {
         std::shared_ptr<std::ostream> stream =
-            std::make_shared<HepMC3::ofstream>(output, Compression::z, gzip_level);
+            std::make_shared<HepMC3::ofstream>(output, Compression::z, std::min(compression % 100, 9));
         return std::make_shared<WriterAscii>(stream, run_info);
     }
     return nullptr;

@@ -149,8 +149,8 @@ def convert_hepmc(input_files, output_file, hepmc_format="root", compression=209
         output_file (str): Path of the file to write
         hepmc_format (str): Output format, one of `HEPMC_FORMATS`: `root` (HepMC3 ROOT
             TTree), `hepmc3` (HepMC3 ascii) or `hepmc3.gz` (gzip-compressed HepMC3 ascii)
-        compression (int): ROOT compression setting (100 * algorithm + level) of `root` output,
-            e.g. 209 = LZMA 9
+        compression (int): ROOT compression setting (100 * algorithm + level), e.g. 209 = LZMA 9,
+            for `hepmc3.gz` output the level is used as gzip level
 
     Raises:
         ValueError: Unknown output format
@@ -191,7 +191,7 @@ def generate_into_converter(
         output_file (str): Path of the file to write
         n_events (int): Number of events the generator produces
         hepmc_format (str): Output format, one of `HEPMC_FORMATS`
-        compression (int): ROOT compression setting of `root` output
+        compression (int): Compression setting, see `convert_hepmc`
         cwd (str): Working directory of the generator
         poll_interval (float): Seconds between status checks of both processes
 

@@ -44,8 +44,8 @@ class ConvertHepMC(
         description="Number of jobs of the generator workflow whose outputs are converted.",
     )
     ConfigParser = luigi.configuration.cfg_parser.LuigiConfigParser.instance()
-    root_compression = luigi.IntParameter(
-        default=ConfigParser.getint("HepMCOutput", "root_compression", 209),
+    compression = luigi.IntParameter(
+        default=ConfigParser.getint("HepMCOutput", "compression", 209),
         significant=False,
         description="ROOT compression setting (100 * algorithm + level), 209 is LZMA 9.",
     )
@@ -145,7 +145,7 @@ class ConvertHepMC(
             hepmc_files,
             root_file.abspath,
             hepmc_format="root",
-            compression=self.root_compression,
+            compression=self.compression,
         )
         output_size = root_file.stat().st_size
         store_verified(root_file.abspath, output)
