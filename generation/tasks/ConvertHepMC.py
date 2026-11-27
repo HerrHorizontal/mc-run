@@ -150,7 +150,9 @@ class ConvertHepMC(
         )
         output_size = root_file.stat().st_size
         output.copy_from_local(root_file.abspath)
+        # the input is removed next, so check the stored file once more
         if output.stat().st_size != output_size:
+            output.remove()
             raise IOError("Stored file {} has an unexpected size! Abort!".format(output.uri()))
         if self.remove_input:
             logger.info("Removing original file {}".format(input_target.uri()))
